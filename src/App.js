@@ -21,7 +21,7 @@ function App() {
       <Router>
         <div className="min-h-screen bg-binance-dark text-white">
           <Navbar />
-          <div className="w-full px-4 md:max-w-[1000px] mx-auto mt-16">
+          <div className="container mx-auto px-4 py-8">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/ido" element={<IDO />} />

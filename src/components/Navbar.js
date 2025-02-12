@@ -2,21 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useWeb3React } from '@web3-react/core';
 import { injected, setupNetwork } from '../utils/connectors';
-import { MdKeyboardArrowDown } from 'react-icons/md';
-import { SG, US, KR } from 'country-flag-icons/react/3x2';
 
 const Navbar = () => {
   const { active, account, activate, deactivate } = useWeb3React();
   const location = useLocation();
   const [connecting, setConnecting] = useState(false);
-  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-  const [currentLang, setCurrentLang] = useState('zh');
-
-  const languages = [
-    { code: 'zh', name: '简体中文', Flag: SG },
-    { code: 'en', name: 'English', Flag: US },
-    { code: 'ko', name: '한국어', Flag: KR }
-  ];
 
   useEffect(() => {
     const connectWalletOnPageLoad = async () => {
@@ -73,16 +63,16 @@ const Navbar = () => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50">
-      <div className="w-full px-4 md:max-w-[1000px] mx-auto">
-        <div className="flex justify-between h-16 bg-[#0B1120]/80 backdrop-blur border-b border-green-500/20">
+    <nav className="bg-[#0B1120]/80 backdrop-blur-md border-b border-green-500/20 fixed w-full z-50">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex justify-between h-16">
           <div className="flex">
-            <Link to="/" className="flex items-center px-4">
+            <Link to="/" className="flex items-center">
               <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">
                 ZERO
               </span>
             </Link>
-            <div className="hidden md:flex md:items-center md:ml-6 space-x-8">
+            <div className="hidden md:flex md:items-center md:ml-10 space-x-8">
               <Link
                 to="/ido"
                 className={`${
@@ -123,46 +113,6 @@ const Navbar = () => {
               >
                 市场
               </Link>
-              <div className="relative">
-                <button 
-                  onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-                  className="flex items-center px-3 py-2 text-sm font-medium text-gray-300 hover:text-green-400 transition-colors space-x-2"
-                >
-                  {(() => {
-                    const currentLanguage = languages.find(l => l.code === currentLang);
-                    const Flag = currentLanguage?.Flag;
-                    return (
-                      <>
-                        {Flag && <Flag className="w-5 h-5" />}
-                        <span>{currentLanguage?.code.toUpperCase()}</span>
-                        <MdKeyboardArrowDown className="w-4 h-4" />
-                      </>
-                    );
-                  })()}
-                </button>
-                {showLanguageMenu && (
-                  <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-[#0B1120] border border-green-500/20">
-                    <div className="py-1">
-                      {languages.map((lang) => {
-                        const Flag = lang.Flag;
-                        return (
-                          <button
-                            key={lang.code}
-                            onClick={() => {
-                              setCurrentLang(lang.code);
-                              setShowLanguageMenu(false);
-                            }}
-                            className="flex items-center w-full px-4 py-2 text-sm text-left text-gray-300 hover:text-green-400 hover:bg-black/30 space-x-3"
-                          >
-                            <Flag className="w-5 h-5" />
-                            <span>{lang.name}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
           <div className="flex items-center">
@@ -173,7 +123,7 @@ const Navbar = () => {
                 </span>
                 <button
                   onClick={disconnectWallet}
-                  className="px-6 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
                 >
                   断开连接
                 </button>
@@ -182,7 +132,7 @@ const Navbar = () => {
               <button
                 onClick={connectWallet}
                 disabled={connecting}
-                className={`px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 rounded-lg hover:from-green-600 hover:to-green-700 transition-all ${
+                className={`bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all ${
                   connecting ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
@@ -192,7 +142,7 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-    </div>
+    </nav>
   );
 };
 
