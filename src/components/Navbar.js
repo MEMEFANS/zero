@@ -101,11 +101,22 @@ const Navbar = () => {
   return (
     <div className="w-full bg-[#0B1120] fixed z-50">
       <div className="max-w-[1400px] mx-auto px-4">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-20">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <Link to="/" className="flex items-center">
-                <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">
+              <Link to="/" className="flex items-center space-x-2">
+                <img 
+                  src="/images/logo.png" 
+                  alt="ZERO Logo" 
+                  style={{ 
+                    width: '64px',
+                    height: '64px',
+                    objectFit: 'contain',
+                    imageRendering: 'crisp-edges',
+                    transform: 'translateY(2px)'
+                  }}
+                />
+                <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">
                   ZERO
                 </span>
               </Link>
