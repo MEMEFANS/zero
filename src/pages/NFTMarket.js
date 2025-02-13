@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import { injected } from '../utils/connectors';
 import { ethers } from 'ethers';
 import { useNavigate } from 'react-router-dom';
+import { LanguageContext } from '../App';
 import { 
   MYSTERY_BOX_ADDRESS, 
   MYSTERY_BOX_ABI, 
@@ -24,6 +25,7 @@ const STAKING_ABI = [
 const NFTMarket = () => {
   const { active, account, activate, library } = useWeb3React();
   const navigate = useNavigate();
+  const { t } = useContext(LanguageContext);
   const [marketItems, setMarketItems] = useState([]);
   const [myNFTs, setMyNFTs] = useState([]);
   const [selectedTab, setSelectedTab] = useState('market');
@@ -192,11 +194,11 @@ const NFTMarket = () => {
       });
       await tx.wait();
       
-      alert('购买成功！');
+      alert(t('buySuccess'));
       loadMarketData();
     } catch (error) {
       console.error('Error buying NFT:', error);
-      alert('购买失败: ' + error.message);
+      alert(t('buyFailed') + error.message);
     }
   };
 
@@ -221,11 +223,11 @@ const NFTMarket = () => {
       const tx = await contract.listNFT(tokenId, priceInWei);
       await tx.wait();
       
-      alert('上架成功！');
+      alert(t('listSuccess'));
       loadMarketData();
     } catch (error) {
       console.error('Error listing NFT:', error);
-      alert('上架失败: ' + error.message);
+      alert(t('listFailed') + error.message);
     }
   };
 
@@ -235,11 +237,11 @@ const NFTMarket = () => {
       const tx = await contract.unlistNFT(nftId);
       await tx.wait();
       
-      alert('下架成功！');
+      alert(t('delistSuccess'));
       loadMarketData();
     } catch (error) {
       console.error('Error delisting NFT:', error);
-      alert('下架失败: ' + error.message);
+      alert(t('delistFailed') + error.message);
     }
   };
 
@@ -262,12 +264,12 @@ const NFTMarket = () => {
       const tx = await stakingContract.stake(selectedStakeNFT.id);
       await tx.wait();
       
-      alert('质押成功！');
+      alert(t('stakeSuccess'));
       loadMarketData();
       setShowStakeModal(false);
     } catch (error) {
       console.error('Error staking NFT:', error);
-      alert('质押失败：' + error.message);
+      alert(t('stakeFailed') + error.message);
     }
   };
 
@@ -301,26 +303,26 @@ const NFTMarket = () => {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-2xl font-bold text-white">#{nft.id}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400">拥有者:</span>
+                  <span className="text-gray-400">{t('owner')}:</span>
                   <span className="text-white">{nft.owner?.slice(0, 6)}...{nft.owner?.slice(-4)}</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-black/20 p-4 rounded-lg">
-                  <div className="text-gray-400 mb-1">基础算力</div>
+                  <div className="text-gray-400 mb-1">{t('power')}</div>
                   <div className="text-xl font-bold text-white">{nft.power}</div>
                 </div>
                 <div className="bg-black/20 p-4 rounded-lg">
-                  <div className="text-gray-400 mb-1">每日收益</div>
+                  <div className="text-gray-400 mb-1">{t('dailyReward')}</div>
                   <div className="text-xl font-bold text-white">{nft.dailyReward} ZONE</div>
                 </div>
                 <div className="bg-black/20 p-4 rounded-lg">
-                  <div className="text-gray-400 mb-1">最大收益</div>
+                  <div className="text-gray-400 mb-1">{t('maxReward')}</div>
                   <div className="text-xl font-bold text-white">{nft.maxReward} ZONE</div>
                 </div>
                 <div className="bg-black/20 p-4 rounded-lg">
-                  <div className="text-gray-400 mb-1">当前价格</div>
+                  <div className="text-gray-400 mb-1">{t('currentPrice')}</div>
                   <div className="text-xl font-bold text-white">{nft.price} BNB</div>
                 </div>
               </div>
@@ -334,7 +336,7 @@ const NFTMarket = () => {
                   }}
                   className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors"
                 >
-                  购买
+                  {t('buyNow')}
                 </button>
               ) : (
                 <div className="space-y-3">
@@ -347,7 +349,7 @@ const NFTMarket = () => {
                         }}
                         className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors"
                       >
-                        上架出售
+                        {t('sellNow')}
                       </button>
                       <button
                         onClick={() => {
@@ -356,7 +358,7 @@ const NFTMarket = () => {
                         }}
                         className="w-full bg-gray-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-600 transition-colors"
                       >
-                        去质押挖矿
+                        {t('stakeNow')}
                       </button>
                     </>
                   ) : (
@@ -367,7 +369,7 @@ const NFTMarket = () => {
                       }}
                       className="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 transition-colors"
                     >
-                      取消出售
+                      {t('delist')}
                     </button>
                   )}
                 </div>
@@ -396,7 +398,7 @@ const NFTMarket = () => {
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
         <div className="bg-[#1A2438] rounded-xl max-w-md w-full mx-4 p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-white">上架 NFT #{nft.id}</h3>
+            <h3 className="text-xl font-bold text-white">{t('listNFT')} #{nft.id}</h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-white"
@@ -409,7 +411,7 @@ const NFTMarket = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
-              <label className="block text-gray-400 mb-2">设置价格 (BNB)</label>
+              <label className="block text-gray-400 mb-2">{t('listingPrice')}</label>
               <input
                 type="number"
                 step="0.01"
@@ -417,7 +419,7 @@ const NFTMarket = () => {
                 value={listingPrice}
                 onChange={(e) => setListingPrice(e.target.value)}
                 className="w-full px-4 py-2 bg-black/20 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-green-500"
-                placeholder="输入价格..."
+                placeholder={t('pricePlaceholder')}
                 required
               />
             </div>
@@ -426,7 +428,7 @@ const NFTMarket = () => {
               type="submit"
               className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors"
             >
-              确认上架
+              {t('confirm')}
             </button>
           </form>
         </div>
@@ -442,7 +444,7 @@ const NFTMarket = () => {
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
         <div className="bg-[#1A2438] rounded-xl max-w-md w-full mx-4 p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-white">质押 NFT #{nft.id}</h3>
+            <h3 className="text-xl font-bold text-white">{t('stakeNFT')} #{nft.id}</h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-white"
@@ -455,28 +457,28 @@ const NFTMarket = () => {
 
           <div className="space-y-4 mb-6">
             <div className="bg-black/20 p-4 rounded-lg">
-              <div className="text-gray-400 mb-1">基础算力</div>
+              <div className="text-gray-400 mb-1">{t('power')}</div>
               <div className="text-xl font-bold text-white">{nft.power}</div>
             </div>
             <div className="bg-black/20 p-4 rounded-lg">
-              <div className="text-gray-400 mb-1">预计每日收益</div>
+              <div className="text-gray-400 mb-1">{t('dailyReward')}</div>
               <div className="text-xl font-bold text-white">{nft.dailyReward} ZONE</div>
             </div>
             <div className="bg-black/20 p-4 rounded-lg">
-              <div className="text-gray-400 mb-1">最大收益</div>
+              <div className="text-gray-400 mb-1">{t('maxReward')}</div>
               <div className="text-xl font-bold text-white">{nft.maxReward} ZONE</div>
             </div>
           </div>
 
           <div className="space-y-4">
             <p className="text-gray-400 text-sm">
-              质押后NFT将被锁定，直到您手动解除质押。在此期间，您将持续获得ZONE代币奖励。
+              {t('stakeWarning')}
             </p>
             <button
               onClick={handleStakeConfirm}
               className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors"
             >
-              确认质押
+              {t('confirm')}
             </button>
           </div>
         </div>
@@ -490,13 +492,13 @@ const NFTMarket = () => {
       <div className="container mx-auto px-4 py-8">
         {/* 页面标题和搜索栏 */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-6">NFT 交易市场</h1>
+          <h1 className="text-4xl font-bold text-white mb-6">{t('nftMarketplace')}</h1>
           <div className="flex flex-col gap-4">
             <div className="flex gap-4">
               <div className="flex-1">
                 <input
                   type="text"
-                  placeholder="搜索 NFT..."
+                  placeholder={t('searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-4 py-2 bg-[#1A2438] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-green-500"
@@ -507,11 +509,11 @@ const NFTMarket = () => {
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
-                <option value="default">排序方式</option>
-                <option value="price_asc">价格: 从低到高</option>
-                <option value="price_desc">价格: 从高到低</option>
-                <option value="power_desc">算力: 从高到低</option>
-                <option value="reward_desc">收益: 从高到低</option>
+                <option value="default">{t('sortDefault')}</option>
+                <option value="price_asc">{t('sortPriceAsc')}</option>
+                <option value="price_desc">{t('sortPriceDesc')}</option>
+                <option value="power_desc">{t('sortPowerDesc')}</option>
+                <option value="reward_desc">{t('sortRewardDesc')}</option>
               </select>
             </div>
             <div className="flex gap-2">
@@ -534,13 +536,13 @@ const NFTMarket = () => {
 
         {!active ? (
           <div className="text-center py-20">
-            <h2 className="text-2xl font-bold text-white mb-4">连接钱包开始交易</h2>
-            <p className="text-gray-400 mb-8">连接钱包以浏览和交易 NFT</p>
+            <h2 className="text-2xl font-bold text-white mb-4">{t('connectWallet')}</h2>
+            <p className="text-gray-400 mb-8">{t('connectWalletDesc')}</p>
             <button
               onClick={connectWallet}
               className="bg-green-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-600 transition-colors"
             >
-              连接钱包
+              {t('connectWallet')}
             </button>
           </div>
         ) : (
@@ -548,19 +550,19 @@ const NFTMarket = () => {
             {/* 市场统计 */}
             <div className="grid grid-cols-4 gap-6 mb-8">
               <div className="bg-[#1A2438] p-6 rounded-xl border border-gray-700">
-                <div className="text-gray-400 mb-2">总交易额</div>
+                <div className="text-gray-400 mb-2">{t('totalVolume')}</div>
                 <div className="text-2xl font-bold text-white">123.45 BNB</div>
               </div>
               <div className="bg-[#1A2438] p-6 rounded-xl border border-gray-700">
-                <div className="text-gray-400 mb-2">地板价</div>
+                <div className="text-gray-400 mb-2">{t('floorPrice')}</div>
                 <div className="text-2xl font-bold text-white">0.5 BNB</div>
               </div>
               <div className="bg-[#1A2438] p-6 rounded-xl border border-gray-700">
-                <div className="text-gray-400 mb-2">总持有者</div>
+                <div className="text-gray-400 mb-2">{t('totalHolders')}</div>
                 <div className="text-2xl font-bold text-white">1,234</div>
               </div>
               <div className="bg-[#1A2438] p-6 rounded-xl border border-gray-700">
-                <div className="text-gray-400 mb-2">挂单数量</div>
+                <div className="text-gray-400 mb-2">{t('totalListings')}</div>
                 <div className="text-2xl font-bold text-white">{marketItems.length}</div>
               </div>
             </div>
@@ -576,7 +578,7 @@ const NFTMarket = () => {
                   }`}
                   onClick={() => setSelectedTab('market')}
                 >
-                  市场列表
+                  {t('allListings')}
                 </button>
                 <button
                   className={`px-4 py-4 font-medium ${
@@ -586,13 +588,13 @@ const NFTMarket = () => {
                   }`}
                   onClick={() => setSelectedTab('myNFT')}
                 >
-                  我的NFT
+                  {t('myListings')}
                 </button>
                 <button
                   onClick={() => setShowUserHistoryModal(true)}
                   className={`px-4 py-4 font-medium text-gray-400 hover:text-gray-300`}
                 >
-                  交易历史
+                  {t('marketHistory')}
                 </button>
               </div>
             </div>
@@ -618,20 +620,20 @@ const NFTMarket = () => {
                     <div className="p-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-white font-medium">#{item.id}</span>
-                        <span className="text-gray-400 text-sm">{item.power} 算力</span>
+                        <span className="text-gray-400 text-sm">{item.power} {t('power')}</span>
                       </div>
                       <div className="space-y-2 mb-4">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">日收益</span>
+                          <span className="text-gray-400">{t('dailyReward')}</span>
                           <span className="text-white">{item.dailyReward} ZONE</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">最大收益</span>
+                          <span className="text-gray-400">{t('maxReward')}</span>
                           <span className="text-white">{item.maxReward} ZONE</span>
                         </div>
                         <div className="pt-2 border-t border-gray-700">
                           <div className="flex justify-between items-center">
-                            <span className="text-gray-400">价格</span>
+                            <span className="text-gray-400">{t('price')}</span>
                             <span className="text-xl font-bold text-white">{item.price} BNB</span>
                           </div>
                         </div>
@@ -640,13 +642,13 @@ const NFTMarket = () => {
                         onClick={() => handleBuy(item.id)}
                         className="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
                       >
-                        购买
+                        {t('buyNow')}
                       </button>
                       <button
                         onClick={() => loadNFTHistory(item.id)}
                         className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors mt-2"
                       >
-                        查看交易历史
+                        {t('viewHistory')}
                       </button>
                     </div>
                   </div>
@@ -667,21 +669,21 @@ const NFTMarket = () => {
                     <div className="p-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-white font-medium">#{nft.id}</span>
-                        <span className="text-gray-400 text-sm">{nft.power} 算力</span>
+                        <span className="text-gray-400 text-sm">{nft.power} {t('power')}</span>
                       </div>
                       <div className="space-y-2 mb-4">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">日收益</span>
+                          <span className="text-gray-400">{t('dailyReward')}</span>
                           <span className="text-white">{nft.dailyReward} ZONE</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">最大收益</span>
+                          <span className="text-gray-400">{t('maxReward')}</span>
                           <span className="text-white">{nft.maxReward} ZONE</span>
                         </div>
                         {nft.listed && (
                           <div className="pt-2 border-t border-gray-700">
                             <div className="flex justify-between items-center">
-                              <span className="text-gray-400">当前价格</span>
+                              <span className="text-gray-400">{t('currentPrice')}</span>
                               <span className="text-xl font-bold text-white">{nft.price} BNB</span>
                             </div>
                           </div>
@@ -694,13 +696,13 @@ const NFTMarket = () => {
                               onClick={() => handleList(nft.id)}
                               className="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
                             >
-                              上架出售
+                              {t('sellNow')}
                             </button>
                             <button
                               onClick={() => handleStake(nft.id)}
                               className="w-full bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
                             >
-                              去质押挖矿
+                              {t('stakeNow')}
                             </button>
                           </>
                         ) : (
@@ -708,14 +710,14 @@ const NFTMarket = () => {
                             onClick={() => handleDelist(nft.id)}
                             className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
                           >
-                            取消出售
+                            {t('delist')}
                           </button>
                         )}
                         <button
                           onClick={() => loadNFTHistory(nft.id)}
                           className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
                         >
-                          查看交易历史
+                          {t('viewHistory')}
                         </button>
                       </div>
                     </div>
@@ -751,23 +753,23 @@ const NFTMarket = () => {
       {showNFTHistoryModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-[#1A2438] p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4 text-white">NFT交易历史</h2>
+            <h2 className="text-2xl font-bold mb-4 text-white">{t('marketHistory')}</h2>
             <div className="space-y-4">
               {selectedNFTHistory.length > 0 ? (
                 selectedNFTHistory.map((trade, index) => (
                   <div key={index} className="border border-gray-700 p-4 rounded bg-black/20">
-                    <p className="text-gray-400">卖家: <span className="text-white">{trade.seller}</span></p>
-                    <p className="text-gray-400">买家: <span className="text-white">{trade.buyer}</span></p>
-                    <p className="text-gray-400">价格: <span className="text-white">
+                    <p className="text-gray-400">{t('seller')}:{' '}<span className="text-white">{trade.seller}</span></p>
+                    <p className="text-gray-400">{t('buyer')}:{' '}<span className="text-white">{trade.buyer}</span></p>
+                    <p className="text-gray-400">{t('price')}:{' '}<span className="text-white">
                       {ethers.BigNumber.isBigNumber(trade.price) 
                         ? ethers.utils.formatEther(trade.price) 
                         : trade.price} BNB
                     </span></p>
-                    <p className="text-gray-400">时间: <span className="text-white">{trade.time.toLocaleString()}</span></p>
+                    <p className="text-gray-400">{t('time')}:{' '}<span className="text-white">{trade.time.toLocaleString()}</span></p>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-400">暂无交易记录</p>
+                <p className="text-gray-400">{t('noHistory')}</p>
               )}
             </div>
             <button
@@ -777,7 +779,7 @@ const NFTMarket = () => {
               }}
               className="mt-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
             >
-              关闭
+              {t('close')}
             </button>
           </div>
         </div>
@@ -786,31 +788,31 @@ const NFTMarket = () => {
       {showUserHistoryModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-[#1A2438] p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4 text-white">我的交易历史</h2>
+            <h2 className="text-2xl font-bold mb-4 text-white">{t('userHistory')}</h2>
             <div className="space-y-4">
               {userHistory.trades.length > 0 ? (
                 userHistory.trades.map((trade, index) => (
                   <div key={index} className="border border-gray-700 p-4 rounded bg-black/20">
-                    <p className="text-gray-400">NFT ID: <span className="text-white">#{userHistory.tokenIds[index]}</span></p>
-                    <p className="text-gray-400">卖家: <span className="text-white">{trade.seller}</span></p>
-                    <p className="text-gray-400">买家: <span className="text-white">{trade.buyer}</span></p>
-                    <p className="text-gray-400">价格: <span className="text-white">
+                    <p className="text-gray-400">{t('tokenId')}:{' '}<span className="text-white">#{userHistory.tokenIds[index]}</span></p>
+                    <p className="text-gray-400">{t('seller')}:{' '}<span className="text-white">{trade.seller}</span></p>
+                    <p className="text-gray-400">{t('buyer')}:{' '}<span className="text-white">{trade.buyer}</span></p>
+                    <p className="text-gray-400">{t('price')}:{' '}<span className="text-white">
                       {ethers.BigNumber.isBigNumber(trade.price) 
                         ? ethers.utils.formatEther(trade.price) 
                         : trade.price} BNB
                     </span></p>
-                    <p className="text-gray-400">时间: <span className="text-white">{trade.time.toLocaleString()}</span></p>
+                    <p className="text-gray-400">{t('time')}:{' '}<span className="text-white">{trade.time.toLocaleString()}</span></p>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-400">暂无交易记录</p>
+                <p className="text-gray-400">{t('noHistory')}</p>
               )}
             </div>
             <button
               onClick={() => setShowUserHistoryModal(false)}
               className="mt-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
             >
-              关闭
+              {t('close')}
             </button>
           </div>
         </div>

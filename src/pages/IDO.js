@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import { injected } from '../utils/connectors';
+import { LanguageContext } from '../App';
 
 const IDO = () => {
   const { active, account, activate } = useWeb3React();
+  const { t } = useContext(LanguageContext);
   const [amount, setAmount] = useState('');
   const [userContribution, setUserContribution] = useState(0);
   const [totalRaised, setTotalRaised] = useState(0);
@@ -39,13 +41,13 @@ const IDO = () => {
 
   const handleContribute = async () => {
     if (!active || !account) {
-      showNotification('error', '请先连接钱包');
+      showNotification('error', t('pleaseConnectWallet'));
       return;
     }
 
     const bnbAmount = parseFloat(amount);
     if (isNaN(bnbAmount) || bnbAmount < idoInfo.privateSale.minContribution || bnbAmount > idoInfo.privateSale.maxContribution) {
-      showNotification('error', `请输入${idoInfo.privateSale.minContribution}-${idoInfo.privateSale.maxContribution} BNB之间的数量`);
+      showNotification('error', t('invalidAmount').replace('{min}', idoInfo.privateSale.minContribution).replace('{max}', idoInfo.privateSale.maxContribution));
       return;
     }
 
@@ -61,16 +63,16 @@ const IDO = () => {
       });
       setUserContribution(prev => prev + bnbAmount);
       setTotalRaised(prev => prev + bnbAmount);
-      showNotification('success', '参与成功！');
+      showNotification('success', t('transactionSuccess'));
       setAmount('');
     } catch (error) {
       console.error('转账失败:', error);
       if (error.code === 4001) {
-        showNotification('error', '交易已取消');
+        showNotification('error', t('transactionCancelled'));
       } else if (error.message.includes('insufficient funds')) {
-        showNotification('error', '余额不足');
+        showNotification('error', t('insufficientBalance'));
       } else {
-        showNotification('error', '交易失败，请重试');
+        showNotification('error', t('transactionFailed'));
       }
     }
   };
@@ -121,7 +123,7 @@ const IDO = () => {
               </div>
               <div>
                 <h3 className={`text-xl font-bold mb-1 ${notification.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
-                  {notification.type === 'success' ? '交易成功' : '交易失败'}
+                  {notification.type === 'success' ? t('transactionSuccess') : t('transactionFailed')}
                 </h3>
                 <p className="text-gray-300">{notification.message}</p>
               </div>
@@ -146,12 +148,12 @@ const IDO = () => {
         {/* 标题区域 */}
         <div className="text-center mb-16">
           <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 mb-6">
-            Zero (ZONE) IDO
+            {t('idoTitle')}
           </h1>
           <div className="flex items-center justify-center gap-6 text-xl">
             <div className="bg-gray-800/50 backdrop-blur px-6 py-3 rounded-full border border-green-500/20">
-              <span className="text-green-400">总量: </span>
-              <span className="text-white font-bold">1亿 ZONE</span>
+              <span className="text-green-400">{t('totalSupply')}: </span>
+              <span className="text-white">{t('oneHundredMillion')} ZONE</span>
             </div>
             <div className="bg-gray-800/50 backdrop-blur px-6 py-3 rounded-full border border-green-500/20">
               <span className="text-green-400 mr-2">⏰</span>
@@ -166,14 +168,14 @@ const IDO = () => {
             {/* 我的参与信息 */}
             {active && (
               <div className="bg-gradient-to-r from-green-500/20 to-green-600/10 p-8 border-b border-gray-700/50">
-                <h3 className="text-2xl font-bold text-green-400 mb-6">我的参与</h3>
+                <h3 className="text-2xl font-bold text-green-400 mb-6">{t('myParticipation')}</h3>
                 <div className="grid grid-cols-2 gap-8">
                   <div>
-                    <p className="text-gray-400 text-sm mb-2">已参与数量</p>
+                    <p className="text-gray-400 text-sm mb-2">{t('participatedAmount')}</p>
                     <p className="text-3xl font-bold text-white">{userContribution} <span className="text-green-400">BNB</span></p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm mb-2">预计获得</p>
+                    <p className="text-gray-400 text-sm mb-2">{t('expectedToReceive')}</p>
                     <p className="text-3xl font-bold text-white">
                       {(userContribution * idoInfo.privateSale.dpapPerBNB).toLocaleString()} <span className="text-green-400">ZONE</span>
                     </p>
@@ -186,27 +188,27 @@ const IDO = () => {
               {/* IDO信息网格 */}
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">发行总量</p>
-                  <p className="text-2xl font-bold text-white">1亿 <span className="text-green-400">ZONE</span></p>
+                  <p className="text-gray-400 text-sm mb-2">{t('totalIssuance')}</p>
+                  <p className="text-2xl font-bold text-white">{t('oneHundredMillion')} <span className="text-green-400">ZONE</span></p>
                 </div>
                 <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">私募总量</p>
-                  <p className="text-2xl font-bold text-white">1000万 <span className="text-green-400">ZONE</span></p>
+                  <p className="text-gray-400 text-sm mb-2">{t('privateSaleAmount')}</p>
+                  <p className="text-2xl font-bold text-white">{t('tenMillion')} <span className="text-green-400">ZONE</span></p>
                 </div>
                 <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">已筹集</p>
+                  <p className="text-gray-400 text-sm mb-2">{t('raisedAmount')}</p>
                   <p className="text-2xl font-bold text-white">{totalRaised.toFixed(2)} <span className="text-green-400">BNB</span></p>
                 </div>
                 <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">兑换比例</p>
+                  <p className="text-gray-400 text-sm mb-2">{t('exchangeRate')}</p>
                   <p className="text-2xl font-bold text-white">1 BNB = <span className="text-green-400">13,000 ZONE</span></p>
                 </div>
                 <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">私募价格</p>
+                  <p className="text-gray-400 text-sm mb-2">{t('privateSalePrice')}</p>
                   <p className="text-2xl font-bold text-white">≈ <span className="text-green-400">0.05U</span></p>
                 </div>
                 <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">参与限额</p>
+                  <p className="text-gray-400 text-sm mb-2">{t('participationLimit')}</p>
                   <div>
                     <p className="text-lg font-bold text-white">
                       <span className="text-green-400">0.1</span> - <span className="text-green-400">2</span> BNB
@@ -222,13 +224,13 @@ const IDO = () => {
                   onClick={connectWallet}
                   className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-600 hover:to-green-700 transition-all text-lg"
                 >
-                  连接钱包参与
+                  {t('connectWalletToParticipate')}
                 </button>
               ) : (
                 <div className="space-y-6">
                   <div className="bg-gray-900/50 rounded-2xl p-6">
                     <label className="block text-gray-400 text-sm mb-3">
-                      输入参与数量
+                      {t('enterParticipationAmount')}
                     </label>
                     <div className="relative">
                       <input
@@ -254,7 +256,7 @@ const IDO = () => {
                     </div>
                     {amount && (
                       <div className="mt-4 bg-green-500/10 rounded-xl p-4">
-                        <p className="text-gray-400 text-sm">预计获得</p>
+                        <p className="text-gray-400 text-sm">{t('expectedToReceive')}</p>
                         <p className="text-xl font-bold text-green-400">
                           {(parseFloat(amount || 0) * idoInfo.privateSale.dpapPerBNB).toLocaleString()} ZONE
                         </p>
@@ -277,7 +279,7 @@ const IDO = () => {
                       `}
                       disabled={!active}
                     >
-                      {active ? '确认私募' : '请先连接钱包'}
+                      {active ? t('confirmContribution') : t('pleaseConnectWallet')}
                     </button>
                   </div>
                 </div>

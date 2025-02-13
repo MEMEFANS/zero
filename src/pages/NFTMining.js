@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import { injected } from '../utils/connectors';
 import { ethers } from 'ethers';
+import { LanguageContext } from '../App';
 
 const MYSTERY_BOX_ADDRESS = "YOUR_MYSTERY_BOX_CONTRACT_ADDRESS";
 
@@ -63,6 +64,7 @@ const calculateDirectBonus = (power, directCount) => {
 
 const NFTMining = () => {
   const { active, account, activate, library } = useWeb3React();
+  const { t } = useContext(LanguageContext);
   const [miningStats, setMiningStats] = useState({
     totalPower: 0,
     personalPower: 0,
@@ -390,29 +392,29 @@ const NFTMining = () => {
         <div className="text-center mb-12">
           <div className="relative inline-block">
             <div className="absolute -inset-2 bg-green-500/20 rounded-lg blur-lg"></div>
-            <h1 className="relative text-4xl font-bold text-green-400">NFT 挖矿</h1>
+            <h1 className="relative text-4xl font-bold text-green-400">{t('nftMining')}</h1>
           </div>
-          <div className="mt-4 text-green-400/80">实时算力监控 · 智能收益分析</div>
+          <div className="mt-4 text-green-400/80">{t('realTimeMonitoring')}</div>
         </div>
 
         {/* 全局挖矿统计 */}
         <div className="grid grid-cols-3 gap-6 mb-6">
           <div className="bg-[#1A2438]/80 backdrop-blur-xl p-4 rounded-lg border border-green-500/20">
-            <div className="text-green-300/80 text-sm mb-1">挖矿人数</div>
+            <div className="text-green-300/80 text-sm mb-1">{t('minerCount')}</div>
             <div className="text-green-400 text-2xl font-bold flex items-center">
-              {miningStats.totalMiners.toLocaleString()} 人
+              {miningStats.totalMiners.toLocaleString()} {t('people')}
               <div className="ml-2 h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
             </div>
           </div>
           <div className="bg-[#1A2438]/80 backdrop-blur-xl p-4 rounded-lg border border-green-500/20">
-            <div className="text-green-300/80 text-sm mb-1">今日挖矿产出</div>
+            <div className="text-green-300/80 text-sm mb-1">{t('todayOutput')}</div>
             <div className="text-green-400 text-2xl font-bold flex items-center">
               {parseFloat(miningStats.todayOutput).toLocaleString()} ZONE
               <div className="ml-2 h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
             </div>
           </div>
           <div className="bg-[#1A2438]/80 backdrop-blur-xl p-4 rounded-lg border border-green-500/20">
-            <div className="text-green-300/80 text-sm mb-1">累计产出</div>
+            <div className="text-green-300/80 text-sm mb-1">{t('totalOutput')}</div>
             <div className="text-green-400 text-2xl font-bold flex items-center">
               {parseFloat(miningStats.totalOutput).toLocaleString()} ZONE
               <div className="ml-2 h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -433,24 +435,24 @@ const NFTMining = () => {
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-green-300 rounded-lg opacity-20 group-hover:opacity-30 transition duration-500 blur"></div>
                 <div className="relative bg-[#1A2438]/80 backdrop-blur-xl p-6 rounded-lg border border-green-500/20 h-full">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-green-400">NFT 状态</h3>
+                    <h3 className="text-xl font-bold text-green-400">{t('nftStatus')}</h3>
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">持有数量</span>
+                      <span className="text-green-300/80">{t('holdingCount')}</span>
                       <span className="text-green-400 font-bold">{nfts.length}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">总算力</span>
-                      <span className="text-green-400 font-bold">{miningStats.personalPower} H/s</span>
+                      <span className="text-green-300/80">{t('totalPower')}</span>
+                      <span className="text-green-400 font-bold">{miningStats.totalPower} H/s</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">挖矿等级</span>
+                      <span className="text-green-300/80">{t('miningLevel')}</span>
                       <span className="text-green-400 font-bold">{miningStats.miningLevel}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">直推加成</span>
+                      <span className="text-green-300/80">{t('directBonus')}</span>
                       <span className="text-green-400 font-bold">+{(MINING_LEVELS.find(l => l.name === miningStats.miningLevel)?.directBonus * 100).toFixed(0)}%</span>
                     </div>
                   </div>
@@ -462,24 +464,24 @@ const NFTMining = () => {
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-green-300 rounded-lg opacity-20 group-hover:opacity-30 transition duration-500 blur"></div>
                 <div className="relative bg-[#1A2438]/80 backdrop-blur-xl p-6 rounded-lg border border-green-500/20 h-full">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-green-400">收益统计</h3>
+                    <h3 className="text-xl font-bold text-green-400">{t('revenueStats')}</h3>
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">当前收益</span>
+                      <span className="text-green-300/80">{t('currentRevenue')}</span>
                       <span className="text-green-400 font-bold">{miningStats.currentRewards} ZONE</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">日收益</span>
+                      <span className="text-green-300/80">{t('dailyRevenue')}</span>
                       <span className="text-green-400 font-bold">{miningStats.dailyRewards} ZONE</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">总收益上限</span>
+                      <span className="text-green-300/80">{t('maxRevenue')}</span>
                       <span className="text-green-400 font-bold">{miningStats.maxRewards} ZONE</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">预计年化</span>
+                      <span className="text-green-300/80">{t('estimatedAnnual')}</span>
                       <span className="text-green-400 font-bold">{miningStats.annualRoi}%</span>
                     </div>
                   </div>
@@ -491,24 +493,24 @@ const NFTMining = () => {
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-green-300 rounded-lg opacity-20 group-hover:opacity-30 transition duration-500 blur"></div>
                 <div className="relative bg-[#1A2438]/80 backdrop-blur-xl p-6 rounded-lg border border-green-500/20 h-full">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-green-400">直推状态</h3>
+                    <h3 className="text-xl font-bold text-green-400">{t('directStatus')}</h3>
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">直推人数</span>
-                      <span className="text-green-400 font-bold">{miningStats.directCount} 人</span>
+                      <span className="text-green-300/80">{t('directCount')}</span>
+                      <span className="text-green-400 font-bold">{miningStats.directCount} {t('people')}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">直推收益</span>
+                      <span className="text-green-300/80">{t('directIncome')}</span>
                       <span className="text-green-400 font-bold">{miningStats.directBonus} ZONE</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">当前等级</span>
+                      <span className="text-green-300/80">{t('currentLevel')}</span>
                       <span className="text-green-400 font-bold">{miningStats.miningLevel}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-300/80">直推加成</span>
+                      <span className="text-green-300/80">{t('directIncrease')}</span>
                       <span className="text-green-400 font-bold">+{(MINING_LEVELS.find(l => l.name === miningStats.miningLevel)?.directBonus * 100).toFixed(0)}%</span>
                     </div>
                   </div>
@@ -519,7 +521,7 @@ const NFTMining = () => {
             {/* 邀请码区域 */}
             <div className="mt-6 bg-[#1A2438]/80 backdrop-blur-xl p-6 rounded-lg border border-green-500/20 max-w-md">
               <div className="flex items-center">
-                <div className="text-green-400 mb-2">我的邀请码</div>
+                <div className="text-green-400 mb-2">{t('myInviteCode')}</div>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="bg-[#0B1120] border border-green-500/20 rounded-lg px-4 py-2 text-white font-mono text-xl text-center flex-1">
@@ -535,7 +537,7 @@ const NFTMining = () => {
                   }}
                   className="bg-gradient-to-r from-green-500 to-green-600 text-white font-medium py-2 px-6 rounded-lg hover:from-green-600 hover:to-green-700 transition-all whitespace-nowrap"
                 >
-                  复制
+                  {t('copy')}
                 </button>
               </div>
             </div>
@@ -543,15 +545,15 @@ const NFTMining = () => {
             {/* NFT列表 */}
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-green-400">我的 NFT</h2>
+                <h2 className="text-2xl font-bold text-green-400">{t('myNFT')}</h2>
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
-                    <span className="text-green-400/80">运行矿机: </span>
+                    <span className="text-green-400/80">{t('runningMachines')}:</span>
                     <span className="text-green-400 font-bold">{nfts.filter(nft => nft.isStaked).length}/{nfts.length}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-green-400/80">全网算力: </span>
-                    <span className="text-green-400 font-bold">{miningStats.totalPower.toLocaleString()} H/s</span>
+                    <span className="text-green-400/80">{t('networkPower')}:</span>
+                    <span className="text-green-400 font-bold">{miningStats.totalPower} H/s</span>
                   </div>
                 </div>
               </div>
@@ -572,7 +574,7 @@ const NFTMining = () => {
                       <div className="relative flex justify-between items-center mb-6 z-10">
                         <div className="flex items-center space-x-2">
                           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                          <span className="text-xs text-green-400/80 font-mono">SYSTEM ONLINE</span>
+                          <span className="text-xs text-green-400/80 font-mono">{t('systemOnline')}</span>
                         </div>
                         <div className="flex items-center space-x-3">
                           {/* CPU温度 */}
@@ -596,7 +598,7 @@ const NFTMining = () => {
                       <div className="relative grid grid-cols-2 gap-12 z-10 mt-8">
                         {/* 左侧：计算单元 */}
                         <div className="space-y-3">
-                          <div className="text-xs text-green-400/60 font-mono mb-2">COMPUTING UNITS</div>
+                          <div className="text-xs text-green-400/60 font-mono mb-2">{t('computingUnits')}</div>
                           <div className="grid grid-cols-3 gap-4">
                             {[...Array(9)].map((_, i) => (
                               <div key={i} className="aspect-square border border-green-400/20 rounded-sm relative overflow-hidden">
@@ -627,7 +629,7 @@ const NFTMining = () => {
 
                         {/* 右侧：系统监控 */}
                         <div className="space-y-3">
-                          <div className="text-xs text-green-400/60 font-mono mb-2">SYSTEM MONITOR</div>
+                          <div className="text-xs text-green-400/60 font-mono mb-2">{t('systemMonitor')}</div>
                           {/* 系统状态图表 */}
                           <div className="h-[200px] border border-green-400/20 rounded-sm p-2 relative">
                             <div className="absolute inset-0 flex items-end justify-around p-2">
@@ -663,7 +665,7 @@ const NFTMining = () => {
                             <span className="text-green-400/60 animate-pulse mr-1">&gt;</span>
                             <div className="relative h-4 overflow-hidden">
                               <div className="whitespace-nowrap text-[10px] text-green-400/60" style={{ animation: 'slideText 10s infinite linear' }}>
-                                INITIALIZING SYSTEM... CHECKING MEMORY... VERIFYING HASH RATE... CONNECTING TO NETWORK... STARTING MINING PROCESS...
+                                {t('initializingSystem')}... {t('checkingMemory')}... {t('verifyingHashRate')}... {t('connectingToNetwork')}... {t('startingMiningProcess')}...
                               </div>
                             </div>
                           </div>
@@ -702,8 +704,8 @@ const NFTMining = () => {
 
                   {/* 文字内容 */}
                   <div className="absolute bottom-8 left-0 right-0 text-center">
-                    <p className="text-green-400/80 text-xl mb-2">暂无 NFT</p>
-                    <p className="text-sm text-green-400/60">请先获取 NFT 开始挖矿</p>
+                    <p className="text-green-400/80 text-xl mb-2">{t('noNFT')}</p>
+                    <p className="text-sm text-green-400/60">{t('getNFTFirst')}</p>
                   </div>
                 </div>
               ) : (
@@ -714,17 +716,17 @@ const NFTMining = () => {
                       <div className="relative bg-[#1A2438]/80 backdrop-blur-xl p-6 rounded-lg border border-green-500/20">
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
-                            <span className="text-green-300/80">NFT ID</span>
+                            <span className="text-green-300/80">{t('nftId')}</span>
                             <span className="text-green-400 font-bold">#{nft.id}</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-green-300/80">算力</span>
+                            <span className="text-green-300/80">{t('power')}</span>
                             <span className="text-green-400 font-bold">{nft.power} H/s</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-green-300/80">状态</span>
+                            <span className="text-green-300/80">{t('status')}</span>
                             <span className={nft.isStaked ? "text-yellow-400 font-bold" : "text-green-400 font-bold"}>
-                              {nft.isStaked ? '已销毁' : '未质押'}
+                              {nft.isStaked ? t('destroyed') : t('unstaked')}
                             </span>
                           </div>
                           
@@ -734,14 +736,14 @@ const NFTMining = () => {
                               onClick={() => handleStakeWithInvite(nft.id)}
                               className="w-full mt-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-medium py-2 px-4 rounded-lg hover:from-green-600 hover:to-green-700 transition-all"
                             >
-                              质押挖矿
+                              {t('stakeMining')}
                             </button>
                           )}
 
                           {/* 已质押的NFT显示提示 */}
                           {nft.isStaked && (
                             <div className="mt-4 text-yellow-400/80 text-sm text-center">
-                              此NFT已被销毁用于挖矿
+                              {t('nftDestroyed')}
                             </div>
                           )}
                         </div>
@@ -761,7 +763,7 @@ const NFTMining = () => {
                   nfts.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:from-green-600 hover:to-green-700'
                 }`}
               >
-                <span className="relative z-10">质押 NFT</span>
+                <span className="relative z-10">{t('stakeNFT')}</span>
                 <div className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000"></div>
               </button>
               <button 
@@ -771,7 +773,7 @@ const NFTMining = () => {
                   miningStats.currentRewards <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-500 hover:text-white'
                 }`}
               >
-                <span className="relative z-10">领取收益</span>
+                <span className="relative z-10">{t('claimRewards')}</span>
                 <div className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000"></div>
               </button>
             </div>
@@ -873,15 +875,15 @@ const NFTMining = () => {
       {showInviteModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-[#1A2438] rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-green-400 mb-4">质押 NFT</h3>
+            <h3 className="text-xl font-bold text-green-400 mb-4">{t('stakeNFT')}</h3>
             <div className="space-y-4">
               <div>
-                <label className="text-green-300/80 block mb-2">邀请码（选填）</label>
+                <label className="text-green-300/80 block mb-2">{t('inviteCodeOptional')}</label>
                 <input
                   type="text"
                   value={inviteCodeInput}
                   onChange={(e) => setInviteCodeInput(e.target.value)}
-                  placeholder="输入邀请码（可选）"
+                  placeholder={t('enterInviteCode')}
                   className="w-full bg-[#0B1120] border border-green-500/20 rounded-lg px-4 py-2 text-white"
                 />
               </div>
@@ -890,13 +892,13 @@ const NFTMining = () => {
                   onClick={() => handleStakeConfirm(false)}
                   className="flex-1 bg-[#0B1120] border border-green-500/20 text-white font-medium py-2 px-4 rounded-lg hover:bg-[#0B1120]/80 transition-all"
                 >
-                  直接质押
+                  {t('stakeDirectly')}
                 </button>
                 <button
                   onClick={() => handleStakeConfirm(true)}
                   className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white font-medium py-2 px-4 rounded-lg hover:from-green-600 hover:to-green-700 transition-all"
                 >
-                  使用邀请码
+                  {t('useInviteCode')}
                 </button>
               </div>
               <button
@@ -907,7 +909,7 @@ const NFTMining = () => {
                 }}
                 className="w-full mt-2 text-green-400/60 hover:text-green-400"
               >
-                取消
+                {t('cancel')}
               </button>
             </div>
           </div>

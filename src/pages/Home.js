@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { LanguageContext } from '../App';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { t } = useContext(LanguageContext);
   const [cursorVariant, setCursorVariant] = useState("default");
   const { ref, inView } = useInView({
     triggerOnce: true,
@@ -44,10 +46,10 @@ const Home = () => {
         {/* 标题介绍 */}
         <div className="text-center py-8">
           <h1 className="text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 text-transparent bg-clip-text">
-            ZERO
+            {t('welcome')}
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            基于人工智能的 NFT 挖矿平台，通过智能合约实现自动化挖矿和收益分配，打造去中心化的数字资产生态系统。
+            {t('description')}
           </p>
         </div>
 
@@ -56,111 +58,111 @@ const Home = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div className="bg-[#1e2839] p-6 rounded-xl text-center transform hover:scale-105 transition-transform border border-green-500/20">
               <div className="text-3xl md:text-4xl font-bold text-green-400 mb-2">12,580</div>
-              <div className="text-green-400/60">总算力</div>
+              <div className="text-green-400/60">{t('totalPowerLabel')}</div>
             </div>
             <div className="bg-[#1e2839] p-6 rounded-xl text-center transform hover:scale-105 transition-transform border border-green-500/20">
               <div className="text-3xl md:text-4xl font-bold text-green-400 mb-2">5,280</div>
-              <div className="text-green-400/60">活跃矿工</div>
+              <div className="text-green-400/60">{t('activeMinersLabel')}</div>
             </div>
             <div className="bg-[#1e2839] p-6 rounded-xl text-center transform hover:scale-105 transition-transform border border-green-500/20">
               <div className="text-3xl md:text-4xl font-bold text-green-400 mb-2">1.2M</div>
-              <div className="text-green-400/60">已挖出代币</div>
+              <div className="text-green-400/60">{t('minedTokensLabel')}</div>
             </div>
             <div className="bg-[#1e2839] p-6 rounded-xl text-center transform hover:scale-105 transition-transform border border-green-500/20">
               <div className="text-3xl md:text-4xl font-bold text-green-400 mb-2">$2.8M</div>
-              <div className="text-green-400/60">总市值</div>
+              <div className="text-green-400/60">{t('totalValueLabel')}</div>
             </div>
           </div>
         </div>
 
-        {/* 核心特点 */}
-        <div className="container mx-auto px-4 py-8 mb-12">
+                {/* 核心特点 */}
+                <div className="container mx-auto px-4 py-8 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-[#1e2839] p-6 rounded-lg">
               <div className="text-yellow-500 text-4xl mb-4">🎯</div>
-              <h3 className="text-xl font-bold mb-2">AI 智能合约</h3>
+              <h3 className="text-xl font-bold mb-2">{t('aiContractTitle')}</h3>
               <p className="text-gray-400">
-                智能合约自动执行，交易安全透明，收益实时结算
+                {t('aiContractDescription')}
               </p>
             </div>
             <div className="bg-[#1e2839] p-6 rounded-lg">
               <div className="text-yellow-500 text-4xl mb-4">🎁</div>
-              <h3 className="text-xl font-bold mb-2">神秘盲盒系统</h3>
+              <h3 className="text-xl font-bold mb-2">{t('mysteryBoxTitle')}</h3>
               <p className="text-gray-400">
-                四种稀有度 NFT，独特外观设计，特殊属性加成
+                {t('mysteryBoxDescription')}
               </p>
             </div>
             <div className="bg-[#1e2839] p-6 rounded-lg">
               <div className="text-yellow-500 text-4xl mb-4">💎</div>
-              <h3 className="text-xl font-bold mb-2">NFT 交易市场</h3>
+              <h3 className="text-xl font-bold mb-2">{t('nftMarketTitle')}</h3>
               <p className="text-gray-400">
-                自由交易 NFT，实时市场行情，安全交易保障
+                {t('nftMarketDescription')}
               </p>
             </div>
           </div>
         </div>
 
-        {/* NFT 等级介绍 */}
-        <div className="container mx-auto px-4 py-8 mb-12">
-          <h2 className="text-3xl font-bold text-center mb-8">NFT 等级系统</h2>
+                {/* NFT 等级介绍 */}
+                <div className="container mx-auto px-4 py-8 mb-12">
+          <h2 className="text-3xl font-bold text-center mb-8">{t('nftLevelSystemTitle')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-[#1e2839] p-6 rounded-lg relative">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-400">普通 NFT</span>
+                <span className="text-gray-400">{t('normalNFT')}</span>
                 <span className="text-white font-bold">N</span>
               </div>
               <ul className="text-gray-400 space-y-2">
-                <li>• 抽取概率: 55%</li>
-                <li>• Pity 值: 1</li>
-                <li>• 无特殊保底</li>
+                <li>{t('drawProbability', { value: '55%' })}</li>
+                <li>{t('pityValue', { value: '1' })}</li>
+                <li>{t('noSpecialGuarantee')}</li>
               </ul>
             </div>
             <div className="bg-[#1e2839] p-6 rounded-lg relative">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-blue-400">稀有 NFT</span>
+                <span className="text-blue-400">{t('rareNFT')}</span>
                 <span className="text-blue-400 font-bold">R</span>
               </div>
               <ul className="text-gray-400 space-y-2">
-                <li>• 抽取概率: 15%</li>
-                <li>• Pity 值: 1</li>
-                <li>• 无特殊保底</li>
+                <li>{t('drawProbability', { value: '15%' })}</li>
+                <li>{t('pityValue', { value: '1' })}</li>
+                <li>{t('noSpecialGuarantee')}</li>
               </ul>
             </div>
             <div className="bg-[#1e2839] p-6 rounded-lg relative">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-purple-400">超稀有 NFT</span>
+                <span className="text-purple-400">{t('superRareNFT')}</span>
                 <span className="text-purple-400 font-bold">SR</span>
               </div>
               <ul className="text-gray-400 space-y-2">
-                <li>• 抽取概率: 5%</li>
-                <li>• Pity 值: 1</li>
-                <li>• 保底: 每100次必得SR级</li>
+                <li>{t('drawProbability', { value: '5%' })}</li>
+                <li>{t('pityValue', { value: '1' })}</li>
+                <li>{t('srGuarantee')}</li>
               </ul>
             </div>
             <div className="bg-[#1e2839] p-6 rounded-lg relative">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-yellow-400">传说 NFT</span>
+                <span className="text-yellow-400">{t('legendaryNFT')}</span>
                 <span className="text-yellow-400 font-bold">SSR</span>
               </div>
               <ul className="text-gray-400 space-y-2">
-                <li>• 抽取概率: 1%</li>
-                <li>• Pity 值: 1</li>
-                <li>• 保底: 每300次必得SSR</li>
+                <li>{t('drawProbability', { value: '1%' })}</li>
+                <li>{t('pityValue', { value: '1' })}</li>
+                <li>{t('ssrGuarantee')}</li>
               </ul>
             </div>
           </div>
         </div>
 
-        {/* 代币信息 */}
+                        {/* 代币信息 */}
         <div className="container mx-auto px-4 py-8 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 代币分配 */}
             <div className="bg-[#1e2839] p-8 rounded-lg">
-              <h3 className="text-2xl font-bold mb-8">代币分配</h3>
+              <h3 className="text-2xl font-bold mb-8">{t('tokenDistributionTitle')}</h3>
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-400">NFT挖矿</span>
+                    <span className="text-gray-400">{t('nftMiningAllocation')}</span>
                     <span className="text-yellow-500">60%</span>
                   </div>
                   <div className="bg-gray-700 h-2 rounded-full overflow-hidden">
@@ -170,7 +172,7 @@ const Home = () => {
 
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-400">私募</span>
+                    <span className="text-gray-400">{t('privateSaleAllocation')}</span>
                     <span className="text-yellow-500">10%</span>
                   </div>
                   <div className="bg-gray-700 h-2 rounded-full overflow-hidden">
@@ -180,7 +182,7 @@ const Home = () => {
 
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-400">联合坐庄</span>
+                    <span className="text-gray-400">{t('liquidityAllocation')}</span>
                     <span className="text-yellow-500">10%</span>
                   </div>
                   <div className="bg-gray-700 h-2 rounded-full overflow-hidden">
@@ -190,7 +192,7 @@ const Home = () => {
 
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-400">上市预留</span>
+                    <span className="text-gray-400">{t('listingReserveAllocation')}</span>
                     <span className="text-yellow-500">10%</span>
                   </div>
                   <div className="bg-gray-700 h-2 rounded-full overflow-hidden">
@@ -200,7 +202,7 @@ const Home = () => {
 
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-400">LP加池</span>
+                    <span className="text-gray-400">{t('lpAllocation')}</span>
                     <span className="text-yellow-500">5%</span>
                   </div>
                   <div className="bg-gray-700 h-2 rounded-full overflow-hidden">
@@ -210,7 +212,7 @@ const Home = () => {
 
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-400">空投</span>
+                    <span className="text-gray-400">{t('airdropAllocation')}</span>
                     <span className="text-yellow-500">5%</span>
                   </div>
                   <div className="bg-gray-700 h-2 rounded-full overflow-hidden">
@@ -220,55 +222,59 @@ const Home = () => {
               </div>
             </div>
 
-            {/* 代币信息 */}
-            <div className="bg-[#1e2839] p-8 rounded-lg">
-              <h3 className="text-2xl font-bold mb-8">代币信息</h3>
-              <div className="space-y-6">
-                <div className="flex justify-between items-center border-b border-gray-700 pb-4">
-                  <span className="text-gray-400">代币名称</span>
-                  <span className="text-yellow-500 text-xl font-bold">ZERO</span>
+                        {/* 代币信息 */}
+                        <div className="bg-[#1e2839] p-8 rounded-lg">
+              <h3 className="text-2xl font-bold mb-8">{t('tokenInfoTitle')}</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">{t('tokenName')}</span>
+                  <span className="text-white">ZERO</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-gray-700 pb-4">
-                  <span className="text-gray-400">代币总量</span>
-                  <span className="text-yellow-500 text-xl font-bold">1亿枚</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">{t('tokenSymbol')}</span>
+                  <span className="text-white">ZONE</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-gray-700 pb-4">
-                  <span className="text-gray-400">发行价格</span>
-                  <span className="text-yellow-500 text-xl font-bold">0.05 USDT</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">{t('totalSupply')}</span>
+                  <span className="text-white">100,000,000</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-gray-700 pb-4">
-                  <span className="text-gray-400">IDO价格</span>
-                  <span className="text-yellow-500 text-xl font-bold">0.05 USDT</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">{t('network')}</span>
+                  <span className="text-white">BSC</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-gray-700 pb-4">
-                  <span className="text-gray-400">上线价格</span>
-                  <span className="text-yellow-500 text-xl font-bold">0.1 USDT</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">{t('initialPrice')}</span>
+                  <span className="text-white">$0.015</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">{t('listingPrice')}</span>
+                  <span className="text-white">$0.02</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 挖矿收益说明 */}
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <h2 className="text-3xl font-bold text-center mb-12">挖矿收益说明</h2>
+                {/* 挖矿收益说明 */}
+                <div className="max-w-6xl mx-auto px-4 py-8">
+          <h2 className="text-3xl font-bold text-center mb-12">{t('miningRevenueTitle')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* 基础收益 */}
             <div className="bg-[#1A2438]/80 backdrop-blur-xl rounded-2xl p-8">
               <div>
-                <h3 className="text-xl font-bold mb-4">基础收益</h3>
+                <h3 className="text-xl font-bold mb-4">{t('basicRevenueTitle')}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-gray-400 rounded-full mr-4"></div>
-                    <span className="text-gray-400">NFT 等级决定算力</span>
+                    <span className="text-gray-400">{t('nftLevelPower')}</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-gray-400 rounded-full mr-4"></div>
-                    <span className="text-gray-400">每日固定收益发放</span>
+                    <span className="text-gray-400">{t('dailyRevenueDistribution')}</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-gray-400 rounded-full mr-4"></div>
-                    <span className="text-gray-400">收益与算力成正比</span>
+                    <span className="text-gray-400">{t('revenueProportionalToPower')}</span>
                   </div>
                 </div>
               </div>
@@ -277,19 +283,19 @@ const Home = () => {
             {/* 质押机制 */}
             <div className="bg-[#1A2438]/80 backdrop-blur-xl rounded-2xl p-8">
               <div>
-                <h3 className="text-xl font-bold mb-4">质押机制</h3>
+                <h3 className="text-xl font-bold mb-4">{t('stakingMechanismTitle')}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-gray-400 rounded-full mr-4"></div>
-                    <span className="text-gray-400">质押即可挖矿</span>
+                    <span className="text-gray-400">{t('stakeToMine')}</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-gray-400 rounded-full mr-4"></div>
-                    <span className="text-gray-400">不可解除质押</span>
+                    <span className="text-gray-400">{t('cannotUnstake')}</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-gray-400 rounded-full mr-4"></div>
-                    <span className="text-gray-400">无锁定期限制</span>
+                    <span className="text-gray-400">{t('noLockupPeriod')}</span>
                   </div>
                 </div>
               </div>
@@ -298,19 +304,19 @@ const Home = () => {
             {/* 收益加成 */}
             <div className="bg-[#1A2438]/80 backdrop-blur-xl rounded-2xl p-8">
               <div>
-                <h3 className="text-xl font-bold mb-4">收益加成</h3>
+                <h3 className="text-xl font-bold mb-4">{t('revenueBoostTitle')}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-gray-400 rounded-full mr-4"></div>
-                    <span className="text-gray-400">NFT 特殊属性加成</span>
+                    <span className="text-gray-400">{t('nftAttributeBonus')}</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-gray-400 rounded-full mr-4"></div>
-                    <span className="text-gray-400">质押时长加成</span>
+                    <span className="text-gray-400">{t('stakingDurationBonus')}</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-gray-400 rounded-full mr-4"></div>
-                    <span className="text-gray-400">活动期间额外加成</span>
+                    <span className="text-gray-400">{t('eventBonus')}</span>
                   </div>
                 </div>
               </div>
@@ -318,63 +324,63 @@ const Home = () => {
           </div>
         </div>
 
-        {/* 项目路线图 */}
-        <div className="container mx-auto px-4 py-8 mb-12">
-          <h2 className="text-3xl font-bold text-center mb-12">发展路线</h2>
+                {/* 项目路线图 */}
+                <div className="container mx-auto px-4 py-8 mb-12">
+          <h2 className="text-3xl font-bold text-center mb-12">{t('developmentRoadmap')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-[#1e2839] p-6 rounded-lg relative">
               <div className="absolute -top-3 left-6 bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-bold">
-                第一阶段
+                {t('phaseOne')}
               </div>
               <ul className="space-y-3 text-gray-300 mt-4">
-                <li>• 完成智能合约开发</li>
-                <li>• 完成 NFT 系统设计</li>
-                <li>• 完成官网开发</li>
-                <li>• 启动私募</li>
+                <li>{t('phaseOneItem1')}</li>
+                <li>{t('phaseOneItem2')}</li>
+                <li>{t('phaseOneItem3')}</li>
+                <li>{t('phaseOneItem4')}</li>
               </ul>
             </div>
 
             <div className="bg-[#1e2839] p-6 rounded-lg relative">
               <div className="absolute -top-3 left-6 bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-bold">
-                第二阶段
+                {t('phaseTwo')}
               </div>
               <ul className="space-y-3 text-gray-300 mt-4">
-                <li>• IDO 启动</li>
-                <li>• NFT 挖矿系统上线</li>
-                <li>• 交易市场开放</li>
-                <li>• 开启流动性挖矿</li>
+                <li>{t('phaseTwoItem1')}</li>
+                <li>{t('phaseTwoItem2')}</li>
+                <li>{t('phaseTwoItem3')}</li>
+                <li>{t('phaseTwoItem4')}</li>
               </ul>
             </div>
 
             <div className="bg-[#1e2839] p-6 rounded-lg relative">
               <div className="absolute -top-3 left-6 bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-bold">
-                第三阶段
+                {t('phaseThree')}
               </div>
               <ul className="space-y-3 text-gray-300 mt-4">
-                <li>• 上线主流交易所</li>
-                <li>• 开启 NFT 升级系统</li>
-                <li>• 推出团队挖矿系统</li>
-                <li>• 启动社区治理</li>
+                <li>{t('phaseThreeItem1')}</li>
+                <li>{t('phaseThreeItem2')}</li>
+                <li>{t('phaseThreeItem3')}</li>
+                <li>{t('phaseThreeItem4')}</li>
               </ul>
             </div>
 
             <div className="bg-[#1e2839] p-6 rounded-lg relative">
               <div className="absolute -top-3 left-6 bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-bold">
-                第四阶段
+                {t('phaseFour')}
               </div>
               <ul className="space-y-3 text-gray-300 mt-4">
-                <li>• AI智能交易系统</li>
-                <li>• AI市场分析预测</li>
-                <li>• AI个性化投资建议</li>
-                <li>• AI风险管理系统</li>
+                <li>{t('phaseFourItem1')}</li>
+                <li>{t('phaseFourItem2')}</li>
+                <li>{t('phaseFourItem3')}</li>
+                <li>{t('phaseFourItem4')}</li>
               </ul>
             </div>
           </div>
         </div>
 
-        {/* AI 智能系统 */}
-        <div className="container mx-auto px-4 py-8 mb-12">
-          <h2 className="text-3xl font-bold text-center mb-12">AI 智能系统</h2>
+                {/* AI 智能系统 */}
+                <div className="container mx-auto px-4 py-8 mb-12">
+          <h2 className="text-3xl font-bold text-center mb-12">{t('aiSystemTitle')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* 闪电套利 */}
             <div className="bg-[#1e2839] p-6 rounded-lg">
@@ -384,15 +390,15 @@ const Home = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold">闪电套利</h3>
+                <h3 className="text-xl font-bold">{t('flashArbitrageTitle')}</h3>
               </div>
               <ul className="space-y-2 text-gray-400">
-                <li>• 跨链套利机器人</li>
-                <li>• 实时价差监控</li>
-                <li>• 自动执行交易</li>
-                <li>• 风险控制系统</li>
+                <li>{t('flashArbitrageItem1')}</li>
+                <li>{t('flashArbitrageItem2')}</li>
+                <li>{t('flashArbitrageItem3')}</li>
+                <li>{t('flashArbitrageItem4')}</li>
               </ul>
-              <div className="mt-4 text-blue-500">需要持有 SR 及以上级别 NFT</div>
+              <div className="mt-4 text-blue-500">{t('srRequirement')}</div>
             </div>
 
             {/* 智能交易 */}
@@ -403,15 +409,15 @@ const Home = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold">智能交易</h3>
+                <h3 className="text-xl font-bold">{t('smartTradingTitle')}</h3>
               </div>
               <ul className="space-y-2 text-gray-400">
-                <li>• AI 趋势分析</li>
-                <li>• 智能止盈止损</li>
-                <li>• 多策略组合</li>
-                <li>• 实时市场洞察</li>
+                <li>{t('smartTradingItem1')}</li>
+                <li>{t('smartTradingItem2')}</li>
+                <li>{t('smartTradingItem3')}</li>
+                <li>{t('smartTradingItem4')}</li>
               </ul>
-              <div className="mt-4 text-blue-500">需要持有 R 及以上级别 NFT</div>
+              <div className="mt-4 text-blue-500">{t('rRequirement')}</div>
             </div>
 
             {/* MEME 雷达 */}
@@ -422,18 +428,18 @@ const Home = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold">MEME 雷达</h3>
+                <h3 className="text-xl font-bold">{t('memeRadarTitle')}</h3>
               </div>
               <ul className="space-y-2 text-gray-400">
-                <li>• 社交媒体监控</li>
-                <li>• 热点币种预警</li>
-                <li>• 情绪指标分析</li>
-                <li>• 早期项目发现</li>
+                <li>{t('memeRadarItem1')}</li>
+                <li>{t('memeRadarItem2')}</li>
+                <li>{t('memeRadarItem3')}</li>
+                <li>{t('memeRadarItem4')}</li>
               </ul>
-              <div className="mt-4 text-blue-500">需要持有 SSR 级别 NFT</div>
+              <div className="mt-4 text-blue-500">{t('ssrRequirement')}</div>
             </div>
 
-            {/* 定时交易 */}
+                          {/* 定时交易 */}
             <div className="bg-[#1e2839] p-6 rounded-lg">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center">
@@ -441,15 +447,15 @@ const Home = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold">定时交易</h3>
+                <h3 className="text-xl font-bold">{t('scheduledTradingTitle')}</h3>
               </div>
               <ul className="space-y-2 text-gray-400">
-                <li>• 自定义交易计划</li>
-                <li>• 条件触发执行</li>
-                <li>• 多币种监控</li>
-                <li>• 邮件/TG通知</li>
+                <li>{t('scheduledTradingItem1')}</li>
+                <li>{t('scheduledTradingItem2')}</li>
+                <li>{t('scheduledTradingItem3')}</li>
+                <li>{t('scheduledTradingItem4')}</li>
               </ul>
-              <div className="mt-4 text-blue-500">需要持有 R 及以上级别 NFT</div>
+              <div className="mt-4 text-blue-500">{t('rRequirement')}</div>
             </div>
 
             {/* 风险预警 */}
@@ -460,15 +466,15 @@ const Home = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold">风险预警</h3>
+                <h3 className="text-xl font-bold">{t('riskWarningTitle')}</h3>
               </div>
               <ul className="space-y-2 text-gray-400">
-                <li>• 市场风险监控</li>
-                <li>• 异常波动预警</li>
-                <li>• 资金流向分析</li>
-                <li>• 智能风控策略</li>
+                <li>{t('riskWarningItem1')}</li>
+                <li>{t('riskWarningItem2')}</li>
+                <li>{t('riskWarningItem3')}</li>
+                <li>{t('riskWarningItem4')}</li>
               </ul>
-              <div className="mt-4 text-blue-500">需要持有 SR 及以上级别 NFT</div>
+              <div className="mt-4 text-blue-500">{t('srRequirement')}</div>
             </div>
 
             {/* 数据分析 */}
@@ -479,22 +485,22 @@ const Home = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold">数据分析</h3>
+                <h3 className="text-xl font-bold">{t('dataAnalysisTitle')}</h3>
               </div>
               <ul className="space-y-2 text-gray-400">
-                <li>• 深度市场分析</li>
-                <li>• 链上数据追踪</li>
-                <li>• 交易模式识别</li>
-                <li>• 投资报告生成</li>
+                <li>{t('dataAnalysisItem1')}</li>
+                <li>{t('dataAnalysisItem2')}</li>
+                <li>{t('dataAnalysisItem3')}</li>
+                <li>{t('dataAnalysisItem4')}</li>
               </ul>
-              <div className="mt-4 text-blue-500">需要持有 SR 及以上级别 NFT</div>
+              <div className="mt-4 text-blue-500">{t('srRequirement')}</div>
             </div>
           </div>
         </div>
 
-        {/* 合作伙伴 */}
+                        {/* 合作伙伴 */}
         <div className="container mx-auto px-4 py-8 mb-12">
-          <h2 className="text-3xl font-bold text-center mb-12">合作伙伴</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">{t('partners')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               {
@@ -552,16 +558,16 @@ const Home = () => {
                 </div>
                 <div className="text-center">
                   <h3 className="text-lg font-medium text-gray-300">{partner.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">全球领先交易所</p>
+                  <p className="text-sm text-gray-500 mt-1">{t('globalLeadingExchange')}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* 项目亮点 */}
-        <div className="container mx-auto px-4 py-8 mb-12">
-          <h2 className="text-3xl font-bold text-center mb-12">项目亮点</h2>
+                {/* 项目亮点 */}
+                <div className="container mx-auto px-4 py-8 mb-12">
+          <h2 className="text-3xl font-bold text-center mb-12">{t('projectHighlights')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
               <div className="flex items-center gap-3 mb-4">
@@ -570,10 +576,10 @@ const Home = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold">AI技术优势</h3>
+                <h3 className="text-xl font-bold">{t('aiTechnologyAdvantage')}</h3>
               </div>
               <p className="text-gray-400">
-                采用最新的人工智能技术，提供精准的市场分析和交易策略，帮助用户实现最大化收益。
+                {t('aiTechnologyDesc')}
               </p>
             </div>
 
@@ -584,10 +590,10 @@ const Home = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold">安全保障</h3>
+                <h3 className="text-xl font-bold">{t('securityGuarantee')}</h3>
               </div>
               <p className="text-gray-400">
-                多重安全机制保护，资金安全有保障，智能风控系统24小时监控。
+                {t('securityDesc')}
               </p>
             </div>
 
@@ -598,10 +604,10 @@ const Home = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold">社区治理</h3>
+                <h3 className="text-xl font-bold">{t('communityGovernance')}</h3>
               </div>
               <p className="text-gray-400">
-                社区驱动的治理机制，用户可参与重要决策，真正实现去中心化。
+                {t('governanceDesc')}
               </p>
             </div>
 
@@ -612,38 +618,38 @@ const Home = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold">生态扩展</h3>
+                <h3 className="text-xl font-bold">{t('ecosystemExpansion')}</h3>
               </div>
               <p className="text-gray-400">
-                持续扩展生态系统，跨链整合，打造完整的数字资产生态。
+                {t('expansionDesc')}
               </p>
             </div>
           </div>
         </div>
 
-        {/* 新闻公告 */}
-        <div className="container mx-auto px-4 py-8 mb-12">
-          <h2 className="text-3xl font-bold text-center mb-12">新闻公告</h2>
+                {/* 新闻公告 */}
+                <div className="container mx-auto px-4 py-8 mb-12">
+          <h2 className="text-3xl font-bold text-center mb-12">{t('newsAnnouncements')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
               <div className="text-yellow-500 mb-2">2025-02-12</div>
-              <h3 className="text-xl font-bold mb-2">重大更新：AI智能系统2.0版本发布</h3>
+              <h3 className="text-xl font-bold mb-2">{t('newsTitle1')}</h3>
               <p className="text-gray-400">
-                全新升级的AI智能系统现已上线，带来更精准的市场分析和交易策略...
+                {t('newsContent1')}
               </p>
             </div>
             <div className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
               <div className="text-yellow-500 mb-2">2025-02-10</div>
-              <h3 className="text-xl font-bold mb-2">社区活动：NFT空投计划启动</h3>
+              <h3 className="text-xl font-bold mb-2">{t('newsTitle2')}</h3>
               <p className="text-gray-400">
-                为回馈社区用户，我们将启动新一轮的NFT空投活动，活动时间为期一个月...
+                {t('newsContent2')}
               </p>
             </div>
             <div className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
               <div className="text-yellow-500 mb-2">2025-02-08</div>
-              <h3 className="text-xl font-bold mb-2">新增功能：多链资产聚合器</h3>
+              <h3 className="text-xl font-bold mb-2">{t('newsTitle3')}</h3>
               <p className="text-gray-400">
-                现在您可以在一个界面管理所有链上资产，支持跨链交易和资产统计...
+                {t('newsContent3')}
               </p>
             </div>
           </div>
@@ -651,7 +657,7 @@ const Home = () => {
 
         {/* 加入社区 */}
         <div className="container mx-auto px-4 py-8 mb-12">
-          <h2 className="text-3xl font-bold text-center mb-12">加入社区</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">{t('joinCommunity')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <a href="https://t.me/ZeroAI" target="_blank" rel="noopener noreferrer" 
                className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
@@ -663,7 +669,7 @@ const Home = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold">Telegram</h3>
-                  <p className="text-gray-400">加入我们的电报群</p>
+                  <p className="text-gray-400">{t('joinTelegramGroup')}</p>
                 </div>
               </div>
             </a>
@@ -678,7 +684,7 @@ const Home = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold">Twitter</h3>
-                  <p className="text-gray-400">关注最新动态</p>
+                  <p className="text-gray-400">{t('followLatestUpdates')}</p>
                 </div>
               </div>
             </a>
@@ -693,16 +699,16 @@ const Home = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold">Discord</h3>
-                  <p className="text-gray-400">加入社区讨论</p>
+                  <p className="text-gray-400">{t('joinCommunityDiscussion')}</p>
                 </div>
               </div>
             </a>
           </div>
         </div>
 
-        {/* 社区列表 */}
-        <div className="container mx-auto px-4 py-8 mb-12">
-          <h2 className="text-3xl font-bold text-center mb-12">社区列表</h2>
+                {/* 社区列表 */}
+                <div className="container mx-auto px-4 py-8 mb-12">
+          <h2 className="text-3xl font-bold text-center mb-12">{t('communityList')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
               <div className="flex items-center gap-3 mb-4">
@@ -710,8 +716,8 @@ const Home = () => {
                   <img src="/images/communities/binance.png" alt="Binance" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">币安社区</h3>
-                  <p className="text-gray-400">全球最大交易所</p>
+                  <h3 className="text-xl font-bold">{t('binanceCommunity')}</h3>
+                  <p className="text-gray-400">{t('globalLeadingExchange')}</p>
                 </div>
               </div>
             </div>
@@ -722,8 +728,8 @@ const Home = () => {
                   <img src="/images/communities/okx.png" alt="OKX" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">OKX社区</h3>
-                  <p className="text-gray-400">领先数字资产平台</p>
+                  <h3 className="text-xl font-bold">{t('okxCommunity')}</h3>
+                  <p className="text-gray-400">{t('globalLeadingExchange')}</p>
                 </div>
               </div>
             </div>
@@ -734,8 +740,8 @@ const Home = () => {
                   <img src="/images/communities/huobi.png" alt="Huobi" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">火币社区</h3>
-                  <p className="text-gray-400">专业数字货币交易</p>
+                  <h3 className="text-xl font-bold">{t('huobiCommunity')}</h3>
+                  <p className="text-gray-400">{t('globalLeadingExchange')}</p>
                 </div>
               </div>
             </div>
@@ -743,20 +749,20 @@ const Home = () => {
             <div className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-lg overflow-hidden">
-                  <img src="/images/communities/gate.png" alt="Gate" className="w-full h-full object-cover" />
+                  <img src="/images/communities/kucoin.png" alt="KuCoin" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">Gate社区</h3>
-                  <p className="text-gray-400">创新数字资产平台</p>
+                  <h3 className="text-xl font-bold">{t('kucoinCommunity')}</h3>
+                  <p className="text-gray-400">{t('globalLeadingExchange')}</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* 底部信息 */}
-        <div className="text-center text-gray-400 py-8">
-          <p> 2025 ZERO. All rights reserved.</p>
+        
+               {/* 底部信息 */}
+               <div className="text-center text-gray-400 py-8">
+          <p>© 2025 ZERO. {t('allRightsReserved')}</p>
         </div>
       </div>
     </div>

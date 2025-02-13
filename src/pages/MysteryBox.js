@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import { injected } from '../utils/connectors';
 import { ethers } from 'ethers';
+import { LanguageContext } from '../App';
 import boxImage from '../assets/box-bg.png';
 
 // 这些地址需要替换为实际部署的合约地址
@@ -29,6 +30,7 @@ const NFT_SETTINGS = {
 
 const MysteryBox = () => {
   const { active, account, activate, library } = useWeb3React();
+  const { t } = useContext(LanguageContext);
   const [openingResult, setOpeningResult] = useState(null);
   const [isOpening, setIsOpening] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
@@ -93,7 +95,7 @@ const MysteryBox = () => {
 
   const openBox = async () => {
     if (!active) {
-      alert('请先连接钱包');
+      alert(t('connectWalletFirst'));
       return;
     }
 
@@ -107,7 +109,7 @@ const MysteryBox = () => {
         if (!approved) {
           setIsOpening(false);
           setShowAnimation(false);
-          alert('授权失败');
+          alert(t('approvalFailed'));
           return;
         }
       }
@@ -127,7 +129,7 @@ const MysteryBox = () => {
       console.error('Error opening box:', error);
       setIsOpening(false);
       setShowAnimation(false);
-      alert('开箱失败');
+      alert(t('openFailed'));
     }
   };
 
@@ -179,10 +181,10 @@ const MysteryBox = () => {
               <div className="absolute inset-4 border-2 border-green-300/10 rounded-full animate-spin-slow"></div>
             </div>
             <h1 className="text-4xl font-bold relative inline-block">
-              <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">神秘盲盒</span>
+              <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">{t('mysteryBoxTitle')}</span>
               <div className="absolute -inset-2 bg-green-500/10 blur-lg rounded-lg -z-10"></div>
             </h1>
-            <p className="text-xl text-green-300/80 mt-4">开启盲盒，获得稀有 NFT</p>
+            <p className="text-xl text-green-300/80 mt-4">{t('mysteryBoxDesc')}</p>
           </div>
 
           {/* 主要内容区 */}
@@ -202,7 +204,7 @@ const MysteryBox = () => {
                   <div className="flex justify-center items-center mb-8">
                     <img 
                       src={boxImage}
-                      alt="Mystery Box"
+                      alt={t('mysteryBoxTitle')}
                       style={{ maxWidth: '500px', width: '100%' }}
                     />
                   </div>
@@ -226,7 +228,7 @@ const MysteryBox = () => {
                         }`}
                       >
                         <span className="relative z-10">
-                          {isApproving ? '授权中' : isOpening ? '开启中' : '开启盲盒'}
+                          {isApproving ? t('approving') : isOpening ? t('opening') : t('openBox')}
                         </span>
                         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000"></div>
                       </button>
@@ -235,7 +237,7 @@ const MysteryBox = () => {
                         onClick={connectWallet}
                         className="w-full max-w-xs relative group overflow-hidden bg-transparent text-green-500 border-2 border-green-500 font-bold py-4 px-8 rounded-lg hover:bg-green-500 hover:text-white transition-colors"
                       >
-                        <span className="relative z-10">连接钱包</span>
+                        <span className="relative z-10">{t('connectWallet')}</span>
                         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000"></div>
                       </button>
                     )}
@@ -251,7 +253,7 @@ const MysteryBox = () => {
           {/* NFT概率展示 */}
           <div className="max-w-6xl mx-auto mt-16">
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 mb-8 text-center relative">
-              NFT 概率
+              {t('nftProbability')}
               <div className="absolute -inset-4 bg-green-500/10 blur-lg rounded-lg -z-10"></div>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -264,15 +266,15 @@ const MysteryBox = () => {
                       rarity === 'R' ? 'text-green-600' :
                       'text-green-700'
                     }`}>
-                      {rarity}
+                      {t(`nftRarity${rarity}`)}
                     </div>
                     <div className="text-green-300/80">
                       <div className="mb-2">
-                        <span className="text-sm">概率：</span>
+                        <span className="text-sm">{t('probability')}：</span>
                         <span className="text-lg font-bold">{data.probability}%</span>
                       </div>
                       <div>
-                        <span className="text-sm">数量：</span>
+                        <span className="text-sm">{t('quantity')}：</span>
                         <span className="text-lg font-bold">{data.count}</span>
                       </div>
                     </div>
@@ -304,14 +306,14 @@ const MysteryBox = () => {
                 ✕
               </button>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-400 mb-4">恭喜获得</div>
+                <div className="text-2xl font-bold text-green-400 mb-4">{t('congratulations')}</div>
                 <div className={`text-4xl font-bold mb-6 ${
                   openingResult === 'SSR' ? 'text-green-400' :
                   openingResult === 'SR' ? 'text-green-500' :
                   openingResult === 'R' ? 'text-green-600' :
                   'text-green-700'
                 }`}>
-                  {openingResult} NFT
+                  {t(`nftRarity${openingResult}`)} NFT
                 </div>
                 <div className="w-48 h-48 bg-[#0B1120] rounded-lg mx-auto mb-6 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-500/10 to-transparent animate-pulse"></div>
@@ -325,7 +327,7 @@ const MysteryBox = () => {
                   onClick={() => setOpeningResult(null)}
                   className="bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-3 px-8 rounded-lg hover:from-green-600 hover:to-green-700 transition-colors relative group overflow-hidden"
                 >
-                  <span className="relative z-10">确定</span>
+                  <span className="relative z-10">{t('confirm')}</span>
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000"></div>
                 </button>
               </div>
