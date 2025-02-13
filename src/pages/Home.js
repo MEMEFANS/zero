@@ -44,7 +44,7 @@ const Home = () => {
       {/* 主要内容 */}
       <div className="relative">
         {/* 标题介绍 */}
-        <div className="text-center py-8">
+        <div className="text-center py-24 pb-8">
           <h1 className="text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 text-transparent bg-clip-text">
             {t('welcome')}
           </h1>

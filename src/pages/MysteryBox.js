@@ -134,7 +134,7 @@ const MysteryBox = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B1120] relative overflow-hidden">
+    <div className="min-h-screen bg-[#0B1120] pt-20 relative overflow-hidden">
       {/* 科技感背景 */}
       <div className="absolute inset-0">
         {/* 矩阵点阵背景 */}

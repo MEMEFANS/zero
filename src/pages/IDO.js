@@ -1,17 +1,22 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import { injected } from '../utils/connectors';
+import { ethers } from 'ethers';
 import { LanguageContext } from '../App';
 
 const IDO = () => {
-  const { active, account, activate } = useWeb3React();
+  const { active, account, activate, library } = useWeb3React();
   const { t } = useContext(LanguageContext);
   const [amount, setAmount] = useState('');
   const [userContribution, setUserContribution] = useState(0);
+  const [expectedTokens, setExpectedTokens] = useState(0);
   const [totalRaised, setTotalRaised] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
   const receivingAddress = '0x43846d8C3E4308Ac1AF9Bc5AE8453Ed73ede7034';
-  
+  // 改用您的服务器地址
+  const API_URL = 'https://api.your-domain.com/api';
+
   const idoInfo = {
     totalSupply: 100000000,
     privateSale: {
@@ -25,6 +30,145 @@ const IDO = () => {
     endTime: '2025-02-15 20:00:00'
   };
 
+  // 获取用户的参与记录
+  const fetchUserContribution = async () => {
+    if (!active || !account) return;
+    
+    try {
+      setIsLoading(true);
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      
+      // 使用 getBalance 检查接收地址的余额
+      const balance = await provider.getBalance(receivingAddress);
+      console.log('Contract balance:', ethers.utils.formatEther(balance), 'BNB');
+
+      // 获取用户向合约的转账记录
+      const filter = {
+        fromBlock: 0,
+        toBlock: 'latest',
+        from: account,
+        to: receivingAddress
+      };
+
+      const history = await provider.send('eth_getTransactionCount', [account, 'latest']);
+      console.log('Transaction count:', history);
+
+      // 获取最近的交易
+      const blockNumber = await provider.getBlockNumber();
+      const block = await provider.getBlock(blockNumber);
+      console.log('Latest block:', blockNumber);
+      console.log('Block timestamp:', new Date(block.timestamp * 1000).toLocaleString());
+
+      // 从localStorage获取历史记录
+      const previousRecord = localStorage.getItem(`ido_contribution_${account}`);
+      let contribution = 0;
+      if (previousRecord) {
+        const { bnbAmount } = JSON.parse(previousRecord);
+        contribution = bnbAmount;
+      }
+      
+      console.log('Current contribution:', contribution, 'BNB');
+      
+      // 更新状态
+      setUserContribution(contribution);
+      setExpectedTokens(contribution * idoInfo.privateSale.dpapPerBNB);
+      
+    } catch (error) {
+      console.error('获取参与记录失败:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 处理用户参与
+  const handleContribute = async () => {
+    if (!active || !account) {
+      showNotification('error', t('pleaseConnect'));
+      return;
+    }
+
+    const bnbAmount = parseFloat(amount);
+    if (isNaN(bnbAmount) || bnbAmount < idoInfo.privateSale.minContribution || bnbAmount > idoInfo.privateSale.maxContribution) {
+      showNotification('error', t('invalidAmount').replace('{min}', idoInfo.privateSale.minContribution).replace('{max}', idoInfo.privateSale.maxContribution));
+      return;
+    }
+
+    try {
+      // 使用window.ethereum直接发送交易
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: account,
+          to: receivingAddress,
+          value: '0x' + (bnbAmount * 1e18).toString(16)
+        }]
+      });
+
+      console.log('Transaction hash:', txHash);
+      showNotification('info', t('waitingConfirmation'));
+
+      // 等待交易确认
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const receipt = await provider.waitForTransaction(txHash);
+      console.log('Transaction receipt:', receipt);
+
+      if (receipt.status === 1) {
+        // 更新用户的参与记录
+        const tokenAmount = bnbAmount * idoInfo.privateSale.dpapPerBNB;
+        const previousRecord = localStorage.getItem(`ido_contribution_${account}`);
+        let newBnbAmount = bnbAmount;
+        let newTokenAmount = tokenAmount;
+        
+        if (previousRecord) {
+          const { bnbAmount: prevBnb, tokenAmount: prevToken } = JSON.parse(previousRecord);
+          newBnbAmount += prevBnb;
+          newTokenAmount += prevToken;
+        }
+
+        // 保存到localStorage
+        localStorage.setItem(`ido_contribution_${account}`, JSON.stringify({
+          bnbAmount: newBnbAmount,
+          tokenAmount: newTokenAmount,
+          lastTx: txHash
+        }));
+
+        // 更新显示
+        setUserContribution(newBnbAmount);
+        setExpectedTokens(newTokenAmount);
+        setTotalRaised(prev => prev + bnbAmount);
+        showNotification('success', t('transactionSuccess'));
+        setAmount('');
+
+        // 触发重新获取数据
+        fetchUserContribution();
+      } else {
+        showNotification('error', t('transactionFailed'));
+      }
+    } catch (error) {
+      console.error('转账失败:', error);
+      if (error.code === 4001) {
+        showNotification('error', t('transactionCancelled'));
+      } else {
+        showNotification('error', t('transactionFailed'));
+      }
+    }
+  };
+
+  // 在组件加载和账户变化时获取数据
+  useEffect(() => {
+    if (active && account) {
+      fetchUserContribution();
+    }
+  }, [active, account]);
+
+  // 每30秒自动刷新一次
+  useEffect(() => {
+    if (active && account) {
+      const interval = setInterval(fetchUserContribution, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [active, account]);
+
   const connectWallet = async () => {
     try {
       await activate(injected);
@@ -37,44 +181,6 @@ const IDO = () => {
   const showNotification = (type, message) => {
     setNotification({ show: true, type, message });
     setTimeout(() => setNotification({ show: false, type: '', message: '' }), 3000);
-  };
-
-  const handleContribute = async () => {
-    if (!active || !account) {
-      showNotification('error', t('pleaseConnectWallet'));
-      return;
-    }
-
-    const bnbAmount = parseFloat(amount);
-    if (isNaN(bnbAmount) || bnbAmount < idoInfo.privateSale.minContribution || bnbAmount > idoInfo.privateSale.maxContribution) {
-      showNotification('error', t('invalidAmount').replace('{min}', idoInfo.privateSale.minContribution).replace('{max}', idoInfo.privateSale.maxContribution));
-      return;
-    }
-
-    try {
-      const web3 = window.ethereum;
-      await web3.request({
-        method: 'eth_sendTransaction',
-        params: [{
-          from: account,
-          to: receivingAddress,
-          value: '0x' + (bnbAmount * 1e18).toString(16)
-        }]
-      });
-      setUserContribution(prev => prev + bnbAmount);
-      setTotalRaised(prev => prev + bnbAmount);
-      showNotification('success', t('transactionSuccess'));
-      setAmount('');
-    } catch (error) {
-      console.error('转账失败:', error);
-      if (error.code === 4001) {
-        showNotification('error', t('transactionCancelled'));
-      } else if (error.message.includes('insufficient funds')) {
-        showNotification('error', t('insufficientBalance'));
-      } else {
-        showNotification('error', t('transactionFailed'));
-      }
-    }
   };
 
   return (
@@ -167,18 +273,32 @@ const IDO = () => {
           <div className="bg-gray-800/40 backdrop-blur-xl rounded-3xl border border-green-500/20 overflow-hidden">
             {/* 我的参与信息 */}
             {active && (
-              <div className="bg-gradient-to-r from-green-500/20 to-green-600/10 p-8 border-b border-gray-700/50">
-                <h3 className="text-2xl font-bold text-green-400 mb-6">{t('myParticipation')}</h3>
-                <div className="grid grid-cols-2 gap-8">
+              <div className="bg-gray-900/50 rounded-2xl p-6 mb-8">
+                <h2 className="text-2xl font-bold text-green-400 mb-6">{t('myParticipation')}</h2>
+                <div className="grid grid-cols-2 gap-6">
                   <div>
                     <p className="text-gray-400 text-sm mb-2">{t('participatedAmount')}</p>
-                    <p className="text-3xl font-bold text-white">{userContribution} <span className="text-green-400">BNB</span></p>
+                    {isLoading ? (
+                      <div className="animate-pulse">
+                        <div className="h-8 bg-gray-700 rounded w-32"></div>
+                      </div>
+                    ) : (
+                      <p className="text-3xl font-bold text-white">
+                        {userContribution.toFixed(4)} <span className="text-green-400">BNB</span>
+                      </p>
+                    )}
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm mb-2">{t('expectedToReceive')}</p>
-                    <p className="text-3xl font-bold text-white">
-                      {(userContribution * idoInfo.privateSale.dpapPerBNB).toLocaleString()} <span className="text-green-400">ZONE</span>
-                    </p>
+                    {isLoading ? (
+                      <div className="animate-pulse">
+                        <div className="h-8 bg-gray-700 rounded w-32"></div>
+                      </div>
+                    ) : (
+                      <p className="text-3xl font-bold text-white">
+                        {expectedTokens.toFixed(2)} <span className="text-green-400">ZONE</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

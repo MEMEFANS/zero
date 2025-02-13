@@ -387,7 +387,7 @@ const NFTMining = () => {
       </div>
 
       {/* 主要内容 */}
-      <div className="relative container mx-auto px-4 py-8">
+      <div className="relative container mx-auto px-4 py-32">
         {/* 标题区域 */}
         <div className="text-center mb-12">
           <div className="relative inline-block">

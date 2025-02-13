@@ -128,7 +128,8 @@ export const translations = {
     initializingSystem: 'INITIALIZING SYSTEM... CHECKING MEMORY... VERIFYING !!',
 
     // Market page
-    nftMarketplace: 'NFT Marketplace',
+    nftMarketplace: 'NFT Market',
+    nftMarketDescription: 'Trading and Collection of Unique Digital Assets',
     searchPlaceholder: 'Search NFT...',
     sortDefault: 'Sort By',
     sortPriceAsc: 'Price: Low to High',
@@ -584,7 +585,8 @@ export const translations = {
     initializingSystem: '시스템 초기화 중... 메모리 확인 중... 검증 중!!',
 
     // Market page
-    nftMarketplace: 'NFT 마켓플레이스',
+    nftMarketplace: 'NFT 마켓',
+    nftMarketDescription: '고유한 디지털 자산의 거래 및 수집',
     searchPlaceholder: 'NFT 검색...',
     sortDefault: '정렬 방식',
     sortPriceAsc: '가격: 낮은순',
@@ -1041,6 +1043,7 @@ export const translations = {
 
     // Market page
     nftMarketplace: 'NFT 交易市场',
+    nftMarketDescription: '独特数字资产的交易与收藏',
     searchPlaceholder: '搜索 NFT...',
     sortDefault: '排序方式',
     sortPriceAsc: '价格: 从低到高',

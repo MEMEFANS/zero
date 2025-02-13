@@ -488,8 +488,17 @@ const NFTMarket = () => {
 
   return (
     <div className="min-h-screen bg-[#0B1120]">
-      {/* 主要内容 */}
-      <div className="container mx-auto px-4 py-8">
+      {/* 主要内容区域 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32">
+        {/* 页面标题 */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            {t('nftMarketplace')}
+          </h1>
+          <p className="text-xl text-gray-400">
+            {t('nftMarketDescription')}
+          </p>
+        </div>
         {/* 页面标题和搜索栏 */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-6">{t('nftMarketplace')}</h1>
