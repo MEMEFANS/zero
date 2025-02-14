@@ -8,7 +8,8 @@ import {
   MYSTERY_BOX_ADDRESS, 
   MYSTERY_BOX_ABI, 
   NFT_RARITY,
-  NFT_RARITY_COLORS 
+  NFT_RARITY_COLORS,
+  NFT_SETTINGS
 } from '../constants/contracts';
 
 // 临时的合约地址，等待实际部署后替换
@@ -25,7 +26,7 @@ const STAKING_ABI = [
 const NFTMarket = () => {
   const { active, account, activate, library } = useWeb3React();
   const navigate = useNavigate();
-  const { t } = useContext(LanguageContext);
+  const { t, language } = useContext(LanguageContext);
   const [marketItems, setMarketItems] = useState([]);
   const [myNFTs, setMyNFTs] = useState([]);
   const [selectedTab, setSelectedTab] = useState('market');
@@ -43,6 +44,13 @@ const NFTMarket = () => {
   const [showUserHistoryModal, setShowUserHistoryModal] = useState(false);
   const [selectedNFTHistory, setSelectedNFTHistory] = useState([]);
   const [userHistory, setUserHistory] = useState({ tokenIds: [], trades: [] });
+  const [marketStats, setMarketStats] = useState({
+    totalVolume: 0,
+    dailyVolume: 0,
+    floorPrice: 0,
+    totalListings: 0,
+    totalHolders: 0
+  });
 
   // 筛选和排序函数
   const getFilteredAndSortedItems = (items) => {
@@ -177,12 +185,83 @@ const NFTMarket = () => {
     }
   };
 
-  useEffect(() => {
-    if (active) {
-      loadMarketData();
-      loadUserHistory();
+  const loadMarketStats = async () => {
+    try {
+      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
+      const stats = await contract.getMarketStats();
+      
+      setMarketStats({
+        totalVolume: ethers.utils.formatEther(stats._totalVolume),
+        dailyVolume: ethers.utils.formatEther(stats._dailyVolume),
+        floorPrice: ethers.utils.formatEther(stats._floorPrice),
+        totalListings: stats._totalListings.toString(),
+        totalHolders: stats._totalHolders.toString()
+      });
+    } catch (error) {
+      console.error('Error loading market stats:', error);
     }
-  }, [active, account]);
+  };
+
+  useEffect(() => {
+    const loadNFTs = async () => {
+      try {
+        setIsLoading(true);
+        // 使用测试数据
+        const TEST_NFTS = [
+          {
+            id: 1,
+            type: 'N',
+            power: 100,
+            dailyReward: 2.8,
+            maxReward: 252,
+            price: 0.1,
+            listed: true
+          },
+          {
+            id: 2,
+            type: 'R',
+            power: 400,
+            dailyReward: 10,
+            maxReward: 900,
+            price: 0.3,
+            listed: true
+          },
+          {
+            id: 3,
+            type: 'SR',
+            power: 1600,
+            dailyReward: 40,
+            maxReward: 3600,
+            price: 0.8,
+            listed: true
+          },
+          {
+            id: 4,
+            type: 'SSR',
+            power: 6400,
+            dailyReward: 160,
+            maxReward: 14400,
+            price: 2,
+            listed: true
+          }
+        ];
+        setMarketItems(TEST_NFTS);
+        setMarketStats({
+          totalVolume: 100,
+          dailyVolume: 10,
+          floorPrice: 0.1,
+          totalListings: 4,
+          totalHolders: 3
+        });
+      } catch (error) {
+        console.error('Failed to load NFTs:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadNFTs();
+  }, [selectedTab]);
 
   const handleBuy = async (nftId) => {
     try {
@@ -271,6 +350,154 @@ const NFTMarket = () => {
       console.error('Error staking NFT:', error);
       alert(t('stakeFailed') + error.message);
     }
+  };
+
+  // 市场统计组件
+  const MarketStats = () => {
+    const labels = {
+      totalVolume: {
+        zh: '总交易额',
+        en: 'Total Volume',
+        ko: '총 거래량'
+      },
+      dailyVolume: {
+        zh: '24h交易额',
+        en: '24h Volume',
+        ko: '24시간 거래량'
+      },
+      floorPrice: {
+        zh: '地板价',
+        en: 'Floor Price',
+        ko: '바닥가'
+      },
+      listedNFTs: {
+        zh: '在售NFT',
+        en: 'Listed NFTs',
+        ko: '판매 중인 NFT'
+      },
+      holders: {
+        zh: '持有人数',
+        en: 'Holders',
+        ko: '보유자 수'
+      }
+    };
+
+    return (
+      <div className="grid grid-cols-5 gap-4 p-4 bg-[#1A2438] rounded-xl mb-6">
+        <div className="text-center">
+          <div className="text-gray-400 text-sm mb-1">{labels.totalVolume[language]}</div>
+          <div className="text-white font-bold">{marketStats.totalVolume} BNB</div>
+        </div>
+        <div className="text-center">
+          <div className="text-gray-400 text-sm mb-1">{labels.dailyVolume[language]}</div>
+          <div className="text-white font-bold">{marketStats.dailyVolume} BNB</div>
+        </div>
+        <div className="text-center">
+          <div className="text-gray-400 text-sm mb-1">{labels.floorPrice[language]}</div>
+          <div className="text-white font-bold">{marketStats.floorPrice} BNB</div>
+        </div>
+        <div className="text-center">
+          <div className="text-gray-400 text-sm mb-1">{labels.listedNFTs[language]}</div>
+          <div className="text-white font-bold">{marketStats.totalListings}</div>
+        </div>
+        <div className="text-center">
+          <div className="text-gray-400 text-sm mb-1">{labels.holders[language]}</div>
+          <div className="text-white font-bold">{marketStats.totalHolders}</div>
+        </div>
+      </div>
+    );
+  };
+
+  // NFT卡片组件
+  const NFTCard = ({ nft }) => {
+    const rarityStyle = NFT_RARITY_COLORS[nft.type];
+    const nftSettings = NFT_SETTINGS[nft.type];
+    const imageUrl = `/images/${nft.type.toLowerCase()}.svg`;
+
+    return (
+      <div className={`bg-[#1A2438] rounded-xl overflow-hidden hover:shadow-lg transition-shadow ${rarityStyle.border}`}>
+        <div className="relative aspect-square">
+          <img 
+            src={imageUrl}
+            alt={`NFT #${nft.id}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/nft-placeholder.svg';
+            }}
+          />
+          <div className={`absolute top-2 left-2 px-2 py-1 rounded-lg ${rarityStyle.bg}`}>
+            <span className={`${rarityStyle.text} font-medium`}>{nftSettings.name}</span>
+          </div>
+          <div className={`absolute bottom-2 right-2 px-2 py-1 rounded-lg bg-black/50`}>
+            <span className="text-white font-medium">{nft.power} POW</span>
+          </div>
+        </div>
+        
+        <div className="p-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-lg font-bold text-white">#{nft.id}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-gray-400">{t('dailyReward')}:</span>
+              <span className="text-white">{nft.dailyReward} ZONE</span>
+            </div>
+          </div>
+          
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-gray-400">ROI:</span>
+              <span className="text-white">{nftSettings.roi}%</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-gray-400">{t('maxReward')}:</span>
+              <span className="text-white">{nft.maxReward}</span>
+            </div>
+          </div>
+          
+          {nft.price && (
+            <div className="flex justify-between items-center pt-4 border-t border-gray-700">
+              <span className="text-sm text-gray-400">{t('price')}</span>
+              <span className="text-lg font-bold text-white">{nft.price} BNB</span>
+            </div>
+          )}
+
+          <div className="mt-4 space-y-2">
+            {selectedTab === 'market' ? (
+              <button
+                onClick={() => handleBuy(nft.id)}
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+              >
+                {t('buyNow')}
+              </button>
+            ) : (
+              <>
+                {!nft.listed ? (
+                  <button
+                    onClick={() => handleList(nft.id)}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                  >
+                    {t('listForSale')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleDelist(nft.id)}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                  >
+                    {t('cancelListing')}
+                  </button>
+                )}
+              </>
+            )}
+            <button
+              onClick={() => loadNFTHistory(nft.id)}
+              className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              {t('viewHistory')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // NFT详情弹窗
@@ -500,6 +727,9 @@ const NFTMarket = () => {
           </p>
         </div>
 
+        {/* 市场统计 */}
+        <MarketStats />
+
         {/* 搜索和筛选区域 */}
         <div className="mb-6 md:mb-8">
           <div className="flex flex-col md:flex-row gap-4 mb-4">
@@ -541,26 +771,6 @@ const NFTMarket = () => {
           </div>
         </div>
 
-        {/* 市场统计 - 移动端两列，PC端四列 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
-          <div className="bg-[#1A2438] p-4 md:p-6 rounded-xl border border-gray-700">
-            <div className="text-gray-400 text-sm md:text-base mb-1 md:mb-2">{t('totalVolume')}</div>
-            <div className="text-xl md:text-2xl font-bold text-white">123.45 BNB</div>
-          </div>
-          <div className="bg-[#1A2438] p-4 md:p-6 rounded-xl border border-gray-700">
-            <div className="text-gray-400 text-sm md:text-base mb-1 md:mb-2">{t('floorPrice')}</div>
-            <div className="text-xl md:text-2xl font-bold text-white">0.5 BNB</div>
-          </div>
-          <div className="bg-[#1A2438] p-4 md:p-6 rounded-xl border border-gray-700">
-            <div className="text-gray-400 text-sm md:text-base mb-1 md:mb-2">{t('totalHolders')}</div>
-            <div className="text-xl md:text-2xl font-bold text-white">1,234</div>
-          </div>
-          <div className="bg-[#1A2438] p-4 md:p-6 rounded-xl border border-gray-700">
-            <div className="text-gray-400 text-sm md:text-base mb-1 md:mb-2">{t('totalListings')}</div>
-            <div className="text-xl md:text-2xl font-bold text-white">{marketItems.length}</div>
-          </div>
-        </div>
-
         {/* 标签页 */}
         <div className="border-b border-gray-700 mb-6 md:mb-8">
           <div className="flex space-x-4 md:space-x-8">
@@ -596,54 +806,10 @@ const NFTMarket = () => {
         {/* NFT列表 - 移动端两列，PC端四列 */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {selectedTab === 'market' && getFilteredAndSortedItems(marketItems).map(item => (
-            <div key={item.id} className="bg-[#1A2438] rounded-xl overflow-hidden border border-gray-700 hover:border-green-500 transition-colors">
-              {/* NFT 图片 */}
-              <div 
-                className="aspect-square bg-gray-800 relative cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => setSelectedNFT(item)}
-              >
-                <div className="absolute top-2 right-2 px-2 py-1 bg-green-500/20 rounded-lg">
-                  <span className="text-green-500 text-sm font-medium">{item.type}</span>
-                </div>
-              </div>
-              {/* NFT 信息 */}
-              <div className="p-3 md:p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-white font-medium">#{item.id}</span>
-                  <span className="text-gray-400 text-sm">{item.power} {t('power')}</span>
-                </div>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">{t('dailyReward')}</span>
-                    <span className="text-white">{item.dailyReward} ZONE</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">{t('maxReward')}</span>
-                    <span className="text-white">{item.maxReward} ZONE</span>
-                  </div>
-                  <div className="pt-2 border-t border-gray-700">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">{t('price')}</span>
-                      <span className="text-lg md:text-xl font-bold text-white">{item.price} BNB</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => handleBuy(item.id)}
-                    className="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors text-sm md:text-base"
-                  >
-                    {t('buyNow')}
-                  </button>
-                  <button
-                    onClick={() => loadNFTHistory(item.id)}
-                    className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
-                  >
-                    {t('viewHistory')}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <NFTCard key={item.id} nft={item} />
+          ))}
+          {selectedTab === 'myNFT' && getFilteredAndSortedItems(myNFTs).map(item => (
+            <NFTCard key={item.id} nft={item} />
           ))}
         </div>
       </div>

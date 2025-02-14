@@ -78,6 +78,12 @@ contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
     mapping(NFTRarity => NFTImage) public rarityImages;
     Counters.Counter private _tokenIdCounter;
 
+    // 市场统计数据
+    uint256 public totalVolume;      // 总交易量
+    uint256 public dailyVolume;      // 24小时交易量
+    uint256 public floorPrice;       // 地板价
+    uint256 public lastUpdateTime;   // 最后更新时间
+
     // 交易历史记录结构
     struct TradeHistory {
         address seller;
@@ -384,6 +390,9 @@ contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
             timestamp: block.timestamp
         }));
 
+        // 更新市场统计数据
+        _updateMarketStats(price);
+
         emit NFTSold(tokenId, seller, msg.sender, price);
     }
 
@@ -391,37 +400,37 @@ contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
     function getMarketStats() external view returns (
         uint256 totalVolume,
         uint256 dailyVolume,
-        uint256 totalNFTs,
-        uint256 listedNFTs
+        uint256 floorPrice,
+        uint256 totalListings,
+        uint256 totalHolders
     ) {
-        totalNFTs = _tokenIdCounter.current();
-        
-        // 计算在售NFT数量
-        uint256 listed = 0;
-        for (uint256 i = 0; i < totalNFTs; i++) {
+        return (totalVolume, dailyVolume, floorPrice, _getActiveListing(), _getUniqueHolders());
+    }
+
+    // 获取活跃挂单数量
+    function _getActiveListing() internal view returns (uint256 count) {
+        uint256 tokenId = _tokenIdCounter.current();
+        for (uint256 i = 1; i <= tokenId; i++) {
             if (marketListings[i].isActive) {
-                listed++;
+                count++;
             }
         }
-        listedNFTs = listed;
+    }
 
-        // 计算交易量
-        uint256 total = 0;
-        uint256 daily = 0;
-        uint256 oneDayAgo = block.timestamp - 1 days;
-
-        for (uint256 i = 0; i < totalNFTs; i++) {
-            TradeHistory[] storage history = tradeHistories[i];
-            for (uint256 j = 0; j < history.length; j++) {
-                total += history[j].price;
-                if (history[j].timestamp >= oneDayAgo) {
-                    daily += history[j].price;
-                }
+    // 获取持有人数量
+    function _getUniqueHolders() internal view returns (uint256) {
+        uint256 tokenId = _tokenIdCounter.current();
+        mapping(address => bool) storage holders;
+        uint256 count;
+        
+        for (uint256 i = 1; i <= tokenId; i++) {
+            address owner = ownerOf(i);
+            if (!holders[owner]) {
+                holders[owner] = true;
+                count++;
             }
         }
-
-        totalVolume = total;
-        dailyVolume = daily;
+        return count;
     }
 
     // 内部函数：从质押列表中移除

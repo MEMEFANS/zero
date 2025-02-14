@@ -30,8 +30,67 @@ export const STAKING_ABI = [
 export const NFT_RARITY = ['N', 'R', 'SR', 'SSR'];
 
 export const NFT_RARITY_COLORS = {
-  'N': 'text-gray-400',
-  'R': 'text-blue-400',
-  'SR': 'text-purple-400',
-  'SSR': 'text-yellow-400'
+  'N': {
+    text: 'text-gray-400',
+    bg: 'bg-gray-500/20',
+    border: 'border-gray-400'
+  },
+  'R': {
+    text: 'text-blue-400',
+    bg: 'bg-blue-500/20',
+    border: 'border-blue-400'
+  },
+  'SR': {
+    text: 'text-purple-400',
+    bg: 'bg-purple-500/20',
+    border: 'border-purple-400'
+  },
+  'SSR': {
+    text: 'text-yellow-400',
+    bg: 'bg-yellow-500/20',
+    border: 'border-yellow-400'
+  }
+};
+
+export const NFT_SETTINGS = {
+  N: { 
+    power: 100, 
+    price: 100, 
+    dailyReward: 2.8, 
+    maxReward: 252, 
+    roi: 35.7, 
+    yearReturn: 152,
+    name: 'Normal',
+    description: 'A common NFT with basic mining power'
+  },
+  R: { 
+    power: 400, 
+    price: 100, 
+    dailyReward: 10, 
+    maxReward: 900, 
+    roi: 11.1, 
+    yearReturn: 800,
+    name: 'Rare',
+    description: 'A rare NFT with enhanced mining capabilities'
+  },
+  SR: { 
+    power: 1600, 
+    price: 100, 
+    dailyReward: 40, 
+    maxReward: 3600, 
+    roi: 2.8, 
+    yearReturn: 3500,
+    name: 'Super Rare',
+    description: 'A super rare NFT with powerful mining abilities'
+  },
+  SSR: { 
+    power: 6400, 
+    price: 100, 
+    dailyReward: 160, 
+    maxReward: 14400, 
+    roi: 0.7, 
+    yearReturn: 14300,
+    name: 'SSR',
+    description: 'The most powerful NFT with exceptional mining power'
+  }
 };
