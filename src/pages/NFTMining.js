@@ -392,7 +392,7 @@ const NFTMining = () => {
         <div className="text-center mb-12">
           <div className="relative inline-block">
             <div className="absolute -inset-2 bg-green-500/20 rounded-lg blur-lg"></div>
-            <h1 className="relative text-4xl font-bold text-green-400">{t('nftMining')}</h1>
+            <h1 className="text-4xl font-bold text-green-400">{t('nftMining')}</h1>
           </div>
           <div className="mt-4 text-green-400/80">{t('realTimeMonitoring')}</div>
         </div>
@@ -429,7 +429,7 @@ const NFTMining = () => {
         ) : (
           <>
             {/* 挖矿状态展示 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 gap-6 mb-8">
               {/* NFT 状态卡片 */}
               <div className="relative group h-[240px]">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-green-300 rounded-lg opacity-20 group-hover:opacity-30 transition duration-500 blur"></div>
@@ -599,7 +599,7 @@ const NFTMining = () => {
                         {/* 左侧：计算单元 */}
                         <div className="space-y-3">
                           <div className="text-xs text-green-400/60 font-mono mb-2">{t('computingUnits')}</div>
-                          <div className="grid grid-cols-3 max-[768px]:grid-cols-2 gap-4 max-[768px]:gap-2">
+                          <div className="grid grid-cols-3 gap-4">
                             {[...Array(9)].map((_, i) => (
                               <div key={i} className="aspect-square border border-green-400/20 rounded-sm relative overflow-hidden">
                                 {/* 计算动画 */}
@@ -709,7 +709,7 @@ const NFTMining = () => {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                   {nfts.map((nft) => (
                     <div key={nft.id} className="relative group">
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-green-300 rounded-lg opacity-20 group-hover:opacity-30 transition duration-500 blur"></div>
