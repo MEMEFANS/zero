@@ -500,7 +500,7 @@ const Home = () => {
 
                         {/* 合作伙伴 */}
         <div className="container mx-auto px-4 py-8 mb-12">
-          <h2 className="text-3xl font-bold text-center mb-12">{t('partners')}</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">{t('communityList')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               {
@@ -659,7 +659,7 @@ const Home = () => {
         <div className="container mx-auto px-4 py-8 mb-12">
           <h2 className="text-3xl font-bold text-center mb-12">{t('joinCommunity')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <a href="https://t.me/ZeroAI" target="_blank" rel="noopener noreferrer" 
+            <a href="https://t.me/ZERONEToken" target="_blank" rel="noopener noreferrer" 
                className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-[#229ED9] rounded-lg flex items-center justify-center">
@@ -674,7 +674,7 @@ const Home = () => {
               </div>
             </a>
 
-            <a href="https://twitter.com/ZeroAI" target="_blank" rel="noopener noreferrer"
+            <a href="https://x.com/ZONEToken_" target="_blank" rel="noopener noreferrer"
                className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
@@ -689,16 +689,16 @@ const Home = () => {
               </div>
             </a>
 
-            <a href="https://discord.gg/ZeroAI" target="_blank" rel="noopener noreferrer"
+            <a href="https://discord.gg/zerone" target="_blank" rel="noopener noreferrer"
                className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-[#5865F2] rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.73 4.87a18.2 18.2 0 0 0-4.48-1.39.069.069 0 0 0-.073.034c-.175.31-.37.72-.506 1.04a16.8 16.8 0 0 0-5.034 0 12.88 12.88 0 0 0-.509-1.04.069.069 0 0 0-.073-.034 18.2 18.2 0 0 0-4.48 1.39.063.063 0 0 0-.029.025C2.38 8.9 1.7 12.84 2.06 16.74c.001.017.012.033.027.044a18.33 18.33 0 0 0 5.517 2.78.07.07 0 0 0 .076-.025c.414-.56.783-1.15 1.1-1.77a.067.067 0 0 0-.037-.094 12.06 12.06 0 0 1-1.71-.81.068.068 0 0 1-.007-.112c.115-.086.23-.176.34-.267a.064.064 0 0 1 .067-.009c3.42 1.56 7.114 1.56 10.488 0a.064.064 0 0 1 .067.009c.11.09.225.18.34.267a.068.068 0 0 1-.006.112 11.33 11.33 0 0 1-1.71.81.067.067 0 0 0-.037.094c.32.62.687 1.21 1.1 1.77a.07.07 0 0 0 .075.025 18.28 18.28 0 0 0 5.518-2.78.065.065 0 0 0 .027-.044c.436-4.5-.731-8.41-3.096-11.85a.051.051 0 0 0-.029-.025zM8.02 14.15c-1.09 0-1.982-.998-1.982-2.22 0-1.22.864-2.22 1.982-2.22 1.127 0 2.003 1.01 1.982 2.22 0 1.222-.864 2.22-1.982 2.22zm7.322 0c-1.09 0-1.982-.998-1.982-2.22 0-1.22.864-2.22 1.982-2.22 1.127 0 2.003 1.01 1.982 2.22 0 1.222-.855 2.22-1.982 2.22z"/>
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold">Discord</h3>
+                  <h3 className="text-xl font-semibold mb-1">Discord</h3>
                   <p className="text-gray-400">{t('joinCommunityDiscussion')}</p>
                 </div>
               </div>
