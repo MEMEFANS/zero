@@ -599,7 +599,7 @@ const NFTMining = () => {
                         {/* 左侧：计算单元 */}
                         <div className="space-y-3">
                           <div className="text-xs text-green-400/60 font-mono mb-2">{t('computingUnits')}</div>
-                          <div className="grid grid-cols-3 gap-4">
+                          <div className="grid grid-cols-3 max-[768px]:grid-cols-2 gap-4 max-[768px]:gap-2">
                             {[...Array(9)].map((_, i) => (
                               <div key={i} className="aspect-square border border-green-400/20 rounded-sm relative overflow-hidden">
                                 {/* 计算动画 */}

@@ -488,254 +488,164 @@ const NFTMarket = () => {
 
   return (
     <div className="min-h-screen bg-[#0B1120]">
-      {/* 主要内容区域 */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32">
+      {/* 主要内容区域 - 调整移动端顶部间距 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 md:pt-32">
         {/* 页面标题 */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+        <div className="text-center mb-8 md:mb-12 mt-8 md:mt-0">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
             {t('nftMarketplace')}
           </h1>
-          <p className="text-xl text-gray-400">
+          <p className="text-lg md:text-xl text-gray-400 hidden md:block">
             {t('nftMarketDescription')}
           </p>
         </div>
-        {/* 页面标题和搜索栏 */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-6">{t('nftMarketplace')}</h1>
-          <div className="flex flex-col gap-4">
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder={t('searchPlaceholder')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 bg-[#1A2438] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-green-500"
-                />
-              </div>
-              <select 
-                className="px-4 py-2 bg-[#1A2438] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-green-500"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+
+        {/* 搜索和筛选区域 */}
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder={t('searchPlaceholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 bg-[#1A2438] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <select 
+              className="px-4 py-2 bg-[#1A2438] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-green-500 w-full md:w-auto"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="default">{t('sortDefault')}</option>
+              <option value="price_asc">{t('sortPriceAsc')}</option>
+              <option value="price_desc">{t('sortPriceDesc')}</option>
+              <option value="power_desc">{t('sortPowerDesc')}</option>
+              <option value="reward_desc">{t('sortRewardDesc')}</option>
+            </select>
+          </div>
+          <div className="flex gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
+            {['全部', 'N', 'R', 'SR', 'SSR'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type === '全部' ? 'all' : type)}
+                className={`px-4 py-1 rounded-full text-sm flex-shrink-0 ${
+                  (type === '全部' && filterType === 'all') || type === filterType
+                    ? 'bg-green-500 text-white'
+                    : 'bg-[#1A2438] text-gray-400 hover:text-white'
+                }`}
               >
-                <option value="default">{t('sortDefault')}</option>
-                <option value="price_asc">{t('sortPriceAsc')}</option>
-                <option value="price_desc">{t('sortPriceDesc')}</option>
-                <option value="power_desc">{t('sortPowerDesc')}</option>
-                <option value="reward_desc">{t('sortRewardDesc')}</option>
-              </select>
-            </div>
-            <div className="flex gap-2">
-              {['全部', 'N', 'R', 'SR', 'SSR'].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setFilterType(type === '全部' ? 'all' : type)}
-                  className={`px-4 py-1 rounded-full text-sm ${
-                    (type === '全部' && filterType === 'all') || type === filterType
-                      ? 'bg-green-500 text-white'
-                      : 'bg-[#1A2438] text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
+                {type}
+              </button>
+            ))}
           </div>
         </div>
 
-        {!active ? (
-          <div className="text-center py-20">
-            <h2 className="text-2xl font-bold text-white mb-4">{t('connectWallet')}</h2>
-            <p className="text-gray-400 mb-8">{t('connectWalletDesc')}</p>
+        {/* 市场统计 - 移动端两列，PC端四列 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+          <div className="bg-[#1A2438] p-4 md:p-6 rounded-xl border border-gray-700">
+            <div className="text-gray-400 text-sm md:text-base mb-1 md:mb-2">{t('totalVolume')}</div>
+            <div className="text-xl md:text-2xl font-bold text-white">123.45 BNB</div>
+          </div>
+          <div className="bg-[#1A2438] p-4 md:p-6 rounded-xl border border-gray-700">
+            <div className="text-gray-400 text-sm md:text-base mb-1 md:mb-2">{t('floorPrice')}</div>
+            <div className="text-xl md:text-2xl font-bold text-white">0.5 BNB</div>
+          </div>
+          <div className="bg-[#1A2438] p-4 md:p-6 rounded-xl border border-gray-700">
+            <div className="text-gray-400 text-sm md:text-base mb-1 md:mb-2">{t('totalHolders')}</div>
+            <div className="text-xl md:text-2xl font-bold text-white">1,234</div>
+          </div>
+          <div className="bg-[#1A2438] p-4 md:p-6 rounded-xl border border-gray-700">
+            <div className="text-gray-400 text-sm md:text-base mb-1 md:mb-2">{t('totalListings')}</div>
+            <div className="text-xl md:text-2xl font-bold text-white">{marketItems.length}</div>
+          </div>
+        </div>
+
+        {/* 标签页 */}
+        <div className="border-b border-gray-700 mb-6 md:mb-8">
+          <div className="flex space-x-4 md:space-x-8">
             <button
-              onClick={connectWallet}
-              className="bg-green-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-600 transition-colors"
+              className={`px-3 md:px-4 py-3 md:py-4 font-medium ${
+                selectedTab === 'market'
+                  ? 'text-green-500 border-b-2 border-green-500'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+              onClick={() => setSelectedTab('market')}
             >
-              {t('connectWallet')}
+              {t('allListings')}
+            </button>
+            <button
+              className={`px-3 md:px-4 py-3 md:py-4 font-medium ${
+                selectedTab === 'myNFT'
+                  ? 'text-green-500 border-b-2 border-green-500'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+              onClick={() => setSelectedTab('myNFT')}
+            >
+              {t('myListings')}
+            </button>
+            <button
+              onClick={() => setShowUserHistoryModal(true)}
+              className={`px-3 md:px-4 py-3 md:py-4 font-medium text-gray-400 hover:text-gray-300`}
+            >
+              {t('marketHistory')}
             </button>
           </div>
-        ) : (
-          <div>
-            {/* 市场统计 */}
-            <div className="grid grid-cols-4 gap-6 mb-8">
-              <div className="bg-[#1A2438] p-6 rounded-xl border border-gray-700">
-                <div className="text-gray-400 mb-2">{t('totalVolume')}</div>
-                <div className="text-2xl font-bold text-white">123.45 BNB</div>
-              </div>
-              <div className="bg-[#1A2438] p-6 rounded-xl border border-gray-700">
-                <div className="text-gray-400 mb-2">{t('floorPrice')}</div>
-                <div className="text-2xl font-bold text-white">0.5 BNB</div>
-              </div>
-              <div className="bg-[#1A2438] p-6 rounded-xl border border-gray-700">
-                <div className="text-gray-400 mb-2">{t('totalHolders')}</div>
-                <div className="text-2xl font-bold text-white">1,234</div>
-              </div>
-              <div className="bg-[#1A2438] p-6 rounded-xl border border-gray-700">
-                <div className="text-gray-400 mb-2">{t('totalListings')}</div>
-                <div className="text-2xl font-bold text-white">{marketItems.length}</div>
-              </div>
-            </div>
+        </div>
 
-            {/* 标签页 */}
-            <div className="border-b border-gray-700 mb-8">
-              <div className="flex space-x-8">
-                <button
-                  className={`px-4 py-4 font-medium ${
-                    selectedTab === 'market'
-                      ? 'text-green-500 border-b-2 border-green-500'
-                      : 'text-gray-400 hover:text-gray-300'
-                  }`}
-                  onClick={() => setSelectedTab('market')}
-                >
-                  {t('allListings')}
-                </button>
-                <button
-                  className={`px-4 py-4 font-medium ${
-                    selectedTab === 'myNFT'
-                      ? 'text-green-500 border-b-2 border-green-500'
-                      : 'text-gray-400 hover:text-gray-300'
-                  }`}
-                  onClick={() => setSelectedTab('myNFT')}
-                >
-                  {t('myListings')}
-                </button>
-                <button
-                  onClick={() => setShowUserHistoryModal(true)}
-                  className={`px-4 py-4 font-medium text-gray-400 hover:text-gray-300`}
-                >
-                  {t('marketHistory')}
-                </button>
+        {/* NFT列表 - 移动端两列，PC端四列 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {selectedTab === 'market' && getFilteredAndSortedItems(marketItems).map(item => (
+            <div key={item.id} className="bg-[#1A2438] rounded-xl overflow-hidden border border-gray-700 hover:border-green-500 transition-colors">
+              {/* NFT 图片 */}
+              <div 
+                className="aspect-square bg-gray-800 relative cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => setSelectedNFT(item)}
+              >
+                <div className="absolute top-2 right-2 px-2 py-1 bg-green-500/20 rounded-lg">
+                  <span className="text-green-500 text-sm font-medium">{item.type}</span>
+                </div>
               </div>
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center items-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent"></div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {selectedTab === 'market' && getFilteredAndSortedItems(marketItems).map(item => (
-                  <div key={item.id} className="bg-[#1A2438] rounded-xl overflow-hidden border border-gray-700 hover:border-green-500 transition-colors">
-                    {/* NFT 图片 */}
-                    <div 
-                      className="aspect-square bg-gray-800 relative cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setSelectedNFT(item)}
-                    >
-                      <div className="absolute top-2 right-2 px-2 py-1 bg-green-500/20 rounded-lg">
-                        <span className="text-green-500 text-sm font-medium">{item.type}</span>
-                      </div>
-                    </div>
-                    {/* NFT 信息 */}
-                    <div className="p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-white font-medium">#{item.id}</span>
-                        <span className="text-gray-400 text-sm">{item.power} {t('power')}</span>
-                      </div>
-                      <div className="space-y-2 mb-4">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">{t('dailyReward')}</span>
-                          <span className="text-white">{item.dailyReward} ZONE</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">{t('maxReward')}</span>
-                          <span className="text-white">{item.maxReward} ZONE</span>
-                        </div>
-                        <div className="pt-2 border-t border-gray-700">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-400">{t('price')}</span>
-                            <span className="text-xl font-bold text-white">{item.price} BNB</span>
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleBuy(item.id)}
-                        className="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
-                      >
-                        {t('buyNow')}
-                      </button>
-                      <button
-                        onClick={() => loadNFTHistory(item.id)}
-                        className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors mt-2"
-                      >
-                        {t('viewHistory')}
-                      </button>
+              {/* NFT 信息 */}
+              <div className="p-3 md:p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-white font-medium">#{item.id}</span>
+                  <span className="text-gray-400 text-sm">{item.power} {t('power')}</span>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">{t('dailyReward')}</span>
+                    <span className="text-white">{item.dailyReward} ZONE</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">{t('maxReward')}</span>
+                    <span className="text-white">{item.maxReward} ZONE</span>
+                  </div>
+                  <div className="pt-2 border-t border-gray-700">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">{t('price')}</span>
+                      <span className="text-lg md:text-xl font-bold text-white">{item.price} BNB</span>
                     </div>
                   </div>
-                ))}
-
-                {selectedTab === 'myNFT' && getFilteredAndSortedItems(myNFTs).map(nft => (
-                  <div key={nft.id} className="bg-[#1A2438] rounded-xl overflow-hidden border border-gray-700 hover:border-green-500 transition-colors">
-                    {/* NFT 图片 */}
-                    <div 
-                      className="aspect-square bg-gray-800 relative cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setSelectedNFT(nft)}
-                    >
-                      <div className="absolute top-2 right-2 px-2 py-1 bg-green-500/20 rounded-lg">
-                        <span className="text-green-500 text-sm font-medium">{nft.type}</span>
-                      </div>
-                    </div>
-                    {/* NFT 信息 */}
-                    <div className="p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-white font-medium">#{nft.id}</span>
-                        <span className="text-gray-400 text-sm">{nft.power} {t('power')}</span>
-                      </div>
-                      <div className="space-y-2 mb-4">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">{t('dailyReward')}</span>
-                          <span className="text-white">{nft.dailyReward} ZONE</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">{t('maxReward')}</span>
-                          <span className="text-white">{nft.maxReward} ZONE</span>
-                        </div>
-                        {nft.listed && (
-                          <div className="pt-2 border-t border-gray-700">
-                            <div className="flex justify-between items-center">
-                              <span className="text-gray-400">{t('currentPrice')}</span>
-                              <span className="text-xl font-bold text-white">{nft.price} BNB</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        {!nft.listed ? (
-                          <>
-                            <button
-                              onClick={() => handleList(nft.id)}
-                              className="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
-                            >
-                              {t('sellNow')}
-                            </button>
-                            <button
-                              onClick={() => handleStake(nft.id)}
-                              className="w-full bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
-                            >
-                              {t('stakeNow')}
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => handleDelist(nft.id)}
-                            className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
-                          >
-                            {t('delist')}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => loadNFTHistory(nft.id)}
-                          className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-                        >
-                          {t('viewHistory')}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => handleBuy(item.id)}
+                    className="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors text-sm md:text-base"
+                  >
+                    {t('buyNow')}
+                  </button>
+                  <button
+                    onClick={() => loadNFTHistory(item.id)}
+                    className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
+                  >
+                    {t('viewHistory')}
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
       {/* NFT详情弹窗 */}
       <NFTDetailModal

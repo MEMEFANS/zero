@@ -259,7 +259,7 @@ const IDO = () => {
           <div className="flex items-center justify-center gap-6 text-xl">
             <div className="bg-gray-800/50 backdrop-blur px-6 py-3 rounded-full border border-green-500/20">
               <span className="text-green-400">{t('totalSupply')}: </span>
-              <span className="text-white">{t('oneHundredMillion')} ZONE</span>
+              <span className="text-white">{t('oneHundredMillion')} <span className="text-green-400">ZONE</span></span>
             </div>
             <div className="bg-gray-800/50 backdrop-blur px-6 py-3 rounded-full border border-green-500/20">
               <span className="text-green-400 mr-2">⏰</span>
@@ -304,36 +304,36 @@ const IDO = () => {
               </div>
             )}
 
-            <div className="p-8">
+            <div className="p-4 md:p-8">
               {/* IDO信息网格 */}
-              <div className="grid grid-cols-2 gap-6 mb-8">
-                <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">{t('totalIssuance')}</p>
-                  <p className="text-2xl font-bold text-white">{t('oneHundredMillion')} <span className="text-green-400">ZONE</span></p>
+              <div className="grid grid-cols-2 gap-3 md:gap-6 mb-6 md:mb-8">
+                <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
+                  <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('totalIssuance')}</p>
+                  <p className="text-base md:text-2xl font-bold text-white">{t('oneHundredMillion')} <span className="text-green-400">ZONE</span></p>
                 </div>
-                <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">{t('privateSaleAmount')}</p>
-                  <p className="text-2xl font-bold text-white">{t('tenMillion')} <span className="text-green-400">ZONE</span></p>
+                <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
+                  <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('privateSaleAmount')}</p>
+                  <p className="text-base md:text-2xl font-bold text-white">{t('tenMillion')} <span className="text-green-400">ZONE</span></p>
                 </div>
-                <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">{t('raisedAmount')}</p>
-                  <p className="text-2xl font-bold text-white">{totalRaised.toFixed(2)} <span className="text-green-400">BNB</span></p>
+                <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
+                  <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('raisedAmount')}</p>
+                  <p className="text-base md:text-2xl font-bold text-white">{totalRaised.toFixed(2)} <span className="text-green-400">BNB</span></p>
                 </div>
-                <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">{t('exchangeRate')}</p>
-                  <p className="text-2xl font-bold text-white">1 BNB = <span className="text-green-400">13,000 ZONE</span></p>
+                <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
+                  <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('exchangeRate')}</p>
+                  <p className="text-base md:text-2xl font-bold text-white">1 BNB = <span className="text-green-400">13,000 ZONE</span></p>
                 </div>
-                <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">{t('privateSalePrice')}</p>
-                  <p className="text-2xl font-bold text-white">≈ <span className="text-green-400">0.05U</span></p>
+                <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
+                  <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('privateSalePrice')}</p>
+                  <p className="text-base md:text-2xl font-bold text-white">≈ <span className="text-green-400">0.05U</span></p>
                 </div>
-                <div className="bg-gray-900/50 rounded-2xl p-6">
-                  <p className="text-gray-400 text-sm mb-2">{t('participationLimit')}</p>
+                <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
+                  <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('participationLimit')}</p>
                   <div>
-                    <p className="text-lg font-bold text-white">
+                    <p className="text-base md:text-xl font-bold text-white">
                       <span className="text-green-400">0.1</span> - <span className="text-green-400">2</span> BNB
                     </p>
-                    <p className="text-sm text-gray-400 mt-1">1,300 - 26,000 ZONE</p>
+                    <p className="text-xs md:text-sm text-gray-400 mt-1">1,300 - 26,000 ZONE</p>
                   </div>
                 </div>
               </div>

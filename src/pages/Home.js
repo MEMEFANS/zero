@@ -244,11 +244,11 @@ const Home = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">{t('initialPrice')}</span>
-                  <span className="text-white">$0.015</span>
+                  <span className="text-white">$0.05</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">{t('listingPrice')}</span>
-                  <span className="text-white">$0.02</span>
+                  <span className="text-white">$0.1</span>
                 </div>
               </div>
             </div>
