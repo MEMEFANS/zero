@@ -383,26 +383,39 @@ const NFTMarket = () => {
     };
 
     return (
-      <div className="grid grid-cols-5 gap-4 p-4 bg-[#1A2438] rounded-xl mb-6">
-        <div className="text-center">
-          <div className="text-gray-400 text-sm mb-1">{labels.totalVolume[language]}</div>
-          <div className="text-white font-bold">{marketStats.totalVolume} BNB</div>
+      <div className="grid grid-cols-5 gap-2 md:gap-4 p-3 md:p-4 bg-[#1A2438] rounded-xl mb-4 md:mb-6 text-center">
+        <div>
+          <div className="text-gray-400 text-xs md:text-sm whitespace-nowrap">{labels.totalVolume[language]}</div>
+          <div className="text-white font-bold text-sm md:text-base mt-0.5 md:mt-1">
+            <span className="block">{marketStats.totalVolume}</span>
+            <span className="text-xs md:text-sm text-gray-400">BNB</span>
+          </div>
         </div>
-        <div className="text-center">
-          <div className="text-gray-400 text-sm mb-1">{labels.dailyVolume[language]}</div>
-          <div className="text-white font-bold">{marketStats.dailyVolume} BNB</div>
+        <div>
+          <div className="text-gray-400 text-xs md:text-sm whitespace-nowrap">{labels.dailyVolume[language]}</div>
+          <div className="text-white font-bold text-sm md:text-base mt-0.5 md:mt-1">
+            <span className="block">{marketStats.dailyVolume}</span>
+            <span className="text-xs md:text-sm text-gray-400">BNB</span>
+          </div>
         </div>
-        <div className="text-center">
-          <div className="text-gray-400 text-sm mb-1">{labels.floorPrice[language]}</div>
-          <div className="text-white font-bold">{marketStats.floorPrice} BNB</div>
+        <div>
+          <div className="text-gray-400 text-xs md:text-sm whitespace-nowrap">{labels.floorPrice[language]}</div>
+          <div className="text-white font-bold text-sm md:text-base mt-0.5 md:mt-1">
+            <span className="block">{marketStats.floorPrice}</span>
+            <span className="text-xs md:text-sm text-gray-400">BNB</span>
+          </div>
         </div>
-        <div className="text-center">
-          <div className="text-gray-400 text-sm mb-1">{labels.listedNFTs[language]}</div>
-          <div className="text-white font-bold">{marketStats.totalListings}</div>
+        <div>
+          <div className="text-gray-400 text-xs md:text-sm whitespace-nowrap">{labels.listedNFTs[language]}</div>
+          <div className="text-white font-bold text-sm md:text-base mt-0.5 md:mt-1">
+            {marketStats.totalListings}
+          </div>
         </div>
-        <div className="text-center">
-          <div className="text-gray-400 text-sm mb-1">{labels.holders[language]}</div>
-          <div className="text-white font-bold">{marketStats.totalHolders}</div>
+        <div>
+          <div className="text-gray-400 text-xs md:text-sm whitespace-nowrap">{labels.holders[language]}</div>
+          <div className="text-white font-bold text-sm md:text-base mt-0.5 md:mt-1">
+            {marketStats.totalHolders}
+          </div>
         </div>
       </div>
     );
@@ -413,88 +426,165 @@ const NFTMarket = () => {
     const rarityStyle = NFT_RARITY_COLORS[nft.type];
     const nftSettings = NFT_SETTINGS[nft.type];
     const imageUrl = `/images/${nft.type.toLowerCase()}.svg`;
+    const { active, account, library } = useWeb3React();
+    const [notification, setNotification] = useState({ show: false, type: '', message: '' });
+
+    // 显示通知
+    const showNotification = (type, message) => {
+      setNotification({ show: true, type, message });
+      setTimeout(() => {
+        setNotification({ show: false, type: '', message: '' });
+      }, 3000);
+    };
+
+    // 处理购买
+    const handleBuy = async () => {
+      if (!active) {
+        showNotification('error', '请先连接钱包');
+        return;
+      }
+
+      try {
+        showNotification('info', '正在处理您的购买请求...');
+
+        const signer = library.getSigner();
+        const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, signer);
+        const price = ethers.utils.parseEther(nft.price.toString());
+        
+        // 发送购买交易
+        const tx = await contract.buyNFT(nft.id, { value: price });
+        
+        showNotification('info', '等待交易确认...');
+        // 等待交易确认
+        await tx.wait();
+        
+        showNotification('success', '购买成功！');
+      } catch (error) {
+        console.error('购买失败:', error);
+        if (error.code === 4001) {
+          showNotification('error', '交易已取消');
+        } else {
+          showNotification('error', `购买失败: ${error.message}`);
+        }
+      }
+    };
 
     return (
-      <div className={`bg-[#1A2438] rounded-xl overflow-hidden hover:shadow-lg transition-shadow ${rarityStyle.border}`}>
-        <div className="relative aspect-square">
+      <div className={`bg-[#1A2438] rounded-xl overflow-hidden hover:shadow-lg transition-shadow ${rarityStyle.border} relative`}>
+        {notification.show && (
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setNotification({ show: false, type: '', message: '' })}></div>
+            <div className={`
+              relative rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4
+              ${notification.type === 'success'
+                ? 'bg-green-500/10 border-2 border-green-500/20'
+                : notification.type === 'error'
+                ? 'bg-red-500/10 border-2 border-red-500/20'
+                : 'bg-blue-500/10 border-2 border-blue-500/20'
+              }
+              backdrop-blur-xl animate-fade-in
+            `}>
+              <div className="flex items-center gap-4">
+                <div className={`
+                  w-12 h-12 rounded-full flex items-center justify-center
+                  ${notification.type === 'success'
+                    ? 'bg-green-500/20 text-green-400'
+                    : notification.type === 'error'
+                    ? 'bg-red-500/20 text-red-400'
+                    : 'bg-blue-500/20 text-blue-400'
+                  }
+                `}>
+                  {notification.type === 'success' ? (
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  ) : notification.type === 'error' ? (
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  ) : (
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <h3 className={`text-xl font-bold mb-1 ${
+                    notification.type === 'success' ? 'text-green-400' : 
+                    notification.type === 'error' ? 'text-red-400' : 
+                    'text-blue-400'
+                  }`}>
+                    {notification.type === 'success' ? '成功' : notification.type === 'error' ? '错误' : '提示'}
+                  </h3>
+                  <p className="text-gray-300">{notification.message}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setNotification({ show: false, type: '', message: '' })}
+                className={`
+                  mt-6 w-full py-3 rounded-lg font-semibold transition-all
+                  ${notification.type === 'success'
+                    ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400'
+                    : notification.type === 'error'
+                    ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400'
+                    : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400'
+                  }
+                `}
+              >
+                确定
+              </button>
+            </div>
+          </div>
+        )}
+        {/* NFT Image Section */}
+        <div className="relative">
           <img 
             src={imageUrl}
-            alt={`NFT #${nft.id}`}
-            className="w-full h-full object-cover"
+            alt={`NFT ${nft.type}`}
+            className="w-full aspect-square object-cover"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = '/images/nft-placeholder.svg';
             }}
           />
-          <div className={`absolute top-2 left-2 px-2 py-1 rounded-lg ${rarityStyle.bg}`}>
-            <span className={`${rarityStyle.text} font-medium`}>{nftSettings.name}</span>
+          {/* Rarity Badge */}
+          <div className={`absolute top-2 left-2 px-3 py-1 rounded-lg ${rarityStyle.bg} bg-opacity-90`}>
+            <span className={`${rarityStyle.text} text-sm font-medium`}>{nft.type}</span>
           </div>
-          <div className={`absolute bottom-2 right-2 px-2 py-1 rounded-lg bg-black/50`}>
-            <span className="text-white font-medium">{nft.power} POW</span>
+          {/* Power Badge */}
+          <div className="absolute bottom-2 right-2 px-3 py-1 rounded-lg bg-black/70">
+            <span className="text-white text-sm font-medium">{nft.power} POW</span>
           </div>
         </div>
-        
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-lg font-bold text-white">#{nft.id}</span>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-gray-400">{t('dailyReward')}:</span>
-              <span className="text-white">{nft.dailyReward} ZONE</span>
-            </div>
-          </div>
-          
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-gray-400">ROI:</span>
-              <span className="text-white">{nftSettings.roi}%</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-gray-400">{t('maxReward')}:</span>
-              <span className="text-white">{nft.maxReward}</span>
-            </div>
-          </div>
-          
-          {nft.price && (
-            <div className="flex justify-between items-center pt-4 border-t border-gray-700">
-              <span className="text-sm text-gray-400">{t('price')}</span>
-              <span className="text-lg font-bold text-white">{nft.price} BNB</span>
-            </div>
-          )}
 
-          <div className="mt-4 space-y-2">
-            {selectedTab === 'market' ? (
-              <button
-                onClick={() => handleBuy(nft.id)}
-                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-              >
-                {t('buyNow')}
-              </button>
-            ) : (
-              <>
-                {!nft.listed ? (
-                  <button
-                    onClick={() => handleList(nft.id)}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-                  >
-                    {t('listForSale')}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleDelist(nft.id)}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-                  >
-                    {t('cancelListing')}
-                  </button>
-                )}
-              </>
-            )}
-            <button
-              onClick={() => loadNFTHistory(nft.id)}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-            >
-              {t('viewHistory')}
-            </button>
+        {/* Stats Grid */}
+        <div className="p-4 bg-[#1E293B]">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-4">
+            <div className="text-left">
+              <div className="text-gray-400 text-xs mb-0.5">{t('dailyReward')}</div>
+              <div className="text-white text-sm font-medium">{nft.dailyReward} ZONE</div>
+            </div>
+            <div className="text-right">
+              <div className="text-gray-400 text-xs mb-0.5">{t('maxReward')}</div>
+              <div className="text-white text-sm font-medium">{nft.maxReward}</div>
+            </div>
+            <div className="text-left">
+              <div className="text-gray-400 text-xs mb-0.5">{t('roi')}</div>
+              <div className="text-white text-sm font-medium">{nftSettings.roi}%</div>
+            </div>
+            <div className="text-right">
+              <div className="text-gray-400 text-xs mb-0.5">{t('price')}</div>
+              <div className="text-white text-sm font-medium">{nft.price} BNB</div>
+            </div>
           </div>
+
+          {/* Buy Button */}
+          <button 
+            onClick={handleBuy}
+            className="w-full py-2 px-4 bg-[#00DC82] hover:bg-opacity-90 text-black text-sm font-medium rounded-lg transition-colors"
+          >
+            {t('buyNow')}
+          </button>
         </div>
       </div>
     );
