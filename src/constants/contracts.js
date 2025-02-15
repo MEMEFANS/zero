@@ -56,6 +56,7 @@ export const NFT_RARITY_COLORS = {
   }
 };
 
+// NFT 图片配置
 export const NFT_IMAGES = {
   'N': [
     '/images/nft-images/n-1.png',
@@ -81,6 +82,13 @@ export const NFT_IMAGES = {
     '/images/nft-images/ssr-3.png',
     '/images/nft-images/ssr-4.png'
   ]
+};
+
+// 根据 NFT ID 和稀有度获取图片
+export const getNFTImage = (rarity, tokenId) => {
+  const images = NFT_IMAGES[rarity];
+  const index = (tokenId - 1) % 4;  // 使用 NFT ID 来确定使用哪个图片
+  return images[index];
 };
 
 export const NFT_SETTINGS = {

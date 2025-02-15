@@ -4,7 +4,7 @@ import { Web3ReactProvider } from '@web3-react/core';
 import { ethers } from 'ethers';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
-import IDO from './pages/IDO';
+import Mint from './pages/IDO';
 import NFTMining from './pages/NFTMining';
 import NFTMarket from './pages/NFTMarket';
 import MysteryBox from './pages/MysteryBox';
@@ -33,7 +33,7 @@ function App() {
             <div className="container mx-auto px-4 py-8">
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/ido" element={<IDO />} />
+                <Route path="/mint" element={<Mint />} />
                 <Route path="/mystery-box" element={<MysteryBox />} />
                 <Route path="/mining" element={<NFTMining />} />
                 <Route path="/market" element={<NFTMarket />} />

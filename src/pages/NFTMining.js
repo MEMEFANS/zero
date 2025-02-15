@@ -402,7 +402,7 @@ const NFTMining = () => {
           <div className="bg-[#1A2438]/80 backdrop-blur-xl p-4 rounded-lg border border-green-500/20">
             <div className="text-green-300/80 text-sm mb-1">{t('minerCount')}</div>
             <div className="text-green-400 text-2xl font-bold flex items-center">
-              {miningStats.totalMiners.toLocaleString()} {t('people')}
+              {miningStats.totalMiners}
               <div className="ml-2 h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
             </div>
           </div>
@@ -499,7 +499,7 @@ const NFTMining = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-green-300/80">{t('directCount')}</span>
-                      <span className="text-green-400 font-bold">{miningStats.directCount} {t('people')}</span>
+                      <span className="text-green-400 font-bold">{miningStats.directCount}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-green-300/80">{t('directIncome')}</span>

@@ -28,6 +28,11 @@ const NFT_SETTINGS = {
   SSR: { probability: 1, power: 6400, price: 100, dailyReward: 160, maxReward: 2400, roi: 0.6, yearReturn: 9600 }
 };
 
+const getNFTImage = (rarity, tokenId) => {
+  // TODO: 根据稀有度和tokenId获取NFT图片地址
+  return `/images/nft-${rarity}-${tokenId}.svg`;
+};
+
 const MysteryBox = () => {
   const { active, account, activate, library } = useWeb3React();
   const { t } = useContext(LanguageContext);
@@ -121,7 +126,7 @@ const MysteryBox = () => {
       // 模拟开箱动画
       setTimeout(() => {
         setShowAnimation(false);
-        setOpeningResult('SSR'); // 这里应该根据实际结果设置
+        setOpeningResult({ rarity: 'SSR', tokenId: 1 }); // 这里应该根据实际结果设置
         setIsOpening(false);
       }, 3000);
 
@@ -251,38 +256,53 @@ const MysteryBox = () => {
           </div>
 
           {/* NFT概率展示 */}
-          <div className="max-w-6xl mx-auto mt-16">
-            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 mb-8 text-center relative">
-              {t('nftProbability')}
-              <div className="absolute -inset-4 bg-green-500/10 blur-lg rounded-lg -z-10"></div>
-            </h2>
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold text-center text-[#00ff94] mb-12">{t('nftProbability')}</h1>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {Object.entries(NFT_SETTINGS).map(([rarity, data]) => (
-                <div key={rarity} className="group relative">
-                  <div className="relative bg-[#1A2438]/80 backdrop-blur-xl rounded-lg p-6 border border-green-500/20 transition-transform duration-300 hover:-translate-y-1">
-                    <div className={`text-2xl font-bold mb-4 ${
-                      rarity === 'SSR' ? 'text-green-400' :
-                      rarity === 'SR' ? 'text-green-500' :
-                      rarity === 'R' ? 'text-green-600' :
-                      'text-green-700'
-                    }`}>
-                      {t(`nftRarity${rarity}`)}
-                    </div>
-                    <div className="text-green-300/80">
-                      <div className="mb-2">
-                        <span className="text-sm">{t('probability')}：</span>
-                        <span className="text-lg font-bold">{data.probability}%</span>
-                      </div>
-                      <div>
-                        <span className="text-sm">{t('quantity')}：</span>
-                        <span className="text-lg font-bold">{data.count}</span>
-                      </div>
-                    </div>
-                    {/* 悬停时显示的装饰边框 */}
-                    <div className="absolute inset-0 border-2 border-transparent group-hover:border-green-500/30 rounded-lg transition-colors duration-300"></div>
-                  </div>
+              {/* N NFT */}
+              <div className="bg-[#1e2839] p-6 rounded-xl border border-[#2e3c51]">
+                <h2 className="text-xl font-bold text-[#00ff94] mb-4">N</h2>
+                <div className="space-y-2">
+                  <p className="text-gray-300">{t('probability')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.probability}%</span></p>
+                  <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.power} H/s</span></p>
+                  <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.dailyReward} ZONE</span></p>
+                  <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.maxReward}</span></p>
                 </div>
-              ))}
+              </div>
+
+              {/* R NFT */}
+              <div className="bg-[#1e2839] p-6 rounded-xl border border-[#2e3c51]">
+                <h2 className="text-xl font-bold text-[#00ff94] mb-4">R</h2>
+                <div className="space-y-2">
+                  <p className="text-gray-300">{t('probability')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.probability}%</span></p>
+                  <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.power} H/s</span></p>
+                  <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.dailyReward} ZONE</span></p>
+                  <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.maxReward}</span></p>
+                </div>
+              </div>
+
+              {/* SR NFT */}
+              <div className="bg-[#1e2839] p-6 rounded-xl border border-[#2e3c51]">
+                <h2 className="text-xl font-bold text-[#00ff94] mb-4">SR</h2>
+                <div className="space-y-2">
+                  <p className="text-gray-300">{t('probability')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.probability}%</span></p>
+                  <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.power} H/s</span></p>
+                  <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.dailyReward} ZONE</span></p>
+                  <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.maxReward}</span></p>
+                </div>
+              </div>
+
+              {/* SSR NFT */}
+              <div className="bg-[#1e2839] p-6 rounded-xl border border-[#2e3c51]">
+                <h2 className="text-xl font-bold text-[#00ff94] mb-4">SSR</h2>
+                <div className="space-y-2">
+                  <p className="text-gray-300">{t('probability')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.probability}%</span></p>
+                  <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.power} H/s</span></p>
+                  <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.dailyReward} ZONE</span></p>
+                  <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.maxReward}</span></p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -291,46 +311,59 @@ const MysteryBox = () => {
       {/* 开箱结果弹窗 */}
       {openingResult && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="relative">
-            <div className="relative bg-[#1A2438]/90 backdrop-blur-xl rounded-lg p-8 max-w-md w-full mx-4 border border-green-500/30">
-              {/* 装饰性边角 */}
-              <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-green-500/50"></div>
-              <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-green-500/50"></div>
-              <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-green-500/50"></div>
-              <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-green-500/50"></div>
-
-              <button 
-                onClick={() => setOpeningResult(null)}
-                className="absolute top-4 right-4 text-green-400 hover:text-white transition-colors"
-              >
-                ✕
-              </button>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-400 mb-4">{t('congratulations')}</div>
-                <div className={`text-4xl font-bold mb-6 ${
-                  openingResult === 'SSR' ? 'text-green-400' :
-                  openingResult === 'SR' ? 'text-green-500' :
-                  openingResult === 'R' ? 'text-green-600' :
-                  'text-green-700'
+          <div className="bg-[#1A2438]/95 backdrop-blur-xl rounded-2xl p-8 max-w-lg w-full mx-4 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-2xl"></div>
+            <div className="relative">
+              {/* NFT 图片 */}
+              <div className="relative group mb-6">
+                <img 
+                  src={getNFTImage(openingResult.rarity, openingResult.tokenId)}
+                  alt={`NFT ${openingResult.rarity}`}
+                  className="w-full aspect-square object-cover rounded-xl"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/images/nft-placeholder.svg';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl"></div>
+                {/* 稀有度标签 */}
+                <div className={`absolute top-4 left-4 px-3 py-1 rounded-lg ${
+                  openingResult.rarity === 'SSR' ? 'bg-amber-500/90' :
+                  openingResult.rarity === 'SR' ? 'bg-purple-500/90' :
+                  openingResult.rarity === 'R' ? 'bg-blue-500/90' :
+                  'bg-gray-500/90'
                 }`}>
-                  {t(`nftRarity${openingResult}`)} NFT
+                  <span className="text-white font-medium">{openingResult.rarity}</span>
                 </div>
-                <div className="w-48 h-48 bg-[#0B1120] rounded-lg mx-auto mb-6 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-500/10 to-transparent animate-pulse"></div>
-                  {/* 装饰性边角 */}
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-green-500/50"></div>
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-green-500/50"></div>
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-green-500/50"></div>
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-green-500/50"></div>
+                {/* 战力标签 */}
+                <div className="absolute bottom-4 right-4 px-3 py-1 rounded-lg bg-black/70">
+                  <span className="text-white font-medium">{NFT_SETTINGS[openingResult.rarity].power} H/s</span>
                 </div>
-                <button
-                  onClick={() => setOpeningResult(null)}
-                  className="bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-3 px-8 rounded-lg hover:from-green-600 hover:to-green-700 transition-colors relative group overflow-hidden"
-                >
-                  <span className="relative z-10">{t('confirm')}</span>
-                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000"></div>
-                </button>
               </div>
+
+              {/* NFT 属性 */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-black/20 rounded-lg p-4">
+                  <div className="text-gray-400 text-sm mb-1">{t('dailyReward')}</div>
+                  <div className="text-green-400 font-bold">
+                    {NFT_SETTINGS[openingResult.rarity].dailyReward} ZONE
+                  </div>
+                </div>
+                <div className="bg-black/20 rounded-lg p-4">
+                  <div className="text-gray-400 text-sm mb-1">{t('maxReward')}</div>
+                  <div className="text-green-400 font-bold">
+                    {NFT_SETTINGS[openingResult.rarity].maxReward}
+                  </div>
+                </div>
+              </div>
+
+              {/* 关闭按钮 */}
+              <button
+                onClick={() => setOpeningResult(null)}
+                className="w-full py-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-bold hover:from-green-600 hover:to-green-700 transition-colors"
+              >
+                {t('confirm')}
+              </button>
             </div>
           </div>
         </div>

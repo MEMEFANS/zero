@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Base64.sol";
 
 contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
     using Counters for Counters.Counter;
@@ -42,11 +43,15 @@ contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
     }
 
     // NFT图片配置
-    struct NFTImage {
-        string imageURI;      // 图片URI
-        string name;          // NFT名称
-        string description;   // NFT描述
+    struct NFTImageConfig {
+        string[] normalImages;    // N级图片URIs
+        string[] rareImages;      // R级图片URIs
+        string[] superRareImages; // SR级图片URIs
+        string[] ssrImages;       // SSR级图片URIs
     }
+
+    // NFT图片配置
+    NFTImageConfig private nftImageConfig;
 
     // 事件
     event BoxOpened(address indexed user, NFTRarity rarity, uint256 tokenId);
@@ -75,7 +80,6 @@ contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
     mapping(uint256 => MarketListing) public marketListings;
     mapping(address => uint256[]) public stakedNFTs;  // 用户质押的NFT列表
     mapping(address => uint256) public userBoxCount;  // 用户开盒次数记录
-    mapping(NFTRarity => NFTImage) public rarityImages;
     Counters.Counter private _tokenIdCounter;
 
     // 市场统计数据
@@ -96,38 +100,62 @@ contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
     mapping(uint256 => TradeHistory[]) public tradeHistories;
 
     // 构造函数
-    constructor(address _zoneToken) ERC721("Zero NFT", "ZNFT") {
+    constructor() ERC721("ZERO", "ONE") {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN_ROLE, msg.sender);
-        zoneToken = IERC20(_zoneToken);
-        
-        // 初始化NFT概率和属性配置
-        rarityConfigs[NFTRarity.N] = RarityConfig(55, 100, 28 * 10**17, 252 * 10**18);    // 55%, 功率100, 日收益2.8, 总收益252
+
+        // 设置稀有度配置
+        rarityConfigs[NFTRarity.N] = RarityConfig(55, 100, 2.8 * 10**18, 252 * 10**18);   // 55%, 功率100, 日收益2.8, 总收益252
         rarityConfigs[NFTRarity.R] = RarityConfig(15, 400, 10 * 10**18, 900 * 10**18);    // 15%, 功率400, 日收益10, 总收益900
         rarityConfigs[NFTRarity.SR] = RarityConfig(5, 1600, 40 * 10**18, 3600 * 10**18);   // 5%, 功率1600, 日收益40, 总收益3600
         rarityConfigs[NFTRarity.SSR] = RarityConfig(1, 6400, 160 * 10**18, 14400 * 10**18); // 1%, 功率6400, 日收益160, 总收益14400
 
-        // 设置默认NFT图片和信息
-        rarityImages[NFTRarity.N] = NFTImage({
-            imageURI: "https://your-image-host.com/n.png",
-            name: "Normal Miner",
-            description: "A basic mining machine"
-        });
-        rarityImages[NFTRarity.R] = NFTImage({
-            imageURI: "https://your-image-host.com/r.png",
-            name: "Rare Miner",
-            description: "An advanced mining machine"
-        });
-        rarityImages[NFTRarity.SR] = NFTImage({
-            imageURI: "https://your-image-host.com/sr.png",
-            name: "Super Rare Miner",
-            description: "A powerful mining machine"
-        });
-        rarityImages[NFTRarity.SSR] = NFTImage({
-            imageURI: "https://your-image-host.com/ssr.png",
-            name: "SSR Miner",
-            description: "The ultimate mining machine"
-        });
+        // 设置NFT图片
+        nftImageConfig.normalImages = [
+            "ipfs://bafkreicg2o5srn26flfurg3aks2ozenazepewyug776xxsc3hznrtjvdfq",
+            "ipfs://bafkreigygfxouqc2wwarzqbjpbuk5px7q6ywkihxopy6svzbw5i6ks6jnq",
+            "ipfs://bafkreibjwpuw2f7vm42efx5f2yf3nmjqrvf2yn45iepys2do5deecjcwaq",
+            "ipfs://bafkreidqbaffdedxivwncxb3n4ivzr75jj25od35lz7urgyvih7g3rpfdm"
+        ];
+
+        nftImageConfig.rareImages = [
+            "ipfs://bafkreib75y2zt6dygbqvr675k77qkvamuozrq3ehcjhj63uiwvatfpnwcy",
+            "ipfs://bafkreifzp2mf37rqhv7jbllgdtno3pafny66neyr4chfun5dipt7pyc5lq",
+            "ipfs://bafkreib44hbtd5mw6bnljd5idvmyheedw4uldyngqdqyrnr237zbtd5ydy",
+            "ipfs://bafkreidbzii233sbt53kprnpguupt4r3vkrnkzxkqtojitsinclbbrxmmy"
+        ];
+
+        nftImageConfig.superRareImages = [
+            "ipfs://bafkreiejcncdya3dofutwzjbppr7iesbnbqny5hiuivkkmqizolmsul7wa",
+            "ipfs://bafkreicg7kb3yq22s3jh4jxp7nd4rovzvmsnpuf4dnn7syctstlaec7aja",
+            "ipfs://bafkreifdm6yc2ey6qlejbg3ohhcgtswy4uywcxrvvys37k745t54xqoscu",
+            "ipfs://bafkreibrsyio7fwpb773vryfo7byr5mzor5pty6i6cdle3qxvsm7qoq2ba"
+        ];
+
+        nftImageConfig.ssrImages = [
+            "ipfs://bafkreigggfktmbu4foz3dwtcbhfldvqbvv73ogdn3hcphfyvwaswwqjbna",
+            "ipfs://bafkreidhdgn3bhyyjyiy6nj7nix72fbnyry2iesz3gjyav6tv7ych63wme",
+            "ipfs://bafkreibyitzhuxdf46ynyyyw6jzavd2o54vlndrkn2d2pfwanu3cq3ouke",
+            "ipfs://bafkreihtjpm2wxxpf5fcm7fdo73ycrm5thvybi6mpom4ml47gadrzq2yd4"
+        ];
+    }
+
+    // 设置NFT图片配置
+    function setNFTImages(
+        string[] memory _normalImages,
+        string[] memory _rareImages,
+        string[] memory _superRareImages,
+        string[] memory _ssrImages
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_normalImages.length == 4, "Invalid normal images length");
+        require(_rareImages.length == 4, "Invalid rare images length");
+        require(_superRareImages.length == 4, "Invalid super rare images length");
+        require(_ssrImages.length == 4, "Invalid ssr images length");
+
+        nftImageConfig.normalImages = _normalImages;
+        nftImageConfig.rareImages = _rareImages;
+        nftImageConfig.superRareImages = _superRareImages;
+        nftImageConfig.ssrImages = _ssrImages;
     }
 
     // 开箱函数 - 使用ZONE代币
@@ -650,58 +678,78 @@ contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
     // 接收BNB
     receive() external payable {}
 
-    // 更新NFT图片配置（管理员功能）
-    function updateRarityImage(
-        NFTRarity rarity,
-        string memory imageURI,
-        string memory name,
-        string memory description
-    ) external onlyRole(ADMIN_ROLE) {
-        rarityImages[rarity] = NFTImage({
-            imageURI: imageURI,
-            name: name,
-            description: description
-        });
-    }
-
     // 获取NFT元数据
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_exists(tokenId), "Token does not exist");
         
-        NFTAttributes memory attrs = nftAttributes[tokenId];
-        NFTImage memory img = rarityImages[attrs.rarity];
+        NFTAttributes memory nft = nftAttributes[tokenId];
+        string memory imageURI;
         
-        // 构建JSON字符串
-        string memory json = string(abi.encodePacked(
-            '{',
-            '"name": "', img.name, ' #', toString(tokenId), '",',
-            '"description": "', img.description, '",',
-            '"image": "', img.imageURI, '",',
-            '"attributes": [',
-            '{"trait_type": "Rarity", "value": "', getRarityString(attrs.rarity), '"},',
-            '{"trait_type": "Power", "value": "', toString(attrs.power), '"},',
-            '{"trait_type": "Daily Reward", "value": "', toString(attrs.dailyReward), '"},',
-            '{"trait_type": "Max Reward", "value": "', toString(attrs.maxReward), '"},',
-            '{"trait_type": "Mined Amount", "value": "', toString(attrs.minedAmount), '"}',
-            ']}'
+        // 根据稀有度和tokenId选择图片
+        uint256 imageIndex = (tokenId - 1) % 4;
+        
+        if (nft.rarity == NFTRarity.N) {
+            imageURI = nftImageConfig.normalImages[imageIndex];
+        } else if (nft.rarity == NFTRarity.R) {
+            imageURI = nftImageConfig.rareImages[imageIndex];
+        } else if (nft.rarity == NFTRarity.SR) {
+            imageURI = nftImageConfig.superRareImages[imageIndex];
+        } else {
+            imageURI = nftImageConfig.ssrImages[imageIndex];
+        }
+
+        // 构建NFT名称
+        string memory nftName = string(abi.encodePacked(
+            "ZERO NFT #",
+            toString(tokenId),
+            " - ",
+            getRarityString(nft.rarity)
         ));
 
-        return string(abi.encodePacked(
-            "data:application/json;base64,",
-            base64Encode(bytes(json))
+        // 构建NFT描述
+        string memory description = string(abi.encodePacked(
+            "ZERO NFT - ",
+            getRarityString(nft.rarity),
+            " Mining Machine. Power: ",
+            toString(nft.power),
+            ". Daily Reward: ",
+            toString(nft.dailyReward / 1e18),
+            " ONE. Max Reward: ",
+            toString(nft.maxReward / 1e18),
+            " ONE."
         ));
+
+        // 构建完整的元数据JSON
+        string memory json = Base64.encode(
+            bytes(string(
+                abi.encodePacked(
+                    '{"name": "', nftName,
+                    '", "description": "', description,
+                    '", "image": "', imageURI,
+                    '", "attributes": [',
+                    '{"trait_type": "Rarity", "value": "', getRarityString(nft.rarity), '"},',
+                    '{"trait_type": "Power", "value": ', toString(nft.power), '},',
+                    '{"trait_type": "Daily Reward", "value": ', toString(nft.dailyReward / 1e18), '},',
+                    '{"trait_type": "Max Reward", "value": ', toString(nft.maxReward / 1e18), '},',
+                    '{"trait_type": "Mined Amount", "value": ', toString(nft.minedAmount / 1e18), '},',
+                    '{"trait_type": "Staking Status", "value": "', nft.isStaked ? "Staked" : "Not Staked", '"}',
+                    ']}'
+                )
+            ))
+        );
+
+        return string(abi.encodePacked('data:application/json;base64,', json));
     }
 
-    // 辅助函数：将稀有度转换为字符串
+    // 获取稀有度字符串
     function getRarityString(NFTRarity rarity) internal pure returns (string memory) {
         if (rarity == NFTRarity.N) return "Normal";
         if (rarity == NFTRarity.R) return "Rare";
         if (rarity == NFTRarity.SR) return "Super Rare";
-        if (rarity == NFTRarity.SSR) return "SSR";
-        return "Unknown";
+        return "SSR";
     }
 
-    // 辅助函数：数字转字符串
+    // 数字转字符串
     function toString(uint256 value) internal pure returns (string memory) {
         if (value == 0) {
             return "0";
@@ -719,33 +767,5 @@ contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
             value /= 10;
         }
         return string(buffer);
-    }
-
-    // Base64编码函数
-    function base64Encode(bytes memory data) internal pure returns (string memory) {
-        string memory table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        uint256 len = data.length;
-        if (len == 0) return "";
-
-        uint256 encodedLen = 4 * ((len + 2) / 3);
-        bytes memory result = new bytes(encodedLen + 32);
-
-        bytes memory tablePtr = bytes(table);
-        uint256 i = 0;
-        uint256 j = 0;
-
-        while (i < len) {
-            uint256 k = i + 3 <= len ? 3 : len - i;
-            uint256 r = 0;
-            for (uint256 l = 0; l < k; l++) {
-                r |= uint256(uint8(data[i + l])) << (16 - l * 8);
-            }
-            for (uint256 l = 0; l < 4; l++) {
-                result[j++] = tablePtr[uint8((r >> (18 - l * 6)) & 0x3F)];
-            }
-            i += 3;
-        }
-
-        return string(result);
     }
 }

@@ -124,14 +124,14 @@ const Navbar = () => {
             {/* Desktop menu */}
             <div className="hidden md:flex md:items-center md:ml-10 space-x-8">
               <Link
-                to="/ido"
+                to="/mint"
                 className={`${
-                  location.pathname === '/ido'
+                  location.pathname === '/mint'
                     ? 'text-green-400 border-green-400'
                     : 'text-gray-300 hover:text-green-400 border-transparent'
                 } px-3 py-2 text-sm font-medium border-b-2 transition-colors`}
               >
-                {t('ido')}
+                Mint
               </Link>
               <Link
                 to="/mystery-box"
@@ -282,15 +282,15 @@ const Navbar = () => {
             </div>
 
             <Link
-              to="/ido"
+              to="/mint"
               className={`${
-                location.pathname === '/ido'
+                location.pathname === '/mint'
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               } block px-3 py-2 rounded-md text-base font-medium`}
               onClick={() => setIsOpen(false)}
             >
-              {t('ido')}
+              Mint
             </Link>
             <Link
               to="/mystery-box"
