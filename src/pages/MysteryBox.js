@@ -3,7 +3,7 @@ import { useWeb3React } from '@web3-react/core';
 import { injected } from '../utils/connectors';
 import { ethers } from 'ethers';
 import { LanguageContext } from '../App';
-import boxImage from '../assets/box-bg.png';
+import boxImage from '../images/mystery-box/box-bg.png';
 
 // 这些地址需要替换为实际部署的合约地址
 const ZONE_TOKEN_ADDRESS = "YOUR_TOKEN_CONTRACT_ADDRESS";
@@ -196,56 +196,58 @@ const MysteryBox = () => {
           <div className="max-w-3xl mx-auto">
             <div className="relative">
               {/* 主卡片 */}
-              <div className="relative bg-[#1A2438]/90 backdrop-blur-xl rounded-lg p-8 border border-green-500/20">
+              <div className="relative backdrop-blur-xl rounded-lg overflow-hidden">
                 {/* 装饰性边角 */}
-                <div className="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-green-500/50"></div>
-                <div className="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-green-500/50"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-green-500/50"></div>
-                <div className="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-green-500/50"></div>
+                <div className="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-green-500/50 z-10"></div>
+                <div className="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-green-500/50 z-10"></div>
+                <div className="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-green-500/50 z-10"></div>
+                <div className="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-green-500/50 z-10"></div>
 
                 {/* 内容 */}
-                <div className="relative">
-                  {/* 盲盒图片 */}
-                  <div className="flex justify-center items-center mb-8">
+                <div className="flex flex-col">
+                  {/* 盲盒图片区域 */}
+                  <div className="w-full">
                     <img 
-                      src={boxImage}
-                      alt={t('mysteryBoxTitle')}
-                      style={{ maxWidth: '500px', width: '100%' }}
+                      src={boxImage} 
+                      alt="Mystery Box" 
+                      className="w-full"
                     />
                   </div>
 
-                  {/* 价格显示 */}
-                  <div className="text-center mb-8 relative">
-                    <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">
-                      100 ZONE
+                  {/* 价格和按钮区域 */}
+                  <div className="p-6 space-y-4">
+                    {/* 价格显示 */}
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-[#00ff94]">
+                        100 ZONE
+                      </div>
                     </div>
-                    <div className="absolute -inset-4 bg-green-500/5 blur-lg rounded-full"></div>
-                  </div>
 
-                  {/* 开启按钮 */}
-                  <div className="flex justify-center">
-                    {active ? (
-                      <button
-                        onClick={openBox}
-                        disabled={isOpening || isApproving}
-                        className={`w-full max-w-xs relative group overflow-hidden bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-4 px-8 rounded-lg ${
-                          (isOpening || isApproving) ? 'opacity-50 cursor-not-allowed' : 'hover:from-green-600 hover:to-green-700'
-                        }`}
-                      >
-                        <span className="relative z-10">
-                          {isApproving ? t('approving') : isOpening ? t('opening') : t('openBox')}
-                        </span>
-                        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000"></div>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={connectWallet}
-                        className="w-full max-w-xs relative group overflow-hidden bg-transparent text-green-500 border-2 border-green-500 font-bold py-4 px-8 rounded-lg hover:bg-green-500 hover:text-white transition-colors"
-                      >
-                        <span className="relative z-10">{t('connectWallet')}</span>
-                        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000"></div>
-                      </button>
-                    )}
+                    {/* 开启按钮 */}
+                    <div>
+                      {active ? (
+                        <button
+                          onClick={openBox}
+                          disabled={isOpening || isApproving}
+                          className={`
+                            w-full py-4 px-8 rounded-lg text-xl font-bold
+                            bg-[#00ff94] hover:bg-[#00ff94]/90 text-black
+                            disabled:bg-[#00ff94]/50 disabled:cursor-not-allowed
+                            transition-colors duration-200
+                          `}
+                        >
+                          {t('openBox')}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={connectWallet}
+                          className="w-full relative group overflow-hidden bg-transparent text-green-500 border-2 border-green-500 font-bold py-4 px-8 rounded-lg hover:bg-green-500 hover:text-white transition-colors"
+                        >
+                          <span className="relative z-10">{t('connectWallet')}</span>
+                          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000"></div>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
