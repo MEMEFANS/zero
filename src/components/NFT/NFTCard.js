@@ -14,47 +14,83 @@ const NFTCard = ({
     return NFT_RARITY_COLORS[NFT_RARITY[rarity]] || NFT_RARITY_COLORS['N'];
   };
 
+  const getRarityName = (rarity) => {
+    switch(NFT_RARITY[rarity]) {
+      case 'N': return 'Normal NFT';
+      case 'R': return 'Rare NFT';
+      case 'SR': return 'Super Rare NFT';
+      case 'SSR': return 'Super Super Rare NFT';
+      default: return 'Normal NFT';
+    }
+  };
+
+  const calculateROI = (dailyReward, price) => {
+    if (!price || !dailyReward) return 0;
+    const priceInBNB = ethers.BigNumber.isBigNumber(price) 
+      ? parseFloat(ethers.utils.formatEther(price))
+      : price;
+    return ((dailyReward * 365) / (priceInBNB * 100)).toFixed(1);
+  };
+
   return (
     <Card 
       onClick={() => onSelect(nft)} 
-      className="p-4 flex flex-col"
+      className={`p-4 flex flex-col bg-gradient-to-br ${getRarityColor(nft.attributes.rarity).gradient} border ${getRarityColor(nft.attributes.rarity).border} rounded-xl`}
     >
-      <div className="relative">
-        <img 
-          src={nft.image || '/images/nft-placeholder.png'} 
-          alt={`NFT #${nft.tokenId}`}
-          className="w-full h-48 object-cover rounded-lg mb-4"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/images/nft-placeholder.png';
-          }}
-        />
-        <span className={`absolute top-2 right-2 px-2 py-1 rounded-full bg-black/50 ${getRarityColor(nft.attributes.rarity)}`}>
+      {/* Rarity Badge */}
+      <div className="mb-2">
+        <span className={`px-3 py-1 rounded-lg text-sm ${getRarityColor(nft.attributes.rarity).text} ${getRarityColor(nft.attributes.rarity).bg}`}>
           {NFT_RARITY[nft.attributes.rarity]}
         </span>
       </div>
 
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-bold">#{nft.tokenId}</h3>
-        {showPrice && nft.price && (
-          <div className="text-right">
-            <p className="text-sm text-gray-400">价格</p>
-            <p className="font-bold">
-              {ethers.BigNumber.isBigNumber(nft.price) 
-                ? ethers.utils.formatEther(nft.price) 
-                : nft.price} BNB
-            </p>
-          </div>
-        )}
+      {/* NFT Title */}
+      <div className="text-center mb-4">
+        <h2 className="text-3xl font-bold mb-1 text-white">{NFT_RARITY[nft.attributes.rarity]}</h2>
+        <p className="text-gray-300">{getRarityName(nft.attributes.rarity)}</p>
       </div>
 
-      {showAttributes && (
-        <div className="space-y-1 text-sm text-gray-400">
-          <p>算力: {nft.attributes.power}</p>
-          <p>日收益: {nft.attributes.dailyReward}</p>
-          <p>已挖取: {nft.attributes.minedAmount}</p>
+      {/* Power Display */}
+      <div className="text-center mb-6">
+        <div className="bg-black/30 backdrop-blur-sm rounded-lg py-3 px-4">
+          <span className="text-2xl font-bold text-white">{nft.attributes.power} POW</span>
         </div>
-      )}
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="bg-black/20 backdrop-blur-sm rounded-lg p-3">
+          <p className="text-gray-300 text-sm">日收益</p>
+          <p className="font-bold text-white">{nft.attributes.dailyReward} ZONE</p>
+        </div>
+        <div className="bg-black/20 backdrop-blur-sm rounded-lg p-3">
+          <p className="text-gray-300 text-sm">最大收益</p>
+          <p className="font-bold text-white">{nft.attributes.maxReward}</p>
+        </div>
+        <div className="bg-black/20 backdrop-blur-sm rounded-lg p-3">
+          <p className="text-gray-300 text-sm">roi</p>
+          <p className="font-bold text-white">{calculateROI(nft.attributes.dailyReward, nft.price)}%</p>
+        </div>
+        <div className="bg-black/20 backdrop-blur-sm rounded-lg p-3">
+          <p className="text-gray-300 text-sm">价格</p>
+          <p className="font-bold text-white">
+            {ethers.BigNumber.isBigNumber(nft.price) 
+              ? ethers.utils.formatEther(nft.price) 
+              : nft.price} BNB
+          </p>
+        </div>
+      </div>
+
+      {/* Buy Button */}
+      <button 
+        className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(nft);
+        }}
+      >
+        立即购买
+      </button>
     </Card>
   );
 };
@@ -68,6 +104,7 @@ NFTCard.propTypes = {
       rarity: PropTypes.number.isRequired,
       power: PropTypes.number.isRequired,
       dailyReward: PropTypes.number.isRequired,
+      maxReward: PropTypes.number.isRequired,
       minedAmount: PropTypes.number.isRequired
     }).isRequired
   }).isRequired,

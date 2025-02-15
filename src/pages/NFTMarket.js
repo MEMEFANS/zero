@@ -9,7 +9,8 @@ import {
   MYSTERY_BOX_ABI, 
   NFT_RARITY,
   NFT_RARITY_COLORS,
-  NFT_SETTINGS
+  NFT_SETTINGS,
+  NFT_IMAGES
 } from '../constants/contracts';
 
 // 临时的合约地址，等待实际部署后替换
@@ -425,7 +426,9 @@ const NFTMarket = () => {
   const NFTCard = ({ nft }) => {
     const rarityStyle = NFT_RARITY_COLORS[nft.type];
     const nftSettings = NFT_SETTINGS[nft.type];
-    const imageUrl = `/images/${nft.type.toLowerCase()}.svg`;
+    // 使用 NFT ID 来确定使用哪个图片，这样同一个 NFT 总是显示相同的图片
+    const imageIndex = (nft.id - 1) % 4;  // 使用 NFT ID 模 4 来选择图片
+    const imageUrl = NFT_IMAGES[nft.type][imageIndex];
     const { active, account, library } = useWeb3React();
     const [notification, setNotification] = useState({ show: false, type: '', message: '' });
 

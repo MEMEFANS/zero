@@ -31,25 +31,56 @@ export const NFT_RARITY = ['N', 'R', 'SR', 'SSR'];
 
 export const NFT_RARITY_COLORS = {
   'N': {
-    text: 'text-gray-400',
-    bg: 'bg-gray-500/20',
-    border: 'border-gray-400'
+    text: 'text-white',
+    bg: 'bg-slate-700',
+    border: 'border-slate-600',
+    gradient: 'from-slate-800 to-slate-700'
   },
   'R': {
-    text: 'text-blue-400',
-    bg: 'bg-blue-500/20',
-    border: 'border-blue-400'
+    text: 'text-white',
+    bg: 'bg-blue-700',
+    border: 'border-blue-600',
+    gradient: 'from-blue-800 to-blue-700'
   },
   'SR': {
-    text: 'text-purple-400',
-    bg: 'bg-purple-500/20',
-    border: 'border-purple-400'
+    text: 'text-white',
+    bg: 'bg-purple-700',
+    border: 'border-purple-600',
+    gradient: 'from-purple-800 to-purple-700'
   },
   'SSR': {
-    text: 'text-yellow-400',
-    bg: 'bg-yellow-500/20',
-    border: 'border-yellow-400'
+    text: 'text-white',
+    bg: 'bg-amber-700',
+    border: 'border-amber-600',
+    gradient: 'from-amber-800 to-amber-700'
   }
+};
+
+export const NFT_IMAGES = {
+  'N': [
+    '/images/nft-images/n-1.png',
+    '/images/nft-images/n-2.png',
+    '/images/nft-images/n-3.png',
+    '/images/nft-images/n-4.png'
+  ],
+  'R': [
+    '/images/nft-images/r-1.png',
+    '/images/nft-images/r-2.png',
+    '/images/nft-images/r-3.png',
+    '/images/nft-images/r-4.png'
+  ],
+  'SR': [
+    '/images/nft-images/sr-1.png',
+    '/images/nft-images/sr-2.png',
+    '/images/nft-images/sr-3.png',
+    '/images/nft-images/sr-4.png'
+  ],
+  'SSR': [
+    '/images/nft-images/ssr-1.png',
+    '/images/nft-images/ssr-2.png',
+    '/images/nft-images/ssr-3.png',
+    '/images/nft-images/ssr-4.png'
+  ]
 };
 
 export const NFT_SETTINGS = {
