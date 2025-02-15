@@ -13,7 +13,7 @@ const IDO = () => {
   const [totalRaised, setTotalRaised] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
-  const receivingAddress = '0x43846d8C3E4308Ac1AF9Bc5AE8453Ed73ede7034';
+  const receivingAddress = '0x82fa012F68420B7e30Eb48eF321d599343902e11';
   // 改用您的服务器地址
   const API_URL = 'https://api.your-domain.com/api';
 
