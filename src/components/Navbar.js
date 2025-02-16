@@ -163,6 +163,16 @@ const Navbar = () => {
               >
                 {t('market')}
               </Link>
+              <Link
+                to="/airdrop"
+                className={`${
+                  location.pathname === '/airdrop'
+                    ? 'text-green-400 border-green-400'
+                    : 'text-gray-300 hover:text-green-400 border-transparent'
+                } px-3 py-2 text-sm font-medium border-b-2 transition-colors`}
+              >
+                {t('airdrop')}
+              </Link>
             </div>
           </div>
 
@@ -318,12 +328,23 @@ const Navbar = () => {
               to="/market"
               className={`${
                 location.pathname === '/market'
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              } block px-3 py-2 rounded-md text-base font-medium`}
+                  ? 'text-green-400'
+                  : 'text-gray-300'
+              } block px-3 py-2 text-base font-medium hover:text-green-400`}
               onClick={() => setIsOpen(false)}
             >
               {t('market')}
+            </Link>
+            <Link
+              to="/airdrop"
+              className={`${
+                location.pathname === '/airdrop'
+                  ? 'text-green-400'
+                  : 'text-gray-300'
+              } block px-3 py-2 text-base font-medium hover:text-green-400`}
+              onClick={() => setIsOpen(false)}
+            >
+              {t('airdrop')}
             </Link>
           </div>
         </div>

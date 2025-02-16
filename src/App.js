@@ -8,6 +8,7 @@ import Mint from './pages/IDO';
 import NFTMining from './pages/NFTMining';
 import NFTMarket from './pages/NFTMarket';
 import MysteryBox from './pages/MysteryBox';
+import Airdrop from './pages/Airdrop';
 import { translations } from './translations';
 
 export const LanguageContext = createContext();
@@ -21,7 +22,9 @@ function App() {
 
   // 翻译助手函数
   const t = (key) => {
-    return translations[language]?.[key] || key;
+    const translation = translations[language]?.[key];
+    console.log('Translation:', { language, key, translation });
+    return translation || key;
   };
 
   return (
@@ -37,6 +40,7 @@ function App() {
                 <Route path="/mystery-box" element={<MysteryBox />} />
                 <Route path="/mining" element={<NFTMining />} />
                 <Route path="/market" element={<NFTMarket />} />
+                <Route path="/airdrop" element={<Airdrop />} />
               </Routes>
             </div>
           </div>
