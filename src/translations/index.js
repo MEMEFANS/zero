@@ -459,30 +459,30 @@ export const translations = {
     globalLeadingExchange: 'Global Leading Exchange',
     
     // Airdrop
-    airdropTitle: 'Airdrop',
-    airdropDescription: 'Participate in our airdrop program',
+    airdropTitle: 'ZONE Token Airdrop',
+    airdropDescription: 'Check your eligibility for ZONE token airdrop and claim rewards.',
     eligibilityRules: 'Eligibility Rules',
-    claimAirdrop: 'Claim Airdrop',
-    airdropStatus: 'Airdrop Status',
-    airdropAmount: 'Airdrop Amount',
+    rule1: 'BSC wallet must be active in the past 6 months',
+    rule2: 'Transaction volume must exceed 3,000 USDT',
+    rule3: 'Eligible addresses will receive 500 ZONE tokens',
     checkEligibility: 'Check Eligibility',
     enterBscAddress: 'Enter your BSC wallet address',
     checkNow: 'Check Now',
     checking: 'Checking...',
-    invalidAddress: 'Invalid BSC address',
-    checkFailed: 'Failed to check eligibility. Please try again.',
     status: 'Status',
     eligible: 'Eligible',
     notEligible: 'Not Eligible',
-    claimed: 'Already Claimed',
+    claimed: 'Claimed',
     transactionVolume: 'Transaction Volume',
     airdropAmount: 'Airdrop Amount',
     claimNotStarted: 'Claim Not Started',
-    claimStartsSoon: 'Airdrop claiming will be available soon',
-    alreadyClaimed: 'Already Claimed',
     notEligibleToClaim: 'Not Eligible to Claim',
-    
-    // Navbar
+    claimStartsSoon: 'Claim will start soon',
+    invalidAddress: 'Invalid address',
+    checkFailed: 'Check failed, please try again',
+    alreadyClaimed: 'Already Claimed',
+
+    // IDO page
     ido: 'IDO',
     mysteryBox: 'Mystery Box',
     mining: 'Mining',
@@ -1232,7 +1232,7 @@ export const translations = {
     phaseFourItem2: 'AI 시장 분석 및 예측',
     phaseFourItem3: 'AI 개인 맞춤형 투자 조언',
     phaseFourItem4: 'AI 리스크 관리 시스템',
-    
+
     // Roadmap
     roadmapTitle: '개발 로드맵',
     phase1Title: 'Phase 1',
@@ -1369,7 +1369,7 @@ export const translations = {
 
     communitiesTitle: '커뮤니티',
     binanceCommunityTitle: '바이낸스 커뮤니티',
-    binanceCommunityDescription: '글로벌 최대 거래소',
+    binanceCommunityDescription: '글로벌 선도 거래소',
     okxCommunityTitle: 'OKX 커뮤니티',
     okxCommunityDescription: '리딩 디지털 자산 플랫폼',
     huobiCommunityTitle: '후오비 커뮤니티',
