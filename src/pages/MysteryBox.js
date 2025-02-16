@@ -22,10 +22,10 @@ const MYSTERY_BOX_ABI = [
 ];
 
 const NFT_SETTINGS = {
-  N: { probability: 55, power: 100, price: 100, dailyReward: 2.8, maxReward: 400, roi: 35.7, yearReturn: 308 },
-  R: { probability: 15, power: 400, price: 100, dailyReward: 10, maxReward: 100, roi: 10, yearReturn: 900 },
-  SR: { probability: 5, power: 1600, price: 100, dailyReward: 40, maxReward: 600, roi: 2.5, yearReturn: 2400 },
-  SSR: { probability: 1, power: 6400, price: 100, dailyReward: 160, maxReward: 2400, roi: 0.6, yearReturn: 9600 }
+  N: { probability: 55, power: 100, price: 100, dailyReward: 2.8, maxReward: 252, roi: 35.7, yearReturn: 152 },
+  R: { probability: 15, power: 400, price: 100, dailyReward: 10, maxReward: 900, roi: 11.1, yearReturn: 800 },
+  SR: { probability: 5, power: 1600, price: 100, dailyReward: 40, maxReward: 3600, roi: 2.8, yearReturn: 3500 },
+  SSR: { probability: 1, power: 6400, price: 100, dailyReward: 160, maxReward: 14400, roi: 0.7, yearReturn: 14300 }
 };
 
 const getNFTImage = (rarity, tokenId) => {
@@ -270,6 +270,7 @@ const MysteryBox = () => {
                   <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.power} H/s</span></p>
                   <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.dailyReward} ZONE</span></p>
                   <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.maxReward}</span></p>
+                  <p className="text-gray-300">{t('yearReturn')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.yearReturn}%</span></p>
                 </div>
               </div>
 
@@ -281,6 +282,7 @@ const MysteryBox = () => {
                   <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.power} H/s</span></p>
                   <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.dailyReward} ZONE</span></p>
                   <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.maxReward}</span></p>
+                  <p className="text-gray-300">{t('yearReturn')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.yearReturn}%</span></p>
                 </div>
               </div>
 
@@ -292,6 +294,7 @@ const MysteryBox = () => {
                   <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.power} H/s</span></p>
                   <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.dailyReward} ZONE</span></p>
                   <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.maxReward}</span></p>
+                  <p className="text-gray-300">{t('yearReturn')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.yearReturn}%</span></p>
                 </div>
               </div>
 
@@ -303,6 +306,7 @@ const MysteryBox = () => {
                   <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.power} H/s</span></p>
                   <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.dailyReward} ZONE</span></p>
                   <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.maxReward}</span></p>
+                  <p className="text-gray-300">{t('yearReturn')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.yearReturn}%</span></p>
                 </div>
               </div>
             </div>

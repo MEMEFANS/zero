@@ -26,8 +26,8 @@ const IDO = () => {
       minContribution: 0.1,
       maxContribution: 2
     },
-    startTime: '2025-02-10 20:00:00',
-    endTime: '2025-02-15 20:00:00'
+    startTime: '2025-02-20 20:00:00',
+    endTime: '2025-02-28 20:00:00'
   };
 
   // 获取用户的参与记录
@@ -256,14 +256,14 @@ const IDO = () => {
           <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 mb-6">
             {t('idoTitle')}
           </h1>
-          <div className="flex items-center justify-center gap-6 text-xl">
-            <div className="bg-gray-800/50 backdrop-blur px-6 py-3 rounded-full border border-green-500/20">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6 text-base md:text-xl">
+            <div className="w-full md:w-auto bg-gray-800/50 backdrop-blur px-4 md:px-6 py-3 rounded-full border border-green-500/20">
               <span className="text-green-400">{t('totalSupply')}: </span>
               <span className="text-white">{t('oneHundredMillion')} <span className="text-green-400">ZONE</span></span>
             </div>
-            <div className="bg-gray-800/50 backdrop-blur px-6 py-3 rounded-full border border-green-500/20">
+            <div className="w-full md:w-auto bg-gray-800/50 backdrop-blur px-4 md:px-6 py-3 rounded-full border border-green-500/20">
               <span className="text-green-400 mr-2">⏰</span>
-              <span className="text-white">{idoInfo.startTime} - {idoInfo.endTime}</span>
+              <span className="text-white text-sm md:text-base whitespace-nowrap">{idoInfo.startTime} - {idoInfo.endTime}</span>
             </div>
           </div>
         </div>
