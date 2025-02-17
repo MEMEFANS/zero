@@ -228,7 +228,7 @@ const Home = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">{t('tokenName')}</span>
-                  <span className="text-white">ZERO</span>
+                  <span className="text-white">ZONE</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">{t('tokenSymbol')}</span>
