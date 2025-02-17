@@ -13,7 +13,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 router.get('/contributions/:address', async (req, res) => {
     try {
         const { address } = req.params;
-        const receivingAddress = '0x515783F108A9C94AA6af5Df50F0f261888b420Ab';
+        const receivingAddress = '0xE2d38187EC26F5d35Cd309898Ef78F12E083De3A';
 
         // 检查缓存
         const cached = contributionsCache.get(address);
