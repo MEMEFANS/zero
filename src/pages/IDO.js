@@ -80,6 +80,36 @@ const IDO = () => {
     }
   };
 
+  // 获取私募合约地址的BNB余额
+  const fetchTotalRaised = async () => {
+    try {
+      console.log('Fetching total raised...');
+      const provider = new ethers.providers.JsonRpcProvider('https://side-falling-ensemble.bsc.quiknode.pro/049fcfd0e81b7b299018b5774557ae1c0d4c9110/');
+      const balance = await provider.getBalance(receivingAddress);
+      const bnbBalance = parseFloat(ethers.utils.formatEther(balance));
+      console.log('Total raised:', bnbBalance, 'BNB');
+      setTotalRaised(bnbBalance);
+    } catch (error) {
+      console.error('获取总筹集量失败:', error);
+    }
+  };
+
+  // 在组件加载时获取总筹集量
+  useEffect(() => {
+    const init = async () => {
+      await fetchTotalRaised();
+    };
+    init();
+  }, []);
+
+  // 每15秒自动刷新总筹集量
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      await fetchTotalRaised();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   // 处理用户参与
   const handleContribute = async () => {
     if (!active || !account) {
@@ -94,6 +124,7 @@ const IDO = () => {
     }
 
     try {
+      setIsLoading(true);
       // 使用window.ethereum直接发送交易
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
@@ -105,7 +136,6 @@ const IDO = () => {
       });
 
       console.log('Transaction hash:', txHash);
-      showNotification('info', t('waitingConfirmation'));
 
       // 等待交易确认
       const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -135,22 +165,27 @@ const IDO = () => {
         // 更新显示
         setUserContribution(newBnbAmount);
         setExpectedTokens(newTokenAmount);
-        setTotalRaised(prev => prev + bnbAmount);
-        showNotification('success', t('transactionSuccess'));
         setAmount('');
+
+        // 等待2秒后刷新总筹集量，确保链上数据已更新
+        setTimeout(async () => {
+          await fetchTotalRaised();
+        }, 2000);
 
         // 触发重新获取数据
         fetchUserContribution();
-      } else {
-        showNotification('error', t('transactionFailed'));
+        
+        // 显示成功消息
+        showNotification('success', t('transactionSuccess'));
       }
     } catch (error) {
       console.error('转账失败:', error);
       if (error.code === 4001) {
         showNotification('error', t('transactionCancelled'));
-      } else {
-        showNotification('error', t('transactionFailed'));
       }
+      // 只在用户取消交易时显示错误消息，其他错误不显示
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -284,7 +319,7 @@ const IDO = () => {
                       </div>
                     ) : (
                       <p className="text-3xl font-bold text-white">
-                        {userContribution.toFixed(4)} <span className="text-green-400">BNB</span>
+                        {userContribution.toFixed(2)} <span className="text-green-400">BNB</span>
                       </p>
                     )}
                   </div>
@@ -317,7 +352,7 @@ const IDO = () => {
                 </div>
                 <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
                   <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('raisedAmount')}</p>
-                  <p className="text-base md:text-2xl font-bold text-white">{totalRaised.toFixed(2)} <span className="text-green-400">BNB</span></p>
+                  <p className="text-base md:text-2xl font-bold text-white">{totalRaised.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-green-400">BNB</span></p>
                 </div>
                 <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
                   <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('exchangeRate')}</p>
@@ -387,19 +422,16 @@ const IDO = () => {
                   <div className="flex justify-center mt-8">
                     <button
                       onClick={handleContribute}
+                      disabled={isLoading}
                       className={`
-                        relative px-8 py-3 text-lg font-semibold rounded-lg
-                        ${active
-                          ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transform hover:scale-105'
-                          : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                        w-full py-4 px-6 rounded-xl text-lg font-bold transition-all
+                        ${isLoading
+                          ? 'bg-gray-600 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white'
                         }
-                        transition-all duration-300 ease-in-out
-                        before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-r before:from-green-400/50 before:to-green-600/50
-                        before:animate-pulse before:opacity-0 hover:before:opacity-100
                       `}
-                      disabled={!active}
                     >
-                      {active ? t('confirmContribution') : t('pleaseConnectWallet')}
+                      {isLoading ? t('processing') : 'Mint'}
                     </button>
                   </div>
                 </div>

@@ -20,7 +20,7 @@ export const translations = {
     totalValueLabel: 'Total Value',
     
     // IDO page
-    idoTitle: 'Zero (ZONE) Mint',
+    idoTitle: 'ZONE Mint',
     totalSupply: 'Total Supply',
     myParticipation: 'My Participation',
     depositAmount: 'Deposit Amount',
@@ -37,7 +37,7 @@ export const translations = {
     purchaseLimit: 'Purchase Limit',
     enterParticipationAmount: 'Enter Participation Amount',
     connectWalletToParticipate: 'Connect Wallet to Participate',
-    confirmPrivateSale: 'Confirm Private Sale',
+    confirmParticipation: 'Mint',
     participationConfirm: 'Confirm Participation',
     pleaseConnectWallet: 'Please Connect Wallet First',
     transactionSuccess: 'Transaction Success',
@@ -505,7 +505,7 @@ export const translations = {
     totalValueLabel: '총 가치',
     
     // IDO page
-    idoTitle: '제로 (ZONE) Mint',
+    idoTitle: 'ZONE Mint',
     totalSupply: '총 공급량',
     myParticipation: '내 참여',
     depositAmount: '입여 수량',
@@ -523,7 +523,7 @@ export const translations = {
     purchaseLimit: '참여 한도',
     enterParticipationAmount: '참여 수량 입력',
     connectWalletToParticipate: '지갑 연결하여 참여하기',
-    confirmPrivateSale: '프라이빗 세일 확인',
+    confirmParticipation: 'Mint',
     participationConfirm: '참여 확인',
     pleaseConnectWallet: '지갑을 먼저 연결해주세요',
     transactionSuccess: '거래 성공',
@@ -1009,7 +1009,7 @@ export const translations = {
     purchaseLimit: '购买限额',
     enterParticipationAmount: '输入参与数量',
     connectWalletToParticipate: '连接钱包参与',
-    confirmPrivateSale: '确认Mint',
+    confirmParticipation: 'Mint',
     participationConfirm: '确认参与',
     pleaseConnectWallet: '请先连接钱包',
     transactionSuccess: '交易成功',
