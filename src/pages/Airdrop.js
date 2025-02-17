@@ -30,7 +30,9 @@ const Airdrop = () => {
       claimFailed: 'Claim failed, please try again later',
       invalidAddress: 'Please enter a valid BSC address',
       enterAddress: 'Please enter BSC address',
-      confirm: 'Confirm'
+      confirm: 'Confirm',
+      sorry: 'Sorry!',
+      requirementNotMet: 'You need at least 3,000 USDT transaction volume to be eligible for the airdrop'
     },
     'ko': {
       title: 'ZONE 토큰 에어드롭',
@@ -54,7 +56,9 @@ const Airdrop = () => {
       claimFailed: '받기 실패, 나중에 다시 시도하세요',
       invalidAddress: '유효한 BSC 주소를 입력하세요',
       enterAddress: 'BSC 주소를 입력하세요',
-      confirm: '확인'
+      confirm: '확인',
+      sorry: '죄송합니다!',
+      requirementNotMet: '에어드롭에 참여하려면 3,000 USDT 이상의 거래량이 필요합니다'
     },
     'zh': {
       title: 'ZONE 代币空投',
@@ -78,7 +82,9 @@ const Airdrop = () => {
       claimFailed: '领取失败，请稍后重试',
       invalidAddress: '请输入有效的 BSC 地址',
       enterAddress: '0x...',
-      confirm: '确定'
+      confirm: '确定',
+      sorry: '抱歉！',
+      requirementNotMet: '需要至少 3,000 USDT 的交易额才能获得空投资格'
     }
   };
   const t = translations[language] || translations.zh;
@@ -694,8 +700,8 @@ const Airdrop = () => {
 
             {!result.isEligible && (
               <div className="p-4 bg-yellow-900/50 border border-yellow-500 rounded">
-                <h3 className="text-lg font-medium mb-2 text-yellow-400">{t.congratulations}</h3>
-                <p className="text-gray-300">需要至少 3,000 USDT 的交易额才能获得空投资格</p>
+                <h3 className="text-lg font-medium mb-2 text-yellow-400">{t.sorry}</h3>
+                <p className="text-gray-300">{t.requirementNotMet}</p>
               </div>
             )}
           </div>
