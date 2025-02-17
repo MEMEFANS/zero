@@ -136,54 +136,53 @@ const IDO = () => {
       });
 
       console.log('Transaction hash:', txHash);
-
-      // 等待交易确认
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const receipt = await provider.waitForTransaction(txHash);
-      console.log('Transaction receipt:', receipt);
-
-      if (receipt.status === 1) {
-        // 更新用户的参与记录
-        const tokenAmount = bnbAmount * idoInfo.privateSale.dpapPerBNB;
-        const previousRecord = localStorage.getItem(`ido_contribution_${account}`);
-        let newBnbAmount = bnbAmount;
-        let newTokenAmount = tokenAmount;
-        
-        if (previousRecord) {
-          const { bnbAmount: prevBnb, tokenAmount: prevToken } = JSON.parse(previousRecord);
-          newBnbAmount += prevBnb;
-          newTokenAmount += prevToken;
-        }
-
-        // 保存到localStorage
-        localStorage.setItem(`ido_contribution_${account}`, JSON.stringify({
-          bnbAmount: newBnbAmount,
-          tokenAmount: newTokenAmount,
-          lastTx: txHash
-        }));
-
-        // 更新显示
-        setUserContribution(newBnbAmount);
-        setExpectedTokens(newTokenAmount);
-        setAmount('');
-
-        // 等待2秒后刷新总筹集量，确保链上数据已更新
-        setTimeout(async () => {
-          await fetchTotalRaised();
-        }, 2000);
-
-        // 触发重新获取数据
-        fetchUserContribution();
-        
-        // 显示成功消息
-        showNotification('success', t('transactionSuccess'));
+      
+      // 交易发送成功后立即显示成功消息
+      showNotification('success', t('transactionSuccess'));
+      
+      // 更新用户的参与记录
+      const tokenAmount = bnbAmount * idoInfo.privateSale.dpapPerBNB;
+      const previousRecord = localStorage.getItem(`ido_contribution_${account}`);
+      let newBnbAmount = bnbAmount;
+      let newTokenAmount = tokenAmount;
+      
+      if (previousRecord) {
+        const { bnbAmount: prevBnb, tokenAmount: prevToken } = JSON.parse(previousRecord);
+        newBnbAmount += prevBnb;
+        newTokenAmount += prevToken;
       }
+
+      // 保存到localStorage
+      localStorage.setItem(`ido_contribution_${account}`, JSON.stringify({
+        bnbAmount: newBnbAmount,
+        tokenAmount: newTokenAmount,
+        lastTx: txHash
+      }));
+
+      // 更新显示
+      setUserContribution(newBnbAmount);
+      setExpectedTokens(newTokenAmount);
+      setAmount('');
+
+      // 在后台等待交易确认并更新总筹集量
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      provider.waitForTransaction(txHash).then(async (receipt) => {
+        if (receipt.status === 1) {
+          // 等待1秒后刷新总筹集量，确保链上数据已更新
+          setTimeout(async () => {
+            await fetchTotalRaised();
+          }, 1000);
+          
+          // 触发重新获取数据
+          fetchUserContribution();
+        }
+      });
+
     } catch (error) {
       console.error('转账失败:', error);
       if (error.code === 4001) {
         showNotification('error', t('transactionCancelled'));
       }
-      // 只在用户取消交易时显示错误消息，其他错误不显示
     } finally {
       setIsLoading(false);
     }
