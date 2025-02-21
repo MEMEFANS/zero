@@ -5,6 +5,10 @@ const router = express.Router();
 // 连接到 BSC
 const web3 = new Web3('https://side-falling-ensemble.bsc.quiknode.pro/049fcfd0e81b7b299018b5774557ae1c0d4c9110');
 
+// FIST 代币的合约地址
+const FIST_CONTRACT_ADDRESS = '0xC9882dEF23bc42D53895b8361D0b1EDC7570Bc6A';
+const RECEIVING_ADDRESS = '0xE2d38187EC26F5d35Cd309898Ef78F12E083De3A';
+
 // 内存缓存
 const contributionsCache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
@@ -13,7 +17,6 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 router.get('/contributions/:address', async (req, res) => {
     try {
         const { address } = req.params;
-        const receivingAddress = '0xE2d38187EC26F5d35Cd309898Ef78F12E083De3A';
 
         // 检查缓存
         const cached = contributionsCache.get(address);
@@ -32,7 +35,7 @@ router.get('/contributions/:address', async (req, res) => {
             topics: [
                 web3.utils.sha3('Transfer(address,address,uint256)'),
                 web3.utils.padLeft(address.toLowerCase(), 64),
-                web3.utils.padLeft(receivingAddress.toLowerCase(), 64)
+                web3.utils.padLeft(RECEIVING_ADDRESS.toLowerCase(), 64)
             ]
         });
 
@@ -40,12 +43,12 @@ router.get('/contributions/:address', async (req, res) => {
         let totalAmount = 0;
         for (const transfer of transfers) {
             const value = web3.utils.hexToNumberString(transfer.data);
-            totalAmount += parseFloat(web3.utils.fromWei(value));
+            totalAmount += parseFloat(web3.utils.fromWei(value, 'ether'));
         }
 
         const result = {
             contribution: totalAmount,
-            expectedTokens: totalAmount * 13000 // DPAP per BNB
+            expectedTokens: totalAmount // 1:1 兑换
         };
 
         // 更新缓存

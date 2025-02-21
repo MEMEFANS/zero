@@ -8,27 +8,66 @@ const IDO = () => {
   const { active, account, activate, library } = useWeb3React();
   const { t } = useContext(LanguageContext);
   const [amount, setAmount] = useState('');
-  const [userContribution, setUserContribution] = useState(0);
-  const [expectedTokens, setExpectedTokens] = useState(0);
+  const [bnbAmount, setBnbAmount] = useState(0);
+  const [tokenAmount, setTokenAmount] = useState(0);
   const [totalRaised, setTotalRaised] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [notification, setNotification] = useState({ show: false, type: '', message: '' });
+  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
   const receivingAddress = '0xE2d38187EC26F5d35Cd309898Ef78F12E083De3A';
-  // 改用您的服务器地址
-  const API_URL = 'https://api.your-domain.com/api';
+  const FIST_CONTRACT_ADDRESS = '0xC9882dEF23bc42D53895b8361D0b1EDC7570Bc6A';  // BSC 网络上的 FIST 代币合约地址
+  
+  // FIST 代币的 ABI，从 BSCScan 获取的标准 BEP20 接口
+  const FIST_ABI = [
+    "function balanceOf(address owner) view returns (uint256)",
+    "function decimals() view returns (uint8)",
+    "function symbol() view returns (string)",
+    "function transfer(address to, uint256 amount) returns (bool)",
+    "function approve(address spender, uint256 amount) returns (bool)",
+    "function allowance(address owner, address spender) view returns (uint256)"
+  ];
 
-  const idoInfo = {
-    totalSupply: 100000000,
-    privateSale: {
-      amount: 10000000,
-      bnbTarget: 769.23,
-      dpapPerBNB: 13000,
-      minContribution: 0.1,
-      maxContribution: 2
-    },
-    startTime: '2025-02-20 20:00:00',
-    endTime: '2025-02-28 20:00:00'
+  // 检查并切换到 BSC 网络
+  const switchToBSC = async () => {
+    if (!window.ethereum) return;
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x38' }], // BSC Mainnet chainId
+      });
+    } catch (switchError) {
+      // 如果用户没有添加 BSC 网络，则添加
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: '0x38',
+                chainName: 'Binance Smart Chain',
+                nativeCurrency: {
+                  name: 'BNB',
+                  symbol: 'BNB',
+                  decimals: 18
+                },
+                rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                blockExplorerUrls: ['https://bscscan.com/']
+              }
+            ]
+          });
+        } catch (addError) {
+          console.error('添加 BSC 网络失败:', addError);
+        }
+      }
+      console.error('切换到 BSC 网络失败:', switchError);
+    }
   };
+
+  // 在组件加载时检查网络
+  useEffect(() => {
+    if (active) {
+      switchToBSC();
+    }
+  }, [active]);
 
   // 获取用户的参与记录
   const fetchUserContribution = async () => {
@@ -37,27 +76,11 @@ const IDO = () => {
     try {
       setIsLoading(true);
       const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const fistContract = new ethers.Contract(FIST_CONTRACT_ADDRESS, FIST_ABI, provider);
       
-      // 使用 getBalance 检查接收地址的余额
-      const balance = await provider.getBalance(receivingAddress);
-      console.log('Contract balance:', ethers.utils.formatEther(balance), 'BNB');
-
-      // 获取用户向合约的转账记录
-      const filter = {
-        fromBlock: 0,
-        toBlock: 'latest',
-        from: account,
-        to: receivingAddress
-      };
-
-      const history = await provider.send('eth_getTransactionCount', [account, 'latest']);
-      console.log('Transaction count:', history);
-
-      // 获取最近的交易
-      const blockNumber = await provider.getBlockNumber();
-      const block = await provider.getBlock(blockNumber);
-      console.log('Latest block:', blockNumber);
-      console.log('Block timestamp:', new Date(block.timestamp * 1000).toLocaleString());
+      // 检查 FIST 余额
+      const balance = await fistContract.balanceOf(receivingAddress);
+      console.log('Contract FIST balance:', ethers.utils.formatEther(balance), 'FIST');
 
       // 从localStorage获取历史记录
       const previousRecord = localStorage.getItem(`ido_contribution_${account}`);
@@ -67,11 +90,11 @@ const IDO = () => {
         contribution = bnbAmount;
       }
       
-      console.log('Current contribution:', contribution, 'BNB');
+      console.log('Current contribution:', contribution, 'FIST');
       
       // 更新状态
-      setUserContribution(contribution);
-      setExpectedTokens(contribution * idoInfo.privateSale.dpapPerBNB);
+      setBnbAmount(contribution);
+      setTokenAmount(contribution);  // 1:1 兑换
       
     } catch (error) {
       console.error('获取参与记录失败:', error);
@@ -80,15 +103,16 @@ const IDO = () => {
     }
   };
 
-  // 获取私募合约地址的BNB余额
+  // 获取私募合约地址的FIST余额
   const fetchTotalRaised = async () => {
     try {
       console.log('Fetching total raised...');
       const provider = new ethers.providers.JsonRpcProvider('https://side-falling-ensemble.bsc.quiknode.pro/049fcfd0e81b7b299018b5774557ae1c0d4c9110/');
-      const balance = await provider.getBalance(receivingAddress);
-      const bnbBalance = parseFloat(ethers.utils.formatEther(balance));
-      console.log('Total raised:', bnbBalance, 'BNB');
-      setTotalRaised(bnbBalance);
+      const fistContract = new ethers.Contract(FIST_CONTRACT_ADDRESS, FIST_ABI, provider);
+      const balance = await fistContract.balanceOf(receivingAddress);
+      const fistBalance = parseFloat(ethers.utils.formatEther(balance));
+      console.log('Total raised:', fistBalance, 'FIST');
+      setTotalRaised(fistBalance);
     } catch (error) {
       console.error('获取总筹集量失败:', error);
     }
@@ -113,37 +137,57 @@ const IDO = () => {
   // 处理用户参与
   const handleContribute = async () => {
     if (!active || !account) {
-      showNotification('error', t('pleaseConnect'));
+      showNotification('error', t('transactionFailed'), t('pleaseConnect'));
       return;
     }
 
-    const bnbAmount = parseFloat(amount);
-    if (isNaN(bnbAmount) || bnbAmount < idoInfo.privateSale.minContribution || bnbAmount > idoInfo.privateSale.maxContribution) {
-      showNotification('error', t('invalidAmount').replace('{min}', idoInfo.privateSale.minContribution).replace('{max}', idoInfo.privateSale.maxContribution));
+    // 确保在 BSC 网络上
+    await switchToBSC();
+
+    const fistAmount = parseFloat(amount);
+    if (isNaN(fistAmount) || fistAmount <= 0) {
+      showNotification('error', t('transactionFailed'), t('invalidAmount'));
+      return;
+    }
+
+    // 检查是否是 1000 的整数倍
+    if (fistAmount % 1000 !== 0) {
+      showNotification('error', t('transactionFailed'), t('amountMustBeMultipleOf1000'));
       return;
     }
 
     try {
       setIsLoading(true);
-      // 使用window.ethereum直接发送交易
-      const txHash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [{
-          from: account,
-          to: receivingAddress,
-          value: '0x' + (bnbAmount * 1e18).toString(16)
-        }]
-      });
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const fistContract = new ethers.Contract(FIST_CONTRACT_ADDRESS, FIST_ABI, signer);
+      
+      // 检查用户的 FIST 余额
+      const balance = await fistContract.balanceOf(account);
+      const userBalance = parseFloat(ethers.utils.formatEther(balance));
+      
+      if (userBalance < fistAmount) {
+        showNotification('error', t('transactionFailed'), t('insufficientFISTBalance'));
+        setIsLoading(false);
+        return;
+      }
 
-      console.log('Transaction hash:', txHash);
+      // 转换金额为 wei 单位
+      const amountInWei = ethers.utils.parseEther(fistAmount.toString());
+      
+      // 发送 FIST 代币
+      const tx = await fistContract.transfer(receivingAddress, amountInWei);
+      const receipt = await tx.wait();
+      
+      console.log('Transaction hash:', receipt.transactionHash);
       
       // 交易发送成功后立即显示成功消息
-      showNotification('success', t('transactionSuccess'));
+      showNotification('success', t('transactionSuccess'), '');
       
       // 更新用户的参与记录
-      const tokenAmount = bnbAmount * idoInfo.privateSale.dpapPerBNB;
+      const tokenAmount = fistAmount;  // 1:1 兑换
       const previousRecord = localStorage.getItem(`ido_contribution_${account}`);
-      let newBnbAmount = bnbAmount;
+      let newBnbAmount = fistAmount;
       let newTokenAmount = tokenAmount;
       
       if (previousRecord) {
@@ -156,33 +200,27 @@ const IDO = () => {
       localStorage.setItem(`ido_contribution_${account}`, JSON.stringify({
         bnbAmount: newBnbAmount,
         tokenAmount: newTokenAmount,
-        lastTx: txHash
+        lastTx: receipt.transactionHash
       }));
 
       // 更新显示
-      setUserContribution(newBnbAmount);
-      setExpectedTokens(newTokenAmount);
+      setBnbAmount(newBnbAmount);
+      setTokenAmount(newTokenAmount);
       setAmount('');
 
       // 在后台等待交易确认并更新总筹集量
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      provider.waitForTransaction(txHash).then(async (receipt) => {
+      provider.waitForTransaction(receipt.transactionHash).then(async (receipt) => {
         if (receipt.status === 1) {
           // 等待1秒后刷新总筹集量，确保链上数据已更新
           setTimeout(async () => {
             await fetchTotalRaised();
           }, 1000);
-          
-          // 触发重新获取数据
-          fetchUserContribution();
         }
       });
 
     } catch (error) {
-      console.error('转账失败:', error);
-      if (error.code === 4001) {
-        showNotification('error', t('transactionCancelled'));
-      }
+      console.error('参与失败:', error);
+      showNotification('error', t('transactionFailed'), t('transactionFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -212,9 +250,23 @@ const IDO = () => {
   };
 
   // 显示通知
-  const showNotification = (type, message) => {
-    setNotification({ show: true, type, message });
-    setTimeout(() => setNotification({ show: false, type: '', message: '' }), 3000);
+  const showNotification = (type, title, message) => {
+    setNotification({ show: true, type, title, message });
+    setTimeout(() => setNotification({ show: false, type: '', title: '', message: '' }), 3000);
+  };
+
+  const idoInfo = {
+    totalSupply: 100000000,
+    privateSale: {
+      amount: 1000000,
+      fistTarget: 1000000,  // 改为与 amount 相同，因为 1:1 兑换
+      dpapPerFIST: 1,      // 1 FIST = 1 ZONE
+      unitAmount: 1000,    // 每份 1000 FIST
+      minContribution: 0.1,
+      maxContribution: 2
+    },
+    startTime: '2025-02-20 20:00:00',
+    endTime: '2025-02-28 20:00:00'
   };
 
   return (
@@ -234,7 +286,7 @@ const IDO = () => {
       {/* 通知弹窗 */}
       {notification.show && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setNotification({ show: false, type: '', message: '' })}></div>
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setNotification({ show: false, type: '', title: '', message: '' })}></div>
           <div className={`
             relative rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4
             ${notification.type === 'success'
@@ -263,13 +315,13 @@ const IDO = () => {
               </div>
               <div>
                 <h3 className={`text-xl font-bold mb-1 ${notification.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
-                  {notification.type === 'success' ? t('transactionSuccess') : t('transactionFailed')}
+                  {notification.title}
                 </h3>
                 <p className="text-gray-300">{notification.message}</p>
               </div>
             </div>
             <button
-              onClick={() => setNotification({ show: false, type: '', message: '' })}
+              onClick={() => setNotification({ show: false, type: '', title: '', message: '' })}
               className={`
                 mt-6 w-full py-3 rounded-lg font-semibold transition-all
                 ${notification.type === 'success'
@@ -318,7 +370,7 @@ const IDO = () => {
                       </div>
                     ) : (
                       <p className="text-3xl font-bold text-white">
-                        {userContribution.toFixed(2)} <span className="text-green-400">BNB</span>
+                        {bnbAmount.toFixed(2)} <span className="text-green-400">FIST</span>
                       </p>
                     )}
                   </div>
@@ -330,7 +382,7 @@ const IDO = () => {
                       </div>
                     ) : (
                       <p className="text-3xl font-bold text-white">
-                        {expectedTokens.toFixed(2)} <span className="text-green-400">ZONE</span>
+                        {tokenAmount.toFixed(2)} <span className="text-green-400">ZONE</span>
                       </p>
                     )}
                   </div>
@@ -347,27 +399,26 @@ const IDO = () => {
                 </div>
                 <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
                   <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('privateSaleAmount')}</p>
-                  <p className="text-base md:text-2xl font-bold text-white">{t('tenMillion')} <span className="text-green-400">ZONE</span></p>
+                  <p className="text-base md:text-2xl font-bold text-white">{t('oneMillion')} <span className="text-green-400">ZONE</span></p>
                 </div>
                 <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
                   <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('raisedAmount')}</p>
-                  <p className="text-base md:text-2xl font-bold text-white">{totalRaised.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-green-400">BNB</span></p>
+                  <p className="text-base md:text-2xl font-bold text-white">{totalRaised.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-green-400">FIST</span></p>
                 </div>
                 <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
                   <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('exchangeRate')}</p>
-                  <p className="text-base md:text-2xl font-bold text-white">1 BNB = <span className="text-green-400">13,000 ZONE</span></p>
+                  <p className="text-base md:text-2xl font-bold text-white">1 FIST = <span className="text-green-400">1 ZONE</span></p>
                 </div>
                 <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
                   <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('privateSalePrice')}</p>
-                  <p className="text-base md:text-2xl font-bold text-white">≈ <span className="text-green-400">0.05U</span></p>
+                  <p className="text-base md:text-2xl font-bold text-white">≈ <span className="text-green-400">0.03</span> USDT</p>
                 </div>
                 <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
                   <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('participationLimit')}</p>
                   <div>
                     <p className="text-base md:text-xl font-bold text-white">
-                      <span className="text-green-400">0.1</span> - <span className="text-green-400">2</span> BNB
+                      <span className="text-green-400">1,000</span> FIST
                     </p>
-                    <p className="text-xs md:text-sm text-gray-400 mt-1">1,300 - 26,000 ZONE</p>
                   </div>
                 </div>
               </div>
@@ -389,31 +440,27 @@ const IDO = () => {
                     <div className="relative">
                       <input
                         type="number"
-                        min={idoInfo.privateSale.minContribution}
-                        max={idoInfo.privateSale.maxContribution}
-                        step="0.1"
                         value={amount}
                         onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          if (value > idoInfo.privateSale.maxContribution) {
-                            setAmount(idoInfo.privateSale.maxContribution.toString());
-                          } else {
-                            setAmount(e.target.value);
-                          }
+                          const value = e.target.value;
+                          setAmount(value);
                         }}
                         className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-4 py-4 text-white text-xl focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        placeholder="0.0"
+                        placeholder="1000"
                       />
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
-                        <span className="text-green-400 font-bold text-lg">BNB</span>
+                        <span className="text-green-400 font-bold text-lg">FIST</span>
                       </div>
                     </div>
                     {amount && (
                       <div className="mt-4 bg-green-500/10 rounded-xl p-4">
                         <p className="text-gray-400 text-sm">{t('expectedToReceive')}</p>
                         <p className="text-xl font-bold text-green-400">
-                          {(parseFloat(amount || 0) * idoInfo.privateSale.dpapPerBNB).toLocaleString()} ZONE
+                          {(parseFloat(amount || 0)).toLocaleString()} ZONE
                         </p>
+                        {parseFloat(amount) % 1000 !== 0 && (
+                          <p className="text-sm text-red-400 mt-2">{t('amountMustBeMultipleOf1000')}</p>
+                        )}
                       </div>
                     )}
                   </div>

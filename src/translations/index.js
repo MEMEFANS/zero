@@ -45,8 +45,13 @@ export const translations = {
     participationSuccessful: 'Participation Successful!',
     transactionCancelled: 'Transaction Cancelled',
     insufficientBalance: 'Insufficient Balance',
+    insufficientFISTBalance: 'Insufficient FIST Balance',
     transactionFailedTryAgain: 'Transaction Failed, Please Try Again',
     invalidAmount: 'Please enter amount between {min}-{max} BNB',
+    multipleOf: 'Multiple of',
+    maxContribution: 'Max Contribution',
+    receiveEqualZONE: 'Receive equal amount of ZONE',
+    amountMustBeMultipleOf1000: 'Amount must be multiple of 1,000',
     
     // IDO Numbers
     oneHundredMillion: '100,000,000',
@@ -399,6 +404,7 @@ export const translations = {
     gateCommunityDescription: 'Innovative digital asset platform',
     kucoinCommunityTitle: 'KuCoin Community',
     kucoinCommunityDescription: 'Global leading exchange',
+    panguCommunity: 'Pangu Community',
     globalLeadingExchange: 'Global Leading Exchange',
 
     communitiesTitle: 'Communities',
@@ -412,6 +418,7 @@ export const translations = {
     gateCommunityDescription: 'Innovative Digital Asset Platform',
     kucoinCommunityTitle: 'KuCoin Community',
     kucoinCommunityDescription: 'Global leading exchange',
+    panguCommunity: 'Pangu Community',
 
     // Discord
     discordTitle: 'Discord',
@@ -456,6 +463,7 @@ export const translations = {
     okxCommunity: 'OKX',
     huobiCommunity: 'Huobi',
     kucoinCommunity: 'KuCoin',
+    panguCommunity: 'Pangu Community',
     globalLeadingExchange: 'Global Leading Exchange',
     
     // Airdrop
@@ -483,6 +491,7 @@ export const translations = {
     notEligibleToClaim: 'Not Eligible to Claim',
     sorry: 'Sorry!',
     requirementNotMet: 'A transaction volume of at least 3,000 USDT is required for airdrop eligibility',
+    bscLargestCommunity: 'Largest BSC Community',
   },
   ko: {
     // Navbar
@@ -531,8 +540,13 @@ export const translations = {
     participationSuccessful: '참여 성공!',
     transactionCancelled: '거래가 취소되었습니다',
     insufficientBalance: '잔액 부족',
+    insufficientFISTBalance: 'FIST 잔액 부족',
     transactionFailedTryAgain: '거래 실패, 다시 시도해주세요',
     invalidAmount: '{min}-{max} BNB 사이의 수량을 입력해주세요',
+    multipleOf: '배수로',
+    maxContribution: '최대 참여',
+    receiveEqualZONE: '동일한 양의 ZONE 받기',
+    amountMustBeMultipleOf1000: '금액은 1,000의 배수여야 합니다',
     
     // IDO Numbers
     oneHundredMillion: '1억',
@@ -885,6 +899,7 @@ export const translations = {
     gateCommunityDescription: '혁신적인 디지털 자산 플랫폼',
     kucoinCommunityTitle: '쿠코인 커뮤니티',
     kucoinCommunityDescription: '글로벌 선도 거래소',
+    panguCommunity: '반고 커뮤니티',
     globalLeadingExchange: '글로벌 선도 거래소',
 
     communitiesTitle: '커뮤니티',
@@ -898,6 +913,7 @@ export const translations = {
     gateCommunityDescription: '혁신적인 디지털 자산 플랫폼',
     kucoinCommunityTitle: '쿠코인 커뮤니티',
     kucoinCommunityDescription: '글로벌 선도 거래소',
+    panguCommunity: '반고 커뮤니티',
 
     // Discord
     discordTitle: 'Discord',
@@ -942,6 +958,7 @@ export const translations = {
     okxCommunity: 'OKX',
     huobiCommunity: '후오비',
     kucoinCommunity: '쿠코인',
+    panguCommunity: '반고 커뮤니티',
     globalLeadingExchange: '글로벌 선도 거래소',
     
     // 에어드롭
@@ -969,6 +986,7 @@ export const translations = {
     notEligibleToClaim: '받을 자격이 없습니다',
     sorry: '죄송합니다!',
     requirementNotMet: '에어드롭 자격을 얻으려면 최소 3,000 USDT의 거래량이 필요합니다',
+    bscLargestCommunity: 'BSC 최대 커뮤니티',
   },
   zh: {
     // Navbar
@@ -1017,8 +1035,13 @@ export const translations = {
     participationSuccessful: '参与成功！',
     transactionCancelled: '交易已取消',
     insufficientBalance: '余额不足',
+    insufficientFISTBalance: 'FIST余额不足',
     transactionFailedTryAgain: '交易失败，请重试',
     invalidAmount: '请输入{min}-{max} BNB之间的数量',
+    multipleOf: '必须是',
+    maxContribution: '最大参与',
+    receiveEqualZONE: '将获得等量的 ZONE',
+    amountMustBeMultipleOf1000: '金额必须是 1,000 的整数倍',
     
     // IDO Numbers
     oneHundredMillion: '1亿',
@@ -1370,6 +1393,7 @@ export const translations = {
     gateCommunityDescription: '创新数字资产平台',
     kucoinCommunityTitle: 'KuCoin社区',
     kucoinCommunityDescription: '全球领先交易所',
+    panguCommunity: '盘古社区',
     globalLeadingExchange: '全球领先交易所',
 
     communitiesTitle: '社区列表',
@@ -1383,6 +1407,7 @@ export const translations = {
     gateCommunityDescription: '创新数字资产平台',
     kucoinCommunityTitle: 'KuCoin社区',
     kucoinCommunityDescription: '全球领先交易所',
+    panguCommunity: '盘古社区',
 
     // Discord
     discordTitle: 'Discord',
@@ -1427,6 +1452,7 @@ export const translations = {
     okxCommunity: 'OKX',
     huobiCommunity: '火币',
     kucoinCommunity: 'KuCoin',
+    panguCommunity: '盘古社区',
     globalLeadingExchange: '全球领先交易所',
     
     // 空投
@@ -1454,5 +1480,6 @@ export const translations = {
     notEligibleToClaim: '不符合领取条件',
     sorry: '抱歉！',
     requirementNotMet: '需要至少 3,000 USDT 的交易额才能获得空投资格',
+    bscLargestCommunity: 'BSC最大社区',
   }
 };
