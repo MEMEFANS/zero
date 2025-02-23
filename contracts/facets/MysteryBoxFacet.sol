@@ -69,6 +69,22 @@ contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
     event NFTMaxRewardUpdated(uint256 indexed tokenId, uint256 newMaxReward);
     event RarityMaxRewardUpdated(NFTRarity indexed rarity, uint256 newMaxReward);
 
+    // 操作日志事件
+    event OperationLog(
+        address indexed operator,
+        string action,
+        string details,
+        uint256 timestamp
+    );
+
+    event BatchOperation(
+        address indexed operator,
+        string action,
+        uint256[] tokenIds,
+        string params,
+        uint256 timestamp
+    );
+
     // 状态变量
     IERC20 public zoneToken;  // ZONE代币合约
     uint256 public BOX_PRICE = 100 * 10**18;  // 100 ZONE
@@ -767,5 +783,125 @@ contract MysteryBoxFacet is ERC721, AccessControl, ReentrancyGuard {
             value /= 10;
         }
         return string(buffer);
+    }
+
+    // 批量更新NFT属性
+    function batchUpdateNFTs(
+        uint256[] calldata tokenIds,
+        string calldata action,
+        string calldata params
+    ) external onlyRole(ADMIN_ROLE) {
+        require(tokenIds.length > 0, "Empty token list");
+        
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            require(_exists(tokenIds[i]), "NFT does not exist");
+            
+            if (keccak256(bytes(action)) == keccak256(bytes("updateDailyReward"))) {
+                uint256 newDailyReward = abi.decode(bytes(params), (uint256));
+                nftAttributes[tokenIds[i]].dailyReward = newDailyReward;
+                emit NFTRewardUpdated(tokenIds[i], newDailyReward);
+            }
+            else if (keccak256(bytes(action)) == keccak256(bytes("updateMaxReward"))) {
+                uint256 newMaxReward = abi.decode(bytes(params), (uint256));
+                nftAttributes[tokenIds[i]].maxReward = newMaxReward;
+                emit NFTMaxRewardUpdated(tokenIds[i], newMaxReward);
+            }
+            else if (keccak256(bytes(action)) == keccak256(bytes("updateRarity"))) {
+                NFTRarity newRarity = NFTRarity(abi.decode(bytes(params), (uint8)));
+                nftAttributes[tokenIds[i]].rarity = newRarity;
+            }
+        }
+        
+        emit BatchOperation(
+            msg.sender,
+            action,
+            tokenIds,
+            params,
+            block.timestamp
+        );
+    }
+
+    // 记录操作日志
+    function logOperation(
+        string calldata action,
+        string calldata details
+    ) external onlyRole(ADMIN_ROLE) {
+        emit OperationLog(
+            msg.sender,
+            action,
+            details,
+            block.timestamp
+        );
+    }
+
+    // 获取NFT统计数据
+    function getNFTStats() external view returns (
+        uint256 totalSupply,
+        uint256 stakedCount,
+        uint256 listedCount,
+        uint256 burnedCount
+    ) {
+        totalSupply = _tokenIdCounter.current();
+        
+        uint256 _stakedCount = 0;
+        uint256 _listedCount = 0;
+        uint256 _burnedCount = 0;
+        
+        for (uint256 i = 1; i <= totalSupply; i++) {
+            if (_exists(i)) {
+                if (nftAttributes[i].isStaked) {
+                    _stakedCount++;
+                }
+                if (marketListings[i].isActive) {
+                    _listedCount++;
+                }
+            } else {
+                _burnedCount++;
+            }
+        }
+        
+        return (totalSupply, _stakedCount, _listedCount, _burnedCount);
+    }
+
+    // 获取时间范围内的交易统计
+    function getTradeStats(uint256 startTime, uint256 endTime) external view returns (
+        uint256 tradeVolume,
+        uint256 tradeCount,
+        address[] memory traders
+    ) {
+        require(startTime < endTime, "Invalid time range");
+        
+        uint256 totalSupply = _tokenIdCounter.current();
+        uint256 _tradeVolume = 0;
+        uint256 _tradeCount = 0;
+        mapping(address => bool) storage tradersMap;
+        address[] memory _traders;
+        uint256 tradersCount = 0;
+        
+        for (uint256 tokenId = 1; tokenId <= totalSupply; tokenId++) {
+            TradeHistory[] storage trades = tradeHistories[tokenId];
+            for (uint256 j = 0; j < trades.length; j++) {
+                if (trades[j].timestamp >= startTime && trades[j].timestamp <= endTime) {
+                    _tradeVolume += trades[j].price;
+                    _tradeCount++;
+                    
+                    if (!tradersMap[trades[j].seller]) {
+                        tradersMap[trades[j].seller] = true;
+                        _traders[tradersCount++] = trades[j].seller;
+                    }
+                    if (!tradersMap[trades[j].buyer]) {
+                        tradersMap[trades[j].buyer] = true;
+                        _traders[tradersCount++] = trades[j].buyer;
+                    }
+                }
+            }
+        }
+        
+        address[] memory activeTraders = new address[](tradersCount);
+        for (uint256 i = 0; i < tradersCount; i++) {
+            activeTraders[i] = _traders[i];
+        }
+        
+        return (_tradeVolume, _tradeCount, activeTraders);
     }
 }

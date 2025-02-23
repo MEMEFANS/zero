@@ -17,26 +17,37 @@ import {
   DashboardOutlined,
   TeamOutlined,
   SettingOutlined,
-  LogoutOutlined
+  LogoutOutlined,
+  UserOutlined,
+  ShoppingOutlined,
+  FileTextOutlined,
+  BarChartOutlined
 } from '@ant-design/icons';
-import { useNavigate, Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import NFTManagement from './NFTManagement';
+import UserManagement from './UserManagement';
+import SystemSettings from './SystemSettings';
+import TransactionManagement from './TransactionManagement';
+import OperationLogs from './OperationLogs';
+import Analytics from './Analytics';
+import { MYSTERY_BOX_ABI } from '../../contracts/MysteryBoxABI';
 
-const { Header, Sider, Content } = Layout;
+const { Header, Content, Sider } = Layout;
 const { Title } = Typography;
 
 const ADMIN_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ADMIN_ROLE"));
 
 const AdminDashboard = () => {
-  const { account, library, deactivate } = useWeb3React();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const { account, library, deactivate } = useWeb3React();
+  const [collapsed, setCollapsed] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalNFTs: 0,
-    totalStaked: 0,
-    totalRewards: 0
+    totalTransactions: 0
   });
 
   // 检查管理员权限
@@ -62,8 +73,54 @@ const AdminDashboard = () => {
     }
   };
 
-  // 加载统计数据
-  const loadStats = async () => {
+  const menuItems = [
+    {
+      key: '',
+      icon: <DashboardOutlined />,
+      label: '仪表盘',
+    },
+    {
+      key: 'nft',
+      icon: <ShoppingOutlined />,
+      label: 'NFT管理',
+    },
+    {
+      key: 'users',
+      icon: <TeamOutlined />,
+      label: '用户管理',
+    },
+    {
+      key: 'transactions',
+      icon: <FileTextOutlined />,
+      label: '交易管理',
+    },
+    {
+      key: 'logs',
+      icon: <FileTextOutlined />,
+      label: '操作日志',
+    },
+    {
+      key: 'analytics',
+      icon: <BarChartOutlined />,
+      label: '数据分析',
+    },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: '系统设置',
+    },
+  ];
+
+  useEffect(() => {
+    if (!account) {
+      message.error('请先连接钱包');
+      return;
+    }
+    checkAdminRole();
+    loadDashboardData();
+  }, [account]);
+
+  const loadDashboardData = async () => {
     try {
       setLoading(true);
       const contract = new ethers.Contract(
@@ -72,51 +129,26 @@ const AdminDashboard = () => {
         library.getSigner()
       );
 
-      const [totalNFTs, totalStaked, totalRewards] = await Promise.all([
-        contract._tokenIdCounter(),
-        contract.getTotalStaked(),
-        contract.getTotalRewards()
+      const [nftStats, tradeStats] = await Promise.all([
+        contract.getNFTStats(),
+        contract.getTradeStats(),
       ]);
 
       setStats({
-        totalNFTs: totalNFTs.toString(),
-        totalStaked: totalStaked.toString(),
-        totalRewards: ethers.utils.formatEther(totalRewards)
+        totalNFTs: nftStats.totalSupply.toString(),
+        totalTransactions: tradeStats.totalTrades.toString(),
       });
     } catch (error) {
-      console.error('加载统计数据失败:', error);
+      console.error('加载数据失败:', error);
+      message.error('加载数据失败');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (account && library) {
-      checkAdminRole();
-      loadStats();
-    }
-  }, [account, library]);
-
-  const menuItems = [
-    {
-      key: 'dashboard',
-      icon: <DashboardOutlined />,
-      label: '仪表盘',
-      onClick: () => navigate('/admin')
-    },
-    {
-      key: 'nft',
-      icon: <TeamOutlined />,
-      label: 'NFT管理',
-      onClick: () => navigate('/admin/nft')
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: '系统设置',
-      onClick: () => navigate('/admin/settings')
-    }
-  ];
+  const handleMenuClick = (key) => {
+    navigate(key);
+  };
 
   if (!isAdmin) {
     return <Spin spinning={loading} />;
@@ -124,70 +156,59 @@ const AdminDashboard = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider>
+      <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
         <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }} />
         <Menu
           theme="dark"
+          selectedKeys={[location.pathname.split('/')[2] || '']}
           mode="inline"
-          defaultSelectedKeys={['dashboard']}
           items={menuItems}
+          onClick={({ key }) => handleMenuClick(key)}
         />
       </Sider>
       <Layout>
-        <Header style={{ padding: '0 16px', background: '#fff', display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            icon={<LogoutOutlined />}
-            onClick={() => {
-              deactivate();
-              navigate('/');
-            }}
-          >
-            退出
-          </Button>
+        <Header style={{ padding: 0, background: '#fff' }}>
+          <Row justify="end" align="middle" style={{ height: '100%', paddingRight: 24 }}>
+            <Col>
+              <Button icon={<LogoutOutlined />} onClick={() => {
+                deactivate();
+                navigate('/');
+              }}>
+                退出
+              </Button>
+            </Col>
+          </Row>
         </Header>
-        <Content style={{ margin: '24px 16px', padding: 24, background: '#fff' }}>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <div>
-                  <Title level={2}>系统概览</Title>
-                  <Row gutter={16}>
-                    <Col span={6}>
-                      <Card>
-                        <Statistic
-                          title="总NFT数量"
-                          value={stats.totalNFTs}
-                          loading={loading}
-                        />
-                      </Card>
-                    </Col>
-                    <Col span={6}>
-                      <Card>
-                        <Statistic
-                          title="质押中NFT"
-                          value={stats.totalStaked}
-                          loading={loading}
-                        />
-                      </Card>
-                    </Col>
-                    <Col span={6}>
-                      <Card>
-                        <Statistic
-                          title="总收益发放"
-                          value={stats.totalRewards}
-                          loading={loading}
-                          suffix="ZONE"
-                        />
-                      </Card>
-                    </Col>
-                  </Row>
-                </div>
-              }
-            />
-            <Route path="/nft" element={<NFTManagement />} />
-            <Route path="/settings" element={<div>系统设置</div>} />
-          </Routes>
+        <Content style={{ margin: '16px' }}>
+          <div style={{ padding: 24, background: '#fff', minHeight: 360 }}>
+            <Spin spinning={loading}>
+              <Routes>
+                <Route path="" element={
+                  <div>
+                    <Title level={2}>仪表盘</Title>
+                    <Row gutter={16}>
+                      <Col span={8}>
+                        <Card>
+                          <Statistic title="总NFT数量" value={stats.totalNFTs} />
+                        </Card>
+                      </Col>
+                      <Col span={8}>
+                        <Card>
+                          <Statistic title="总交易数" value={stats.totalTransactions} />
+                        </Card>
+                      </Col>
+                    </Row>
+                  </div>
+                } />
+                <Route path="nft/*" element={<NFTManagement />} />
+                <Route path="users/*" element={<UserManagement />} />
+                <Route path="transactions/*" element={<TransactionManagement />} />
+                <Route path="logs/*" element={<OperationLogs />} />
+                <Route path="analytics/*" element={<Analytics />} />
+                <Route path="settings/*" element={<SystemSettings />} />
+              </Routes>
+            </Spin>
+          </div>
         </Content>
       </Layout>
     </Layout>

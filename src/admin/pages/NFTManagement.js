@@ -19,6 +19,7 @@ import {
   Popconfirm
 } from 'antd';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { MYSTERY_BOX_ABI } from '../../contracts/MysteryBoxABI';
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -34,10 +35,12 @@ const NFTManagement = () => {
   const [selectedNFTs, setSelectedNFTs] = useState([]);
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showRarityModal, setShowRarityModal] = useState(false);
+  const [batchActionVisible, setBatchActionVisible] = useState(false);
   
   // 表单数据
   const [form] = Form.useForm();
   const [rarityForm] = Form.useForm();
+  const [batchActionForm] = Form.useForm();
 
   // 加载NFT数据
   const loadNFTData = async () => {
@@ -79,39 +82,115 @@ const NFTManagement = () => {
     }
   };
 
-  // 更新单个NFT
-  const updateSingleNFT = async (tokenId, dailyReward, maxReward) => {
-    try {
-      setLoading(true);
-      const contract = new ethers.Contract(
-        process.env.REACT_APP_MYSTERY_BOX_ADDRESS,
-        MYSTERY_BOX_ABI,
-        library.getSigner()
-      );
-
-      if (dailyReward) {
-        const tx = await contract.updateNFTDailyReward(
-          tokenId,
-          ethers.utils.parseEther(dailyReward.toString())
+  // 批量操作模态框
+  const BatchActionModal = () => {
+    const handleBatchAction = async (values) => {
+      try {
+        setLoading(true);
+        const contract = new ethers.Contract(
+          process.env.REACT_APP_MYSTERY_BOX_ADDRESS,
+          MYSTERY_BOX_ABI,
+          library.getSigner()
         );
-        await tx.wait();
-      }
 
-      if (maxReward) {
-        const tx = await contract.updateNFTMaxReward(
-          tokenId,
-          ethers.utils.parseEther(maxReward.toString())
+        const action = values.action;
+        const params = values.params || {};
+
+        // 批量执行操作
+        const tx = await contract.batchUpdateNFTs(
+          selectedNFTs,
+          action,
+          JSON.stringify(params)
         );
-        await tx.wait();
-      }
 
-      message.success('更新成功');
-      loadNFTData();
-    } catch (error) {
-      message.error('更新失败：' + error.message);
-    } finally {
-      setLoading(false);
-    }
+        await tx.wait();
+        message.success('批量操作成功');
+        loadNFTData();
+        setBatchActionVisible(false);
+      } catch (error) {
+        console.error('批量操作失败:', error);
+        message.error('批量操作失败');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    return (
+      <Modal
+        title="批量操作"
+        visible={batchActionVisible}
+        onCancel={() => setBatchActionVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={batchActionForm}
+          onFinish={handleBatchAction}
+          layout="vertical"
+        >
+          <Form.Item
+            name="action"
+            label="操作类型"
+            rules={[{ required: true }]}
+          >
+            <Select>
+              <Option value="updatePrice">更新价格</Option>
+              <Option value="updateRarity">更新稀有度</Option>
+              <Option value="updateStakingRewards">更新质押收益</Option>
+              <Option value="lock">锁定</Option>
+              <Option value="unlock">解锁</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            noStyle
+            shouldUpdate={(prevValues, currentValues) => prevValues.action !== currentValues.action}
+          >
+            {({ getFieldValue }) => {
+              const action = getFieldValue('action');
+              if (action === 'updatePrice' || action === 'updateStakingRewards') {
+                return (
+                  <Form.Item
+                    name={['params', 'value']}
+                    label="数值"
+                    rules={[{ required: true }]}
+                  >
+                    <InputNumber min={0} step={0.1} />
+                  </Form.Item>
+                );
+              }
+              if (action === 'updateRarity') {
+                return (
+                  <Form.Item
+                    name={['params', 'rarity']}
+                    label="稀有度"
+                    rules={[{ required: true }]}
+                  >
+                    <Select>
+                      <Option value="common">普通</Option>
+                      <Option value="rare">稀有</Option>
+                      <Option value="epic">史诗</Option>
+                      <Option value="legendary">传说</Option>
+                    </Select>
+                  </Form.Item>
+                );
+              }
+              return null;
+            }}
+          </Form.Item>
+
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                确认
+              </Button>
+              <Button onClick={() => setBatchActionVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+    );
   };
 
   // 批量更新NFT
@@ -244,6 +323,13 @@ const NFTManagement = () => {
               更新稀有度配置
             </Button>
             <Button
+              type="primary"
+              disabled={selectedNFTs.length === 0}
+              onClick={() => setBatchActionVisible(true)}
+            >
+              批量操作 ({selectedNFTs.length})
+            </Button>
+            <Button
               disabled={selectedNFTs.length === 0}
               onClick={() => setShowBatchModal(true)}
             >
@@ -257,6 +343,7 @@ const NFTManagement = () => {
           dataSource={nftData}
           rowKey="id"
           rowSelection={{
+            type: 'checkbox',
             selectedRowKeys: selectedNFTs,
             onChange: setSelectedNFTs,
           }}
@@ -335,6 +422,8 @@ const NFTManagement = () => {
             </Form.Item>
           </Form>
         </Modal>
+
+        <BatchActionModal />
       </div>
     </Spin>
   );
