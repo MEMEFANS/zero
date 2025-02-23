@@ -1,59 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { useWeb3React } from '@web3-react/core';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { ethers } from 'ethers';
-import { Spin, message } from 'antd';
 
-const ADMIN_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ADMIN_ROLE"));
-
+// AdminRoute component - 保护需要管理员权限的路由
 const AdminRoute = ({ children }) => {
-  const { account, library } = useWeb3React();
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // 检查用户是否已登录并且是管理员
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
-  useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!account || !library) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const contract = new ethers.Contract(
-          process.env.REACT_APP_MYSTERY_BOX_ADDRESS,
-          MYSTERY_BOX_ABI,
-          library.getSigner()
-        );
-
-        const hasRole = await contract.hasRole(ADMIN_ROLE, account);
-        setIsAdmin(hasRole);
-
-        if (!hasRole) {
-          message.error('您没有管理员权限');
-        }
-      } catch (error) {
-        console.error('检查权限失败:', error);
-        message.error('检查权限失败');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAdminRole();
-  }, [account, library]);
-
-  if (loading) {
-    return <Spin size="large" />;
+  // 如果未登录或不是管理员，重定向到登录页面
+  if (!isAuthenticated || !isAdmin) {
+    return <Navigate to="/login" replace />;
   }
 
-  if (!account) {
-    return <Navigate to="/connect" replace />;
-  }
-
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-
+  // 如果是管理员且已登录，渲染子组件
   return children;
 };
 
