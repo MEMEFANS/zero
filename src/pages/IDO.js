@@ -13,6 +13,8 @@ const IDO = () => {
   const [totalRaised, setTotalRaised] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
+  const [referrer, setReferrer] = useState(null);
+  const [copySuccess, setCopySuccess] = useState(false);
   const receivingAddress = '0xE2d38187EC26F5d35Cd309898Ef78F12E083De3A';
   // 改用您的服务器地址
   const API_URL = 'https://api.your-domain.com/api';
@@ -110,6 +112,15 @@ const IDO = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // 获取URL中的推荐人地址
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const ref = queryParams.get('ref');
+    if (ref && ethers.utils.isAddress(ref)) {
+      setReferrer(ref);
+    }
+  }, []);
+
   // 处理用户参与
   const handleContribute = async () => {
     if (!active || !account) {
@@ -125,18 +136,35 @@ const IDO = () => {
 
     try {
       setIsLoading(true);
-      // 使用window.ethereum直接发送交易
+
+      // 计算项目方和推荐人金额
+      const projectAmount = referrer ? bnbAmount * 0.9 : bnbAmount;  // 90%给项目方
+      const referralAmount = referrer ? bnbAmount * 0.1 : 0;         // 10%给推荐人
+
+      // 发送到项目方地址
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
         params: [{
           from: account,
           to: receivingAddress,
-          value: '0x' + (bnbAmount * 1e18).toString(16)
+          value: '0x' + (projectAmount * 1e18).toString(16)
         }]
       });
 
+      // 如果有推荐人,发送推荐奖励
+      if (referrer && referralAmount > 0) {
+        await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: account,
+            to: referrer,
+            value: '0x' + (referralAmount * 1e18).toString(16)
+          }]
+        });
+      }
+
       console.log('Transaction hash:', txHash);
-      
+
       // 交易发送成功后立即显示成功消息
       showNotification('success', t('transactionSuccess'));
       
@@ -215,6 +243,25 @@ const IDO = () => {
   const showNotification = (type, message) => {
     setNotification({ show: true, type, message });
     setTimeout(() => setNotification({ show: false, type: '', message: '' }), 3000);
+  };
+
+  // 生成推荐链接
+  const generateReferralLink = () => {
+    if (!account) return '';
+    const currentUrl = window.location.origin + window.location.pathname;
+    return `${currentUrl}?ref=${account}`;
+  };
+
+  // 复制推荐链接
+  const copyReferralLink = async () => {
+    const link = generateReferralLink();
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   return (
@@ -432,6 +479,52 @@ const IDO = () => {
                     >
                       {isLoading ? t('processing') : 'Mint'}
                     </button>
+                  </div>
+
+                  <div className="mt-8 pt-8 border-t border-[#2E3A52]">
+                    <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" clipRule="evenodd" />
+                      </svg>
+                      {t('referralReward')}
+                    </h3>
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="text" 
+                        value={account ? generateReferralLink() : t('pleaseConnectWallet')}
+                        readOnly
+                        className="flex-1 bg-[#0B1120] text-gray-300 px-4 py-3 rounded-lg border border-[#2E3A52] focus:outline-none"
+                      />
+                      <button
+                        onClick={copyReferralLink}
+                        disabled={!account}
+                        className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                          copySuccess 
+                            ? 'bg-green-600 hover:bg-green-700' 
+                            : 'bg-[#3B82F6] hover:bg-[#2563EB]'
+                        } ${!account && 'opacity-50 cursor-not-allowed'}`}
+                      >
+                        {copySuccess ? (
+                          <div className="flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            {t('copied')}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
+                              <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
+                            </svg>
+                            {t('copyLink')}
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                    <p className="mt-4 text-sm text-gray-400">
+                      {t('referralDescription')}
+                    </p>
                   </div>
                 </div>
               )}
