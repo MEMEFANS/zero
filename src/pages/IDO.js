@@ -4,6 +4,22 @@ import { injected } from '../utils/connectors';
 import { ethers } from 'ethers';
 import { LanguageContext } from '../App';
 
+// IDO合约ABI
+const IDO_ABI = [
+  "function invest() external payable",
+  "function bindReferrer(address referrer) external",
+  "function getUserReferrer(address user) external view returns (address)",
+  "function projectWallet() external view returns (address)",
+  "function referralPercentage() external view returns (uint256)",
+  "function paused() external view returns (bool)",
+  "function isUserBound(address user) external view returns (bool)",
+  "function userReferrers(address) external view returns (address)",
+  "function referrerUsers(address, uint256) external view returns (address)"
+];
+
+// IDO合约地址 - BSC主网
+const IDO_CONTRACT_ADDRESS = "0x342b119B3329e244df1Da8D8c9AaCaAFD3E9Ff4c";
+
 const IDO = () => {
   const { active, account, activate, library } = useWeb3React();
   const { t } = useContext(LanguageContext);
@@ -14,10 +30,9 @@ const IDO = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
   const [referrer, setReferrer] = useState(null);
+  const [contract, setContract] = useState(null);
+  const [userReferrer, setUserReferrer] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
-  const receivingAddress = '0xE2d38187EC26F5d35Cd309898Ef78F12E083De3A';
-  // 改用您的服务器地址
-  const API_URL = 'https://api.your-domain.com/api';
 
   const idoInfo = {
     totalSupply: 100000000,
@@ -32,85 +47,20 @@ const IDO = () => {
     endTime: '2025-02-28 20:00:00'
   };
 
-  // 获取用户的参与记录
-  const fetchUserContribution = async () => {
-    if (!active || !account) return;
-    
-    try {
-      setIsLoading(true);
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      
-      // 使用 getBalance 检查接收地址的余额
-      const balance = await provider.getBalance(receivingAddress);
-      console.log('Contract balance:', ethers.utils.formatEther(balance), 'BNB');
-
-      // 获取用户向合约的转账记录
-      const filter = {
-        fromBlock: 0,
-        toBlock: 'latest',
-        from: account,
-        to: receivingAddress
-      };
-
-      const history = await provider.send('eth_getTransactionCount', [account, 'latest']);
-      console.log('Transaction count:', history);
-
-      // 获取最近的交易
-      const blockNumber = await provider.getBlockNumber();
-      const block = await provider.getBlock(blockNumber);
-      console.log('Latest block:', blockNumber);
-      console.log('Block timestamp:', new Date(block.timestamp * 1000).toLocaleString());
-
-      // 从localStorage获取历史记录
-      const previousRecord = localStorage.getItem(`ido_contribution_${account}`);
-      let contribution = 0;
-      if (previousRecord) {
-        const { bnbAmount } = JSON.parse(previousRecord);
-        contribution = bnbAmount;
-      }
-      
-      console.log('Current contribution:', contribution, 'BNB');
-      
-      // 更新状态
-      setUserContribution(contribution);
-      setExpectedTokens(contribution * idoInfo.privateSale.dpapPerBNB);
-      
-    } catch (error) {
-      console.error('获取参与记录失败:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  // 显示通知
+  const showNotification = (type, message) => {
+    setNotification({ show: true, type, message });
+    setTimeout(() => setNotification({ show: false, type: '', message: '' }), 5000);
   };
 
-  // 获取私募合约地址的BNB余额
-  const fetchTotalRaised = async () => {
-    try {
-      console.log('Fetching total raised...');
-      const provider = new ethers.providers.JsonRpcProvider('https://side-falling-ensemble.bsc.quiknode.pro/049fcfd0e81b7b299018b5774557ae1c0d4c9110/');
-      const balance = await provider.getBalance(receivingAddress);
-      const bnbBalance = parseFloat(ethers.utils.formatEther(balance));
-      console.log('Total raised:', bnbBalance, 'BNB');
-      setTotalRaised(bnbBalance);
-    } catch (error) {
-      console.error('获取总筹集量失败:', error);
+  // 初始化合约
+  useEffect(() => {
+    if (library && active) {
+      const signer = library.getSigner();
+      const idoContract = new ethers.Contract(IDO_CONTRACT_ADDRESS, IDO_ABI, signer);
+      setContract(idoContract);
     }
-  };
-
-  // 在组件加载时获取总筹集量
-  useEffect(() => {
-    const init = async () => {
-      await fetchTotalRaised();
-    };
-    init();
-  }, []);
-
-  // 每15秒自动刷新总筹集量
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      await fetchTotalRaised();
-    }, 15000);
-    return () => clearInterval(interval);
-  }, []);
+  }, [library, active]);
 
   // 获取URL中的推荐人地址
   useEffect(() => {
@@ -121,10 +71,97 @@ const IDO = () => {
     }
   }, []);
 
+  // 获取总筹集量
+  const fetchTotalRaised = async () => {
+    try {
+      if (!contract) return;
+      const provider = new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org');
+      const balance = await provider.getBalance(IDO_CONTRACT_ADDRESS);
+      setTotalRaised(parseFloat(ethers.utils.formatEther(balance)));
+    } catch (error) {
+      console.error('获取总筹集量失败:', error);
+    }
+  };
+
+  // 定期更新总筹集量
+  useEffect(() => {
+    fetchTotalRaised();
+    const interval = setInterval(fetchTotalRaised, 15000);
+    return () => clearInterval(interval);
+  }, [contract]);
+
+  // 初始化时检查用户是否已有绑定的推荐人
+  useEffect(() => {
+    const checkUserReferrer = async () => {
+      if (contract && account) {
+        try {
+          const referrer = await contract.getUserReferrer(account);
+          if (referrer !== ethers.constants.AddressZero) {
+            setUserReferrer(referrer);
+          }
+        } catch (error) {
+          console.error('获取用户推荐人失败:', error);
+        }
+      }
+    };
+    
+    checkUserReferrer();
+  }, [contract, account]);
+
+  // 处理推荐人绑定
+  const handleReferrerBinding = async () => {
+    if (!contract || !account || !referrer) return;
+
+    try {
+      setIsLoading(true);
+      
+      // 检查是否已经绑定过推荐人
+      const currentReferrer = await contract.getUserReferrer(account);
+      if (currentReferrer !== ethers.constants.AddressZero) {
+        showNotification('error', '您已经绑定了推荐人');
+        return;
+      }
+
+      // 绑定推荐人
+      const tx = await contract.bindReferrer(referrer);
+      showNotification('info', '正在绑定推荐人...');
+      
+      await tx.wait();
+      setUserReferrer(referrer);
+      showNotification('success', '推荐人绑定成功！');
+      
+    } catch (error) {
+      console.error('绑定推荐人失败:', error);
+      showNotification('error', error.message || '绑定失败，请重试');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 在组件加载时检查URL中的推荐人并尝试绑定
+  useEffect(() => {
+    const bindReferrerFromURL = async () => {
+      if (contract && account && referrer && !userReferrer) {
+        try {
+          await handleReferrerBinding();
+        } catch (error) {
+          console.error('自动绑定推荐人失败:', error);
+        }
+      }
+    };
+
+    bindReferrerFromURL();
+  }, [contract, account, referrer]);
+
   // 处理用户参与
   const handleContribute = async () => {
     if (!active || !account) {
       showNotification('error', t('pleaseConnect'));
+      return;
+    }
+
+    if (!contract) {
+      showNotification('error', '合约未初始化');
       return;
     }
 
@@ -136,132 +173,55 @@ const IDO = () => {
 
     try {
       setIsLoading(true);
-
-      // 计算项目方和推荐人金额
-      const projectAmount = referrer ? bnbAmount * 0.9 : bnbAmount;  // 90%给项目方
-      const referralAmount = referrer ? bnbAmount * 0.1 : 0;         // 10%给推荐人
-
-      // 发送到项目方地址
-      const txHash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [{
-          from: account,
-          to: receivingAddress,
-          value: '0x' + (projectAmount * 1e18).toString(16)
-        }]
+      
+      // 调用合约invest函数，不再需要传入推荐人地址
+      const tx = await contract.invest({
+        value: ethers.utils.parseEther(amount)
       });
 
-      // 如果有推荐人,发送推荐奖励
-      if (referrer && referralAmount > 0) {
-        await window.ethereum.request({
-          method: 'eth_sendTransaction',
-          params: [{
-            from: account,
-            to: referrer,
-            value: '0x' + (referralAmount * 1e18).toString(16)
-          }]
-        });
-      }
+      showNotification('info', '交易已发送，等待确认...');
+      console.log('Transaction hash:', tx.hash);
 
-      console.log('Transaction hash:', txHash);
-
-      // 交易发送成功后立即显示成功消息
-      showNotification('success', t('transactionSuccess'));
-      
-      // 更新用户的参与记录
-      const tokenAmount = bnbAmount * idoInfo.privateSale.dpapPerBNB;
-      const previousRecord = localStorage.getItem(`ido_contribution_${account}`);
-      let newBnbAmount = bnbAmount;
-      let newTokenAmount = tokenAmount;
-      
-      if (previousRecord) {
-        const { bnbAmount: prevBnb, tokenAmount: prevToken } = JSON.parse(previousRecord);
-        newBnbAmount += prevBnb;
-        newTokenAmount += prevToken;
-      }
-
-      // 保存到localStorage
-      localStorage.setItem(`ido_contribution_${account}`, JSON.stringify({
-        bnbAmount: newBnbAmount,
-        tokenAmount: newTokenAmount,
-        lastTx: txHash
-      }));
+      await tx.wait();
+      showNotification('success', '投资成功！');
 
       // 更新显示
-      setUserContribution(newBnbAmount);
-      setExpectedTokens(newTokenAmount);
+      setUserContribution(prev => prev + bnbAmount);
+      setExpectedTokens(prev => prev + (bnbAmount * idoInfo.privateSale.dpapPerBNB));
       setAmount('');
 
-      // 在后台等待交易确认并更新总筹集量
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      provider.waitForTransaction(txHash).then(async (receipt) => {
-        if (receipt.status === 1) {
-          // 等待1秒后刷新总筹集量，确保链上数据已更新
-          setTimeout(async () => {
-            await fetchTotalRaised();
-          }, 1000);
-          
-          // 触发重新获取数据
-          fetchUserContribution();
-        }
-      });
+      // 更新总筹集量
+      await fetchTotalRaised();
 
     } catch (error) {
-      console.error('转账失败:', error);
-      if (error.code === 4001) {
-        showNotification('error', t('transactionCancelled'));
-      }
+      console.error('投资失败:', error);
+      showNotification('error', error.message || '交易失败，请重试');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 在组件加载和账户变化时获取数据
-  useEffect(() => {
-    if (active && account) {
-      fetchUserContribution();
-    }
-  }, [active, account]);
-
-  // 每30秒自动刷新一次
-  useEffect(() => {
-    if (active && account) {
-      const interval = setInterval(fetchUserContribution, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [active, account]);
-
+  // 连接钱包函数
   const connectWallet = async () => {
     try {
       await activate(injected);
     } catch (error) {
-      console.error('Error connecting wallet:', error);
+      console.error('Failed to connect wallet:', error);
     }
-  };
-
-  // 显示通知
-  const showNotification = (type, message) => {
-    setNotification({ show: true, type, message });
-    setTimeout(() => setNotification({ show: false, type: '', message: '' }), 3000);
   };
 
   // 生成推荐链接
   const generateReferralLink = () => {
     if (!account) return '';
-    const currentUrl = window.location.origin + window.location.pathname;
-    return `${currentUrl}?ref=${account}`;
+    return `${window.location.origin}?ref=${account}`;
   };
 
   // 复制推荐链接
-  const copyReferralLink = async () => {
+  const copyReferralLink = () => {
     const link = generateReferralLink();
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
+    navigator.clipboard.writeText(link);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
   };
 
   return (
@@ -532,6 +492,11 @@ const IDO = () => {
           </div>
         </div>
       </div>
+      {userReferrer && (
+        <div className="referrer-info">
+          <p>您的推荐人: {userReferrer}</p>
+        </div>
+      )}
     </div>
   );
 };
