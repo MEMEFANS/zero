@@ -12,13 +12,20 @@ const IDO_ABI = [
   "function projectWallet() external view returns (address)",
   "function referralPercentage() external view returns (uint256)",
   "function paused() external view returns (bool)",
-  "function isUserBound(address user) external view returns (bool)",
-  "function userReferrers(address) external view returns (address)",
-  "function referrerUsers(address, uint256) external view returns (address)"
+  "function zoneToken() external view returns (address)",
+  "function MIN_INVESTMENT() external view returns (uint256)",
+  "function MAX_INVESTMENT() external view returns (uint256)",
+  "function EXCHANGE_RATE() external view returns (uint256)",
+  "function idoEndTime() external view returns (uint256)",
+  "function claimStartTime() external view returns (uint256)",
+  "function getIDOInfo() external view returns (uint256 _totalRaised, uint256 _participantsCount, uint256 _averageInvestment)",
+  "function getUserInvestment(address user) external view returns (uint256 investmentAmount, uint256 tokenAllocation, bool claimed)",
+  "function claimTokens() external",
+  "function totalRaisedBNB() external view returns (uint256)"
 ];
 
 // IDO合约地址 - BSC主网
-const IDO_CONTRACT_ADDRESS = "0x342b119B3329e244df1Da8D8c9AaCaAFD3E9Ff4c";
+const IDO_CONTRACT_ADDRESS = "0xEEB028B3d7411366e3Ae43F3201202c0369d079B";
 
 const IDO = () => {
   const { active, account, activate, library } = useWeb3React();
@@ -33,19 +40,15 @@ const IDO = () => {
   const [contract, setContract] = useState(null);
   const [userReferrer, setUserReferrer] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
-
-  const idoInfo = {
-    totalSupply: 100000000,
-    privateSale: {
-      amount: 10000000,
-      bnbTarget: 769.23,
-      dpapPerBNB: 13000,
-      minContribution: 0.1,
-      maxContribution: 2
-    },
-    startTime: '2025-02-20 20:00:00',
-    endTime: '2025-02-28 20:00:00'
-  };
+  const [hasClaimed, setHasClaimed] = useState(false);
+  const [participantsCount, setParticipantsCount] = useState(0);
+  const [averageInvestment, setAverageInvestment] = useState(0);
+  const [idoStatus, setIdoStatus] = useState({
+    endTime: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,  // 30天后结束
+    claimTime: Math.floor(Date.now() / 1000) + 35 * 24 * 60 * 60,  // 35天后可以领取
+    isActive: true,
+    isClaimable: false
+  });
 
   // 显示通知
   const showNotification = (type, message) => {
@@ -62,6 +65,194 @@ const IDO = () => {
     }
   }, [library, active]);
 
+  // 获取IDO状态
+  const fetchIDOStatus = async () => {
+    if (!contract) return;
+    try {
+      // 直接获取各个状态
+      const endTime = await contract.idoEndTime();
+      const claimTime = await contract.claimStartTime();
+      const isPaused = await contract.paused();
+      const now = Math.floor(Date.now() / 1000);
+
+      // 计算状态
+      const isActive = !isPaused && now <= endTime.toNumber();
+      const isClaimable = now >= claimTime.toNumber();
+
+      setIdoStatus({
+        endTime: endTime.toNumber(),
+        claimTime: claimTime.toNumber(),
+        isActive,
+        isClaimable
+      });
+
+    } catch (error) {
+      console.error('获取IDO状态失败:', error);
+    }
+  };
+
+  // 获取用户投资信息
+  const fetchUserInvestment = async () => {
+    if (!contract || !account) return;
+    try {
+      const investment = await contract.getUserInvestment(account);
+      setUserContribution(ethers.utils.formatEther(investment.investmentAmount));
+      setExpectedTokens(ethers.utils.formatEther(investment.tokenAllocation));
+      setHasClaimed(investment.claimed);
+    } catch (error) {
+      console.error('获取用户投资信息失败:', error);
+    }
+  };
+
+  // 获取总募集信息
+  const fetchTotalRaised = async () => {
+    if (!contract) return;
+    try {
+      const info = await contract.getIDOInfo();
+      setTotalRaised(ethers.utils.formatEther(info._totalRaised));
+      setParticipantsCount(info._participantsCount.toNumber());
+      setAverageInvestment(ethers.utils.formatEther(info._averageInvestment));
+    } catch (error) {
+      console.error('获取总筹集量失败:', error);
+    }
+  };
+
+  // 定期更新数据
+  useEffect(() => {
+    if (contract) {
+      fetchIDOStatus();
+      fetchTotalRaised();
+      if (account) {
+        fetchUserInvestment();
+      }
+      
+      const interval = setInterval(() => {
+        fetchIDOStatus();
+        fetchTotalRaised();
+        if (account) {
+          fetchUserInvestment();
+        }
+      }, 15000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [contract, account]);
+
+  // 处理代币领取
+  const handleClaim = async () => {
+    if (!contract || !account) return;
+    if (!idoStatus.isClaimable) {
+      showNotification('error', '还未到领取时间');
+      return;
+    }
+    if (hasClaimed) {
+      showNotification('error', '已经领取过代币');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      const tx = await contract.claimTokens();
+      showNotification('info', '正在领取代币...');
+      await tx.wait();
+      showNotification('success', '代币领取成功！');
+      setHasClaimed(true);
+    } catch (error) {
+      console.error('领取代币失败:', error);
+      showNotification('error', error.message || '领取失败');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 处理投资
+  const handleContribute = async () => {
+    if (!active || !account) {
+      showNotification('error', t('pleaseConnect'));
+      return;
+    }
+
+    if (!contract) {
+      showNotification('error', '合约未初始化');
+      return;
+    }
+
+    if (!idoStatus.isActive) {
+      showNotification('error', 'IDO未开始或已结束');
+      return;
+    }
+
+    // 检查是否绑定了推荐人
+    try {
+      const hasReferrer = await contract.getUserReferrer(account);
+      if (hasReferrer === '0x0000000000000000000000000000000000000000' && referrer) {
+        // 如果没有推荐人但提供了推荐人地址，先绑定推荐人
+        const bindTx = await contract.bindReferrer(referrer);
+        await bindTx.wait();
+        showNotification('success', '推荐人绑定成功');
+      }
+    } catch (error) {
+      console.error('检查推荐人失败:', error);
+      showNotification('error', '检查推荐人失败');
+      return;
+    }
+
+    const bnbAmount = parseFloat(amount);
+    if (isNaN(bnbAmount) || bnbAmount < 0.1 || bnbAmount > 2) {
+      showNotification('error', t('invalidAmount').replace('{min}', '0.1').replace('{max}', '2'));
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const tx = await contract.invest({
+        value: ethers.utils.parseEther(amount),
+        gasLimit: 500000 // 设置足够的 gas 限制
+      });
+
+      showNotification('info', '交易已发送，等待确认...');
+      await tx.wait();
+      showNotification('success', '投资成功！');
+
+      // 更新数据
+      fetchUserInvestment();
+      fetchTotalRaised();
+      setAmount('');
+    } catch (error) {
+      console.error('投资失败:', error);
+      if (error.message.includes('insufficient funds')) {
+        showNotification('error', '钱包 BNB 余额不足，请确保有足够的 BNB 支付 gas 费用');
+      } else {
+        showNotification('error', error.message || '交易失败，请重试');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 连接钱包函数
+  const connectWallet = async () => {
+    try {
+      await activate(injected);
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+    }
+  };
+
+  // 生成推荐链接
+  const generateReferralLink = () => {
+    if (!account) return '';
+    return `${window.location.origin}?ref=${account}`;
+  };
+
+  // 复制推荐链接
+  const copyReferralLink = () => {
+    const link = generateReferralLink();
+    navigator.clipboard.writeText(link);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
+  };
+
   // 获取URL中的推荐人地址
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
@@ -70,25 +261,6 @@ const IDO = () => {
       setReferrer(ref);
     }
   }, []);
-
-  // 获取总筹集量
-  const fetchTotalRaised = async () => {
-    try {
-      if (!contract) return;
-      const provider = new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org');
-      const balance = await provider.getBalance(IDO_CONTRACT_ADDRESS);
-      setTotalRaised(parseFloat(ethers.utils.formatEther(balance)));
-    } catch (error) {
-      console.error('获取总筹集量失败:', error);
-    }
-  };
-
-  // 定期更新总筹集量
-  useEffect(() => {
-    fetchTotalRaised();
-    const interval = setInterval(fetchTotalRaised, 15000);
-    return () => clearInterval(interval);
-  }, [contract]);
 
   // 初始化时检查用户是否已有绑定的推荐人
   useEffect(() => {
@@ -153,76 +325,106 @@ const IDO = () => {
     bindReferrerFromURL();
   }, [contract, account, referrer]);
 
-  // 处理用户参与
-  const handleContribute = async () => {
-    if (!active || !account) {
-      showNotification('error', t('pleaseConnect'));
-      return;
-    }
+  // 添加一个格式化日期的函数
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'Loading...';
+    const date = new Date(timestamp * 1000);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
+  };
 
-    if (!contract) {
-      showNotification('error', '合约未初始化');
-      return;
-    }
-
-    const bnbAmount = parseFloat(amount);
-    if (isNaN(bnbAmount) || bnbAmount < idoInfo.privateSale.minContribution || bnbAmount > idoInfo.privateSale.maxContribution) {
-      showNotification('error', t('invalidAmount').replace('{min}', idoInfo.privateSale.minContribution).replace('{max}', idoInfo.privateSale.maxContribution));
-      return;
-    }
-
+  // 检查合约中的代币余额和IDO状态
+  const checkContractStatus = async () => {
+    if (!contract) return;
     try {
-      setIsLoading(true);
+      // 1. 获取ZONE代币地址和合约
+      const zoneTokenAddress = await contract.zoneToken();
+      console.log("ZONE Token Address:", zoneTokenAddress);
       
-      // 调用合约invest函数，不再需要传入推荐人地址
-      const tx = await contract.invest({
-        value: ethers.utils.parseEther(amount)
+      const zoneTokenContract = new ethers.Contract(zoneTokenAddress, [
+        "function balanceOf(address) view returns (uint256)",
+        "function decimals() view returns (uint8)"
+      ], library.getSigner());
+
+      // 2. 检查合约中的ZONE余额
+      const balance = await zoneTokenContract.balanceOf(IDO_CONTRACT_ADDRESS);
+      const decimals = await zoneTokenContract.decimals();
+      console.log("IDO Contract ZONE Balance:", ethers.utils.formatUnits(balance, decimals));
+
+      // 3. 检查IDO状态
+      const endTime = await contract.idoEndTime();
+      const claimTime = await contract.claimStartTime();
+      const isPaused = await contract.paused();
+      console.log("IDO Status:", {
+        endTime: new Date(endTime.toNumber() * 1000).toLocaleString(),
+        claimTime: new Date(claimTime.toNumber() * 1000).toLocaleString(),
+        isPaused: isPaused
       });
 
-      showNotification('info', '交易已发送，等待确认...');
-      console.log('Transaction hash:', tx.hash);
+      // 4. 检查是否暂停
+      console.log("Contract Paused:", isPaused);
 
-      await tx.wait();
-      showNotification('success', '投资成功！');
+      // 5. 获取当前总募集量
+      const totalRaised = await contract.totalRaisedBNB();
+      console.log("Total Raised BNB:", ethers.utils.formatEther(totalRaised));
 
-      // 更新显示
-      setUserContribution(prev => prev + bnbAmount);
-      setExpectedTokens(prev => prev + (bnbAmount * idoInfo.privateSale.dpapPerBNB));
-      setAmount('');
-
-      // 更新总筹集量
-      await fetchTotalRaised();
+      return {
+        zoneBalance: ethers.utils.formatUnits(balance, decimals),
+        isPaused: isPaused,
+        totalRaised: ethers.utils.formatEther(totalRaised)
+      };
 
     } catch (error) {
-      console.error('投资失败:', error);
-      showNotification('error', error.message || '交易失败，请重试');
-    } finally {
-      setIsLoading(false);
+      console.error('检查合约状态失败:', error);
+      return null;
     }
   };
 
-  // 连接钱包函数
-  const connectWallet = async () => {
+  // 检查合约状态并输出详细信息
+  const checkDetailedStatus = async () => {
+    if (!contract) return;
     try {
-      await activate(injected);
+      console.log("检查合约状态...");
+      
+      // 1. 检查 ZONE 代币地址
+      const zoneTokenAddress = await contract.zoneToken();
+      console.log("ZONE Token 地址:", zoneTokenAddress);
+      console.log("是否匹配:", zoneTokenAddress.toLowerCase() === "0x9b7C0EDE41E88779f7076099d77445eBE6388Abc".toLowerCase());
+
+      // 2. 检查时间设置
+      const endTime = await contract.idoEndTime();
+      const claimTime = await contract.claimStartTime();
+      console.log("IDO结束时间:", new Date(endTime.toNumber() * 1000).toLocaleString());
+      console.log("代币领取时间:", new Date(claimTime.toNumber() * 1000).toLocaleString());
+
+      // 3. 检查投资限制
+      const minInvest = await contract.MIN_INVESTMENT();
+      const maxInvest = await contract.MAX_INVESTMENT();
+      console.log("最小投资额:", ethers.utils.formatEther(minInvest), "BNB");
+      console.log("最大投资额:", ethers.utils.formatEther(maxInvest), "BNB");
+
+      // 4. 检查是否暂停
+      const isPaused = await contract.paused();
+      console.log("合约是否暂停:", isPaused);
+
+      // 5. 获取项目钱包
+      const projectWallet = await contract.projectWallet();
+      console.log("项目钱包地址:", projectWallet);
+
     } catch (error) {
-      console.error('Failed to connect wallet:', error);
+      console.error("检查失败:", error);
     }
   };
 
-  // 生成推荐链接
-  const generateReferralLink = () => {
-    if (!account) return '';
-    return `${window.location.origin}?ref=${account}`;
-  };
-
-  // 复制推荐链接
-  const copyReferralLink = () => {
-    const link = generateReferralLink();
-    navigator.clipboard.writeText(link);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
-  };
+  // 在组件加载时检查状态
+  useEffect(() => {
+    if (contract && library) {
+      checkContractStatus();
+      checkDetailedStatus();
+    }
+  }, [contract, library]);
 
   return (
     <div className="min-h-screen bg-[#0B1120] relative overflow-hidden">
@@ -303,8 +505,8 @@ const IDO = () => {
               <span className="text-white">{t('oneHundredMillion')} <span className="text-green-400">ZONE</span></span>
             </div>
             <div className="w-full md:w-auto bg-gray-800/50 backdrop-blur px-4 md:px-6 py-3 rounded-full border border-green-500/20">
-              <span className="text-green-400 mr-2">⏰</span>
-              <span className="text-white text-sm md:text-base whitespace-nowrap">{idoInfo.startTime} - {idoInfo.endTime}</span>
+              <span className="text-gray-400 mr-2">⏰</span>
+              <span className="text-white">{formatDate(idoStatus.endTime)}</span>
             </div>
           </div>
         </div>
@@ -362,7 +564,7 @@ const IDO = () => {
                 </div>
                 <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
                   <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('exchangeRate')}</p>
-                  <p className="text-base md:text-2xl font-bold text-white">1 BNB = <span className="text-green-400">13,000 ZONE</span></p>
+                  <p className="text-base md:text-2xl font-bold text-white">1 BNB = <span className="text-green-400">10,000 ZONE</span></p>
                 </div>
                 <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
                   <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('privateSalePrice')}</p>
@@ -374,10 +576,94 @@ const IDO = () => {
                     <p className="text-base md:text-xl font-bold text-white">
                       <span className="text-green-400">0.1</span> - <span className="text-green-400">2</span> BNB
                     </p>
-                    <p className="text-xs md:text-sm text-gray-400 mt-1">1,300 - 26,000 ZONE</p>
+                    <p className="text-xs md:text-sm text-gray-400 mt-1">1,000 - 20,000 ZONE</p>
                   </div>
                 </div>
               </div>
+
+              {/* 统计信息 */}
+              <div className="grid grid-cols-2 gap-3 md:gap-6 mb-6">
+                {/* 参与人数 */}
+                <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
+                  <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">参与人数</p>
+                  <p className="text-base md:text-2xl font-bold text-white">{participantsCount}</p>
+                </div>
+
+                {/* 平均投资 */}
+                <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
+                  <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">平均投资</p>
+                  <p className="text-base md:text-2xl font-bold text-white">
+                    {parseFloat(averageInvestment).toFixed(2)} <span className="text-green-400">BNB</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* 领取代币和推荐链接 */}
+              {active && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 mb-6">
+                  {/* 领取代币按钮 */}
+                  <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-gray-400 text-xs md:text-sm">代币领取</p>
+                      <div className="flex items-center">
+                        <span className={`inline-block w-2 h-2 rounded-full mr-2 ${idoStatus.isClaimable ? 'bg-green-400' : 'bg-gray-400'}`}></span>
+                        <span className="text-gray-400 text-xs">{idoStatus.isClaimable ? '可领取' : '未开始'}</span>
+                      </div>
+                    </div>
+                    {/* 显示可获得的代币数量 */}
+                    <div className="mb-4">
+                      <p className="text-gray-400 text-xs md:text-sm mb-1">可获得代币</p>
+                      <p className="text-2xl md:text-3xl font-bold">
+                        <span className="text-white">{parseFloat(expectedTokens).toLocaleString()}</span>
+                        <span className="text-green-400 ml-2">ZONE</span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleClaim}
+                      disabled={isLoading || !idoStatus.isClaimable || hasClaimed}
+                      className={`
+                        w-full py-4 px-6 rounded-xl text-lg font-bold transition-all
+                        ${isLoading || !idoStatus.isClaimable || hasClaimed
+                          ? 'bg-gray-600 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                        }
+                        text-white
+                      `}
+                    >
+                      {isLoading ? '处理中...' : hasClaimed ? '已领取' : '领取代币'}
+                    </button>
+                  </div>
+
+                  {/* 推荐链接 */}
+                  <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-gray-400 text-xs md:text-sm">推荐链接</p>
+                      {copySuccess && (
+                        <span className="text-green-400 text-xs">已复制</span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        readOnly
+                        value={generateReferralLink()}
+                        className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-4 py-4 text-gray-400 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all pr-24"
+                      />
+                      <button
+                        onClick={copyReferralLink}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-green-500/20 hover:bg-green-500/30 text-green-400 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                      >
+                        复制
+                      </button>
+                    </div>
+                    {userReferrer && (
+                      <p className="mt-2 text-gray-400 text-xs">
+                        您的推荐人: <span className="text-white">{userReferrer.slice(0, 6)}...{userReferrer.slice(-4)}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* 参与表单 */}
               {!active ? (
@@ -396,14 +682,14 @@ const IDO = () => {
                     <div className="relative">
                       <input
                         type="number"
-                        min={idoInfo.privateSale.minContribution}
-                        max={idoInfo.privateSale.maxContribution}
+                        min={0.1}
+                        max={2}
                         step="0.1"
                         value={amount}
                         onChange={(e) => {
                           const value = parseFloat(e.target.value);
-                          if (value > idoInfo.privateSale.maxContribution) {
-                            setAmount(idoInfo.privateSale.maxContribution.toString());
+                          if (value > 2) {
+                            setAmount('2');
                           } else {
                             setAmount(e.target.value);
                           }
@@ -419,7 +705,7 @@ const IDO = () => {
                       <div className="mt-4 bg-green-500/10 rounded-xl p-4">
                         <p className="text-gray-400 text-sm">{t('expectedToReceive')}</p>
                         <p className="text-xl font-bold text-green-400">
-                          {(parseFloat(amount || 0) * idoInfo.privateSale.dpapPerBNB).toLocaleString()} ZONE
+                          {(parseFloat(amount || 0) * 10000).toLocaleString()} ZONE
                         </p>
                       </div>
                     )}
@@ -433,58 +719,13 @@ const IDO = () => {
                         w-full py-4 px-6 rounded-xl text-lg font-bold transition-all
                         ${isLoading
                           ? 'bg-gray-600 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white'
+                          : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
                         }
+                        text-white
                       `}
                     >
                       {isLoading ? t('processing') : 'Mint'}
                     </button>
-                  </div>
-
-                  <div className="mt-8 pt-8 border-t border-[#2E3A52]">
-                    <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" clipRule="evenodd" />
-                      </svg>
-                      {t('referralReward')}
-                    </h3>
-                    <div className="flex items-center gap-3">
-                      <input 
-                        type="text" 
-                        value={account ? generateReferralLink() : t('pleaseConnectWallet')}
-                        readOnly
-                        className="flex-1 bg-[#0B1120] text-gray-300 px-4 py-3 rounded-lg border border-[#2E3A52] focus:outline-none"
-                      />
-                      <button
-                        onClick={copyReferralLink}
-                        disabled={!account}
-                        className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                          copySuccess 
-                            ? 'bg-green-600 hover:bg-green-700' 
-                            : 'bg-[#3B82F6] hover:bg-[#2563EB]'
-                        } ${!account && 'opacity-50 cursor-not-allowed'}`}
-                      >
-                        {copySuccess ? (
-                          <div className="flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                            {t('copied')}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
-                              <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
-                            </svg>
-                            {t('copyLink')}
-                          </div>
-                        )}
-                      </button>
-                    </div>
-                    <p className="mt-4 text-sm text-gray-400">
-                      {t('referralDescription')}
-                    </p>
                   </div>
                 </div>
               )}

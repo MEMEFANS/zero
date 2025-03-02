@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 abstract contract Context {
@@ -122,10 +122,41 @@ abstract contract Ownable is Context {
     }
 }
 
+// OpenZeppelin Contracts (last updated v4.7.0) (token/ERC20/IERC20.sol)
+interface IERC20 {
+    function transfer(address to, uint256 amount) external returns (bool);
+}
+
+interface IReferralRegistry {
+    function bindReferrer(address user, address referrer) external;
+    function getUserReferrer(address user) external view returns (address);
+    function hasReferrer(address user) external view returns (bool);
+    function getReferrerUsers(address referrer) external view returns (address[] memory);
+}
+
 contract IDODistributor is ReentrancyGuard, Pausable, Ownable {
     address public projectWallet;
     uint256 public referralPercentage = 10; // 10% for referrals
     uint256 public constant MAX_REFERRAL_PERCENTAGE = 20; // Maximum 20%
+
+    // IDO时间控制
+    uint256 public idoEndTime;        // IDO结束时间
+    uint256 public claimStartTime;    // 代币领取开始时间
+
+    // 新增：IDO参数
+    uint256 public constant TOTAL_SUPPLY = 100_000_000 * 10**18; // 1亿代币
+    uint256 public constant EXCHANGE_RATE = 10000; // 1 BNB = 10000 ZONE
+    uint256 public constant MIN_INVESTMENT = 0.1 ether; // 最小投资
+    uint256 public constant MAX_INVESTMENT = 2 ether; // 最大投资
+
+    // 新增：募资相关状态
+    uint256 public totalRaisedBNB; // 已募集的BNB总量
+    mapping(address => uint256) public userInvestments; // 用户投资金额
+    mapping(address => bool) public hasClaimedTokens; // 用户是否已领取代币
+    mapping(address => uint256) public userTokenAllocation; // 用户可领取的代币数量
+
+    // 添加推荐注册表
+    IReferralRegistry public referralRegistry;
 
     // 用户绑定的推荐人映射
     mapping(address => address) public userReferrers;
@@ -134,51 +165,69 @@ contract IDODistributor is ReentrancyGuard, Pausable, Ownable {
     // 用户是否已经被绑定推荐人
     mapping(address => bool) public isUserBound;
 
+    // 新增：ZONE代币合约地址
+    IERC20 public zoneToken;
+
+    // 新增事件
+    event TokensClaimed(address indexed user, uint256 amount);
     event Investment(
         address indexed investor,
         address indexed referrer,
         uint256 amount,
         uint256 projectAmount,
-        uint256 referralAmount
+        uint256 referralAmount,
+        uint256 newTotalRaised  // 添加新的总募集量
     );
-
     event ReferrerBound(
         address indexed user,
         address indexed referrer
     );
-
     event ProjectWalletUpdated(
         address indexed oldWallet,
         address indexed newWallet
     );
-
     event ReferralPercentageUpdated(
         uint256 oldPercentage,
         uint256 newPercentage
     );
+    event IDOTimeUpdated(
+        uint256 endTime,
+        uint256 claimTime
+    );
 
-    constructor(address _projectWallet) {
-        require(_projectWallet != address(0), "Invalid project wallet");
+    constructor(
+        address _projectWallet, 
+        address _zoneToken,
+        address _referralRegistry,
+        uint256 _idoEndTime,
+        uint256 _claimStartTime
+    ) {
+        require(_projectWallet != address(0), "Zero address");
+        require(_zoneToken != address(0), "Zero address");
+        require(_referralRegistry != address(0), "Zero address");
+        require(_idoEndTime > block.timestamp, "Invalid end time");
+        require(_claimStartTime > _idoEndTime, "Claim time must be after end time");
+
         projectWallet = _projectWallet;
+        zoneToken = IERC20(_zoneToken);
+        referralRegistry = IReferralRegistry(_referralRegistry);
+        idoEndTime = _idoEndTime;
+        claimStartTime = _claimStartTime;
     }
 
     // 绑定推荐人关系
     function bindReferrer(address referrer) external whenNotPaused {
         require(referrer != address(0), "Invalid referrer address");
         require(referrer != msg.sender, "Cannot refer yourself");
-        require(!isUserBound[msg.sender], "User already has a referrer");
+        require(!referralRegistry.hasReferrer(msg.sender), "User already has a referrer");
         require(referrer != projectWallet, "Cannot bind project wallet");
-        
-        userReferrers[msg.sender] = referrer;
-        referrerUsers[referrer].push(msg.sender);
-        isUserBound[msg.sender] = true;
-        
-        emit ReferrerBound(msg.sender, referrer);
+
+        referralRegistry.bindReferrer(msg.sender, referrer);
     }
 
     // 获取用户的推荐人
     function getUserReferrer(address user) external view returns (address) {
-        return userReferrers[user];
+        return referralRegistry.getUserReferrer(user);
     }
 
     // 获取推荐人的下级用户列表
@@ -186,20 +235,31 @@ contract IDODistributor is ReentrancyGuard, Pausable, Ownable {
         return referrerUsers[referrer];
     }
 
-    // 接收投资并分配资金
+    // 修改invest函数，添加时间控制
     function invest() external payable nonReentrant whenNotPaused {
-        require(msg.value > 0, "Investment amount must be greater than 0");
+        require(block.timestamp <= idoEndTime, "IDO ended");
+        require(msg.value >= MIN_INVESTMENT, "Below minimum investment");
+        require(msg.value <= MAX_INVESTMENT, "Exceeds maximum investment");
+        require(userInvestments[msg.sender] + msg.value <= MAX_INVESTMENT, "Would exceed max investment");
         require(msg.sender != projectWallet, "Project wallet cannot invest");
-        
-        address referrer = userReferrers[msg.sender];
+
+        address referrer = referralRegistry.getUserReferrer(msg.sender);
         uint256 referralAmount = 0;
         uint256 projectAmount = msg.value;
+
+        // 计算用户应获得的代币数量
+        uint256 tokenAmount = msg.value * EXCHANGE_RATE * 10**18 / 1 ether;
+        userTokenAllocation[msg.sender] += tokenAmount;
+
+        // 更新投资记录
+        userInvestments[msg.sender] += msg.value;
+        totalRaisedBNB += msg.value;
 
         // 如果用户有绑定的推荐人，计算并发送推荐奖励
         if (referrer != address(0)) {
             referralAmount = (msg.value * referralPercentage) / 100;
             projectAmount = msg.value - referralAmount;
-            
+
             (bool referralSuccess,) = referrer.call{value: referralAmount}("");
             require(referralSuccess, "Referral transfer failed");
         }
@@ -213,7 +273,51 @@ contract IDODistributor is ReentrancyGuard, Pausable, Ownable {
             referrer,
             msg.value,
             projectAmount,
-            referralAmount
+            referralAmount,
+            totalRaisedBNB  // 添加当前总募集量到事件中
+        );
+    }
+
+    // 修改claimTokens函数，添加时间控制
+    function claimTokens() external nonReentrant whenNotPaused {
+        require(block.timestamp >= claimStartTime, "Claim not started");
+        require(userTokenAllocation[msg.sender] > 0, "No tokens to claim");
+        require(!hasClaimedTokens[msg.sender], "Tokens already claimed");
+
+        uint256 amount = userTokenAllocation[msg.sender];
+        hasClaimedTokens[msg.sender] = true;
+
+        require(zoneToken.transfer(msg.sender, amount), "Token transfer failed");
+
+        emit TokensClaimed(msg.sender, amount);
+    }
+
+    // 新增：更新IDO时间设置
+    function updateIDOTimes(
+        uint256 _idoEndTime,
+        uint256 _claimStartTime
+    ) external onlyOwner {
+        require(_idoEndTime > block.timestamp, "Invalid end time");
+        require(_claimStartTime > _idoEndTime, "Claim time must be after end time");
+
+        idoEndTime = _idoEndTime;
+        claimStartTime = _claimStartTime;
+
+        emit IDOTimeUpdated(_idoEndTime, _claimStartTime);
+    }
+
+    // 新增：查询IDO状态
+    function getIDOStatus() external view returns (
+        uint256 _idoEndTime,
+        uint256 _claimStartTime,
+        bool isActive,
+        bool isClaimable
+    ) {
+        return (
+            idoEndTime,
+            claimStartTime,
+            block.timestamp <= idoEndTime,
+            block.timestamp >= claimStartTime
         );
     }
 
@@ -221,20 +325,20 @@ contract IDODistributor is ReentrancyGuard, Pausable, Ownable {
     function setProjectWallet(address newWallet) external onlyOwner {
         require(newWallet != address(0), "Invalid wallet address");
         require(newWallet != address(this), "Cannot set contract as wallet");
-        
+
         address oldWallet = projectWallet;
         projectWallet = newWallet;
-        
+
         emit ProjectWalletUpdated(oldWallet, newWallet);
     }
 
     // 允许更改推荐奖励比例
     function setReferralPercentage(uint256 newPercentage) external onlyOwner {
         require(newPercentage <= MAX_REFERRAL_PERCENTAGE, "Percentage exceeds maximum");
-        
+
         uint256 oldPercentage = referralPercentage;
         referralPercentage = newPercentage;
-        
+
         emit ReferralPercentageUpdated(oldPercentage, newPercentage);
     }
 
@@ -252,9 +356,30 @@ contract IDODistributor is ReentrancyGuard, Pausable, Ownable {
     function emergencyWithdraw() external onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0, "No balance to withdraw");
-        
+
         (bool success,) = owner().call{value: balance}("");
         require(success, "Withdrawal failed");
+    }
+
+    // 新增：获取IDO募集信息
+    function getIDOInfo() external view returns (
+        uint256 _totalRaised,         // 总募集量
+        uint256 _participantsCount,   // 参与人数
+        uint256 _averageInvestment    // 平均投资额
+    ) {
+        uint256 participants = 0;
+        address[] memory users = referralRegistry.getReferrerUsers(address(0));
+        for (uint i = 0; i < users.length; i++) {
+            if (userInvestments[users[i]] > 0) {
+                participants++;
+            }
+        }
+        
+        return (
+            totalRaisedBNB,
+            participants,
+            participants > 0 ? totalRaisedBNB / participants : 0
+        );
     }
 
     receive() external payable {

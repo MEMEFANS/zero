@@ -1,6 +1,8 @@
 export const MYSTERY_BOX_ADDRESS = "0x1234567890abcdef1234567890abcdef12345678";
-export const ZONE_TOKEN_ADDRESS = "YOUR_ZONE_TOKEN_ADDRESS";
+export const ZONE_TOKEN_ADDRESS = "0x9b7C0EDE41E88779f7076099d77445eBE6388Abc";
 export const STAKING_ADDRESS = "YOUR_STAKING_CONTRACT_ADDRESS";
+export const REFERRAL_REGISTRY_ADDRESS = "0x587353A6387d531b01d3815e4416B2e64511cA57";
+export const IDO_DISTRIBUTOR_ADDRESS = "0xEEB028B3d7411366e3Ae43F3201202c0369d079B";
 
 export const MYSTERY_BOX_ABI = [
   "function getMarketListing(uint256 tokenId) external view returns (tuple(address seller, uint256 price, bool isActive))",

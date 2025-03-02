@@ -147,11 +147,21 @@ const Navbar = () => {
                 to="/mining"
                 className={`${
                   location.pathname === '/mining'
-                    ? 'text-green-400 border-green-400'
-                    : 'text-gray-300 hover:text-green-400 border-transparent'
-                } px-3 py-2 text-sm font-medium border-b-2 transition-colors`}
+                    ? 'text-green-400 font-medium'
+                    : 'text-gray-300 hover:text-white'
+                } px-3 py-2 rounded-md text-sm font-medium`}
               >
-                {t('mining')}
+                NFT挖矿
+              </Link>
+              <Link
+                to="/lpmining"
+                className={`${
+                  location.pathname === '/lpmining'
+                    ? 'text-green-400 font-medium'
+                    : 'text-gray-300 hover:text-white'
+                } px-3 py-2 rounded-md text-sm font-medium`}
+              >
+                LP挖矿
               </Link>
               <Link
                 to="/market"
@@ -322,7 +332,18 @@ const Navbar = () => {
               } block px-3 py-2 rounded-md text-base font-medium`}
               onClick={() => setIsOpen(false)}
             >
-              {t('mining')}
+              NFT挖矿
+            </Link>
+            <Link
+              to="/lpmining"
+              className={`${
+                location.pathname === '/lpmining'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              } block px-3 py-2 rounded-md text-base font-medium`}
+              onClick={() => setIsOpen(false)}
+            >
+              LP挖矿
             </Link>
             <Link
               to="/market"

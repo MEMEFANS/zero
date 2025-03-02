@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Mint from './pages/IDO';
 import NFTMining from './pages/NFTMining';
+import LPMining from './pages/LPMining';
 import NFTMarket from './pages/NFTMarket';
 import MysteryBox from './pages/MysteryBox';
 import Airdrop from './pages/Airdrop';
@@ -39,6 +40,7 @@ function App() {
                 <Route path="/mint" element={<Mint />} />
                 <Route path="/mystery-box" element={<MysteryBox />} />
                 <Route path="/mining" element={<NFTMining />} />
+                <Route path="/lpmining" element={<LPMining />} />
                 <Route path="/market" element={<NFTMarket />} />
                 <Route path="/airdrop" element={<Airdrop />} />
               </Routes>

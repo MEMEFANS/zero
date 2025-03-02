@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
@@ -50,8 +50,9 @@ interface IUniswapV2Router02 {
 }
 
 contract ZoneToken is ERC20, ERC20Burnable, Pausable, AccessControl, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     // 交易税率（可调整）
     uint256 public buyTax = 30;  // 3%
@@ -95,9 +96,8 @@ contract ZoneToken is ERC20, ERC20Burnable, Pausable, AccessControl, ReentrancyG
     constructor(address _marketingWallet) ERC20("ZONE Token", "ZONE") {
         require(_marketingWallet != address(0), "Marketing wallet cannot be zero");
         
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(PAUSER_ROLE, msg.sender);
-        _setupRole(MINTER_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(PAUSER_ROLE, msg.sender);
 
         marketingWallet = _marketingWallet;
         
@@ -126,16 +126,25 @@ contract ZoneToken is ERC20, ERC20Burnable, Pausable, AccessControl, ReentrancyG
     // 接收BNB
     receive() external payable {}
 
+    function pause() public onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() public onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
+
     // 设置交易税率
     function setTaxes(uint256 _buyTax, uint256 _sellTax) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_buyTax <= 100 && _sellTax <= 100, "Tax too high"); // 最高10%
+        require(_buyTax <= 100, "Buy tax too high"); // 最高10%
+        require(_sellTax <= 490, "Sell tax too high"); // 最高49%
         buyTax = _buyTax;
         sellTax = _sellTax;
     }
 
     // 设置分红比例
     function setShares(uint256 _lpRewardShare, uint256 _marketingShare) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_lpRewardShare + _marketingShare <= 100, "Total share too high"); // 最高10%
+        require(_lpRewardShare + _marketingShare <= 1000, "Total share too high"); // 最高100%
         lpRewardShare = _lpRewardShare;
         marketingShare = _marketingShare;
     }
@@ -157,15 +166,15 @@ contract ZoneToken is ERC20, ERC20Burnable, Pausable, AccessControl, ReentrancyG
     }
 
     // 计算交易税
-    function calculateTaxFee(uint256 amount, bool isSelling) private view returns (uint256) {
+    function calculateTaxFee(uint256 amount, bool isSellTx) private view returns (uint256) {
         if (isExcludedFromFee[msg.sender] || isExcludedFromFee[tx.origin]) {
             return 0;
         }
-        return amount * (isSelling ? sellTax : buyTax) / TAX_DENOMINATOR;
+        return amount * (isSellTx ? sellTax : buyTax) / TAX_DENOMINATOR;
     }
 
     // 检查是否是卖出操作
-    function isSelling(address recipient) private view returns (bool) {
+    function checkIsSelling(address recipient) private view returns (bool) {
         return recipient == lpPairBNB || recipient == lpPairUSDT;
     }
 
@@ -251,19 +260,43 @@ contract ZoneToken is ERC20, ERC20Burnable, Pausable, AccessControl, ReentrancyG
         );
     }
 
-    // 覆盖转账函数
-    function _transfer(
+    // 转账函数
+    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+        _customTransfer(_msgSender(), recipient, amount);
+        return true;
+    }
+
+    // 授权转账函数
+    function transferFrom(
         address sender,
         address recipient,
         uint256 amount
-    ) internal virtual override {
+    ) public virtual override returns (bool) {
+        _customTransfer(sender, recipient, amount);
+
+        uint256 currentAllowance = allowance(sender, _msgSender());
+        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
+        unchecked {
+            _approve(sender, _msgSender(), currentAllowance - amount);
+        }
+
+        return true;
+    }
+
+    // 自定义转账实现
+    function _customTransfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal virtual {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
+        require(!paused(), "Token transfer paused");
 
         // 如果正在处理流动性，直接转账
         if (inSwapAndLiquify) {
-            super._transfer(sender, recipient, amount);
+            _transfer(sender, recipient, amount);
             return;
         }
 
@@ -283,15 +316,15 @@ contract ZoneToken is ERC20, ERC20Burnable, Pausable, AccessControl, ReentrancyG
         }
 
         // 计算交易税
-        bool isSell = isSelling(recipient);
+        bool isSell = checkIsSelling(recipient);
         uint256 taxFee = calculateTaxFee(amount, isSell);
         uint256 transferAmount = amount - taxFee;
 
         // 转账
         if (taxFee > 0) {
-            super._transfer(sender, address(this), taxFee);
+            _transfer(sender, address(this), taxFee);
         }
-        super._transfer(sender, recipient, transferAmount);
+        _transfer(sender, recipient, transferAmount);
     }
 
     // 紧急提取卡在合约里的代币
