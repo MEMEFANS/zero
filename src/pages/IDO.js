@@ -67,11 +67,20 @@ const IDO = () => {
   // 检查并处理推荐人绑定
   useEffect(() => {
     const checkAndBindReferrer = async () => {
-      if (!contract || !account) return;
+      if (!contract || !account || !referralContract) {
+        console.log('Dependencies not ready:', { contract: !!contract, account: !!account, referralContract: !!referralContract });
+        return;
+      }
 
       try {
+        console.log('Checking referrer with contracts:', {
+          idoAddress: contract.address,
+          referralAddress: referralContract.address,
+          account: account
+        });
+
         // 检查是否已经绑定过推荐人
-        const currentReferrer = await contract.getUserReferrer(account);
+        const currentReferrer = await referralContract.getUserReferrer(account);
         console.log('Current referrer:', currentReferrer);
         
         if (currentReferrer === ethers.constants.AddressZero) {
@@ -100,7 +109,7 @@ const IDO = () => {
                 });
 
                 // 先检查是否已经有推荐人
-                const hasRef = await contract.hasReferrer(account);
+                const hasRef = await referralContract.hasReferrer(account);
                 console.log('Has referrer check:', hasRef);
                 if (hasRef) {
                   showNotification('error', '您已经有推荐人了');
@@ -119,16 +128,54 @@ const IDO = () => {
                   return;
                 }
 
+                // 检查是否是项目钱包地址
+                const projectWallet = await contract.projectWallet();
+                if (urlReferrer.toLowerCase() === projectWallet.toLowerCase()) {
+                  showNotification('error', '不能将项目钱包设为推荐人');
+                  return;
+                }
+
+                // 检查合约权限
+                try {
+                  const AUTHORIZED_ROLE = ethers.utils.keccak256(
+                    ethers.utils.toUtf8Bytes('AUTHORIZED_CONTRACT_ROLE')
+                  );
+                  const hasRole = await referralContract.hasRole(AUTHORIZED_ROLE, contract.address);
+                  console.log('Contract authorization check:', {
+                    hasRole,
+                    idoAddress: contract.address,
+                    roleHash: AUTHORIZED_ROLE
+                  });
+                } catch (error) {
+                  console.error('Error checking contract role:', error);
+                }
+
                 // 通过 IDO 合约绑定推荐人
                 console.log('Calling IDO contract bindReferrer with:', urlReferrer);
-                const bindTx = await contract.bindReferrer(urlReferrer);
+                const bindTx = await contract.bindReferrer(urlReferrer, {
+                  gasLimit: 500000
+                });
                 showNotification('info', '等待交易确认...', true);
                 console.log('Binding transaction sent:', bindTx.hash);
                 
-                await bindTx.wait();
-                setUserReferrer(urlReferrer);
-                showNotification('success', '推荐人绑定成功！');
-                console.log('Binding successful');
+                // 等待交易确认
+                const receipt = await bindTx.wait();
+                console.log('Transaction receipt:', receipt);
+
+                // 再次检查是否绑定成功
+                const newReferrer = await referralContract.getUserReferrer(account);
+                console.log('New referrer check:', {
+                  expected: urlReferrer.toLowerCase(),
+                  actual: newReferrer.toLowerCase()
+                });
+
+                if (newReferrer.toLowerCase() === urlReferrer.toLowerCase()) {
+                  setUserReferrer(urlReferrer);
+                  showNotification('success', '推荐人绑定成功！');
+                  console.log('Binding successful');
+                } else {
+                  throw new Error('Binding verification failed');
+                }
               } catch (error) {
                 console.error('绑定推荐人失败:', error);
                 // 解析错误信息
@@ -145,6 +192,25 @@ const IDO = () => {
                   errorMessage = '您取消了交易';
                 } else if (error.message.includes('insufficient funds')) {
                   errorMessage = 'BNB余额不足';
+                } else if (error.message.includes('Cannot bind project wallet')) {
+                  errorMessage = '不能将项目钱包设为推荐人';
+                } else if (error.message.includes('execution reverted')) {
+                  // 记录详细错误信息
+                  console.error('Contract execution error:', {
+                    message: error.message,
+                    code: error.code,
+                    data: error.data,
+                    error
+                  });
+                  errorMessage = '合约执行失败，请查看控制台日志';
+                } else {
+                  console.error('Unknown error:', {
+                    error,
+                    message: error.message,
+                    code: error.code,
+                    data: error.data
+                  });
+                  errorMessage = '未知错误，请查看控制台日志';
                 }
                 showNotification('error', errorMessage);
               } finally {
@@ -159,13 +225,18 @@ const IDO = () => {
           setUserReferrer(currentReferrer);
         }
       } catch (error) {
-        console.error('检查推荐人失败:', error);
-        showNotification('error', '检查推荐人状态失败');
+        console.error('检查推荐人状态失败:', {
+          error,
+          message: error.message,
+          code: error.code,
+          data: error.data,
+          stack: error.stack
+        });
       }
     };
 
     checkAndBindReferrer();
-  }, [contract, account, urlReferrer]);
+  }, [contract, account, urlReferrer, referralContract]);
 
   // 初始化合约
   useEffect(() => {
