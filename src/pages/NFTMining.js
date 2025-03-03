@@ -3,39 +3,34 @@ import { useWeb3React } from '@web3-react/core';
 import { injected } from '../utils/connectors';
 import { ethers } from 'ethers';
 import { LanguageContext } from '../App';
+import { 
+  ZONE_NFT_ADDRESS,
+  NFT_MINING_ADDRESS,
+  ZONE_NFT_ABI,
+  NFT_RARITY,
+  NFT_RARITY_COLORS,
+  NFT_SETTINGS,
+  NFT_IMAGES,
+  NFT_PROBABILITIES
+} from '../constants/contracts';
 
-const MYSTERY_BOX_ADDRESS = "YOUR_MYSTERY_BOX_CONTRACT_ADDRESS";
-
-const MYSTERY_BOX_ABI = [
-  "function getNFTAttributes(uint256 tokenId) external view returns (tuple(uint8 rarity, uint256 power, uint256 dailyReward, uint256 maxReward, uint256 minedAmount, bool isStaked, uint256 stakeTime))",
+const NFT_MINING_ABI = [
+  "function stakeNFT(uint256 tokenId) external",
+  "function stakeNFTWithInvite(uint256 tokenId, string memory inviteCode) external",
+  "function unstakeNFT(uint256 tokenId) external",
+  "function claimReward() external",
   "function getStakedNFTs(address user) external view returns (uint256[])",
   "function calculateReward(uint256 tokenId) public view returns (uint256)",
   "function getTotalMiners() external view returns (uint256)",
   "function getTodayOutput() external view returns (uint256)",
   "function getTotalOutput() external view returns (uint256)",
-  "function stakeNFT(uint256 tokenId) external",
-  "function stakeNFTWithInvite(uint256 tokenId, string memory inviteCode) external",
   "function getUserPower(address user) external view returns (uint256)",
   "function pendingReward(address user) external view returns (uint256)",
   "function getDailyRewards(address user) external view returns (uint256)",
-  "function getDirectReferrals(address user) external view returns (uint256)"
+  "function getDirectReferrals(address user) external view returns (uint256)",
+  "function isApprovedForAll(address owner, address operator) external view returns (bool)",
+  "function setApprovalForAll(address operator, bool approved) external"
 ];
-
-const NFT_RARITY = ['N', 'R', 'SR', 'SSR'];
-
-const NFT_SETTINGS = {
-  N: { power: 100, price: 100, dailyReward: 2.8, maxReward: 252, roi: 35.7, yearReturn: 152 },
-  R: { power: 400, price: 100, dailyReward: 10, maxReward: 900, roi: 11.1, yearReturn: 800 },
-  SR: { power: 1600, price: 100, dailyReward: 40, maxReward: 3600, roi: 2.8, yearReturn: 3500 },
-  SSR: { power: 6400, price: 100, dailyReward: 160, maxReward: 14400, roi: 0.7, yearReturn: 14300 }
-};
-
-const NFT_PROBABILITIES = {
-  N: 0.55,
-  R: 0.15,
-  SR: 0.05,
-  SSR: 0.01
-};
 
 const NFT_LEVELS = {
   N: { power: 100, daily: 2.8, maxReward: 252, roi: 35.7, annual: 152, rate: 55, price: 100 },
@@ -95,14 +90,13 @@ const NFTMining = () => {
     }
   };
 
-  // 加载所有挖矿数据
   const loadMiningData = async () => {
     if (!account) return;
     
     try {
       setIsLoading(true);
       const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, provider);
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, provider);
       
       // 获取用户的 NFT 列表
       const stakedNFTs = await contract.getStakedNFTs(account);
@@ -113,7 +107,7 @@ const NFTMining = () => {
         const attrs = await contract.getNFTAttributes(nftId);
         totalPower = totalPower.add(attrs.power);
       }
-
+  
       const [rewards, dailyRewards, directCount, totalMiners, todayOutput, totalOutput] = await Promise.all([
         contract.pendingReward(account),
         contract.getDailyRewards(account),
@@ -122,7 +116,7 @@ const NFTMining = () => {
         contract.getTodayOutput(),
         contract.getTotalOutput()
       ]);
-
+  
       const level = calculateMiningLevel(totalPower);
       const inviteCode = account?.slice(-6).toUpperCase();
       
@@ -150,7 +144,7 @@ const NFTMining = () => {
 
   const fetchNFTs = async () => {
     try {
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
       
       // 加载质押的NFT
       const stakedTokenIds = await contract.getStakedNFTs(account);
@@ -172,7 +166,7 @@ const NFTMining = () => {
         })
       );
       setNfts(stakedNFTsData);
-
+  
       // 计算总算力和每日收益
       const totalPower = stakedNFTsData.reduce((sum, nft) => sum + parseInt(nft.power), 0);
       const dailyRewards = stakedNFTsData.reduce((sum, nft) => sum + parseFloat(nft.dailyReward), 0);
@@ -182,28 +176,26 @@ const NFTMining = () => {
         personalPower: totalPower,
         dailyRewards
       }));
-
+  
       setIsLoading(false);
     } catch (error) {
       console.error('Error loading NFTs:', error);
       setIsLoading(false);
     }
   };
-
-  // 获取全局挖矿数据
   const fetchGlobalStats = async () => {
     if (!account) return;
     
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, provider);
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, provider);
       
       const [totalMiners, todayOutput, totalOutput] = await Promise.all([
         contract.getTotalMiners(),
         contract.getTodayOutput(),
         contract.getTotalOutput()
       ]);
-
+  
       setMiningStats(prev => ({
         ...prev,
         totalMiners: totalMiners.toNumber(),
@@ -214,19 +206,19 @@ const NFTMining = () => {
       console.error('Error fetching global stats:', error);
     }
   };
-
+  
   const handleStakeWithInvite = async (nftId) => {
     setSelectedNFTId(nftId);
     setShowInviteModal(true);
   };
-
+  
   const handleStakeConfirm = async (useInviteCode = false) => {
     if (isSubmitting) return;
     
     try {
       setIsSubmitting(true);
       setIsLoading(true);
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
       
       let tx;
       if (useInviteCode && inviteCodeInput) {
@@ -253,7 +245,7 @@ const NFTMining = () => {
       setIsLoading(false);
     }
   };
-
+  
   useEffect(() => {
     if (active && account) {
       // 初始加载

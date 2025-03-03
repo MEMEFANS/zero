@@ -1,12 +1,16 @@
-export const MYSTERY_BOX_ADDRESS = "0x1234567890abcdef1234567890abcdef12345678";
-export const ZONE_TOKEN_ADDRESS = "0x9b7C0EDE41E88779f7076099d77445eBE6388Abc";
-export const STAKING_ADDRESS = "YOUR_STAKING_CONTRACT_ADDRESS";
-export const REFERRAL_REGISTRY_ADDRESS = "0x587353A6387d531b01d3815e4416B2e64511cA57";
-export const IDO_DISTRIBUTOR_ADDRESS = "0xEEB028B3d7411366e3Ae43F3201202c0369d079B";
+export const ZONE_NFT_ADDRESS = "0xb43C8B9B56A7e4f3ea2f04465aCB5fe3Fb90826F"; // 原 MYSTERY_BOX_ADDRESS
+export const ZONE_TOKEN_ADDRESS = "0xfc57f8625688D85A332437FF1aacE8731d952955";
+export const NFT_MARKETPLACE_ADDRESS = "0x7EB2F701206B52b034201a608A6b73cc7423d747";
+export const NFT_MINING_ADDRESS = "0x71fcB50d20052511b545A9f42E2F857aaCB5b76a";
+export const REFERRAL_REGISTRY_ADDRESS = "0x32Ef65Add373412446400F3A6Ed460f61E599360";
+export const IDO_DISTRIBUTOR_ADDRESS = "0xBcFFfC6D090daF69E46D30cfaf49e39d4ce77ef1";
 
-export const MYSTERY_BOX_ABI = [
+export const ZONE_NFT_ABI = [
+  "function openBox() external returns (uint256)",
+  "function boxPrice() view returns (uint256)",
+  "function nftAttributes(uint256 tokenId) view returns (uint8 rarity, uint256 power, uint256 dailyReward, uint256 maxReward, uint256 minedAmount, bool isStaked, uint256 stakeTime)",
+  "event BoxOpened(address indexed user, uint256 indexed tokenId, string rarity)",
   "function getMarketListing(uint256 tokenId) external view returns (tuple(address seller, uint256 price, bool isActive))",
-  "function getNFTAttributes(uint256 tokenId) external view returns (tuple(uint8 rarity, uint256 power, uint256 dailyReward, uint256 maxReward, uint256 minedAmount, bool isStaked, uint256 stakeTime))",
   "function getOwnedNFTs(address user) external view returns (uint256[])",
   "function listNFT(uint256 tokenId, uint256 price) external",
   "function unlistNFT(uint256 tokenId) external",
@@ -20,13 +24,17 @@ export const MYSTERY_BOX_ABI = [
 ];
 
 export const ZONE_TOKEN_ABI = [
-  "function balanceOf(address account) external view returns (uint256)",
-  "function allowance(address owner, address spender) external view returns (uint256)",
-  "function approve(address spender, uint256 amount) external returns (bool)"
-];
-
-export const STAKING_ABI = [
-  "function stake(uint256 tokenId) external"
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function totalSupply() view returns (uint256)",
+  "function balanceOf(address account) view returns (uint256)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function transfer(address to, uint256 amount) external returns (bool)",
+  "function transferFrom(address from, address to, uint256 amount) external returns (bool)",
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+  "event Approval(address indexed owner, address indexed spender, uint256 value)"
 ];
 
 export const NFT_RARITY = ['N', 'R', 'SR', 'SSR'];
@@ -101,6 +109,7 @@ export const NFT_SETTINGS = {
     maxReward: 252, 
     roi: 35.7, 
     yearReturn: 152,
+    rate: 55,
     name: 'Normal',
     description: 'A common NFT with basic mining power'
   },
@@ -111,6 +120,7 @@ export const NFT_SETTINGS = {
     maxReward: 900, 
     roi: 11.1, 
     yearReturn: 800,
+    rate: 15,
     name: 'Rare',
     description: 'A rare NFT with enhanced mining capabilities'
   },
@@ -121,6 +131,7 @@ export const NFT_SETTINGS = {
     maxReward: 3600, 
     roi: 2.8, 
     yearReturn: 3500,
+    rate: 5,
     name: 'Super Rare',
     description: 'A super rare NFT with powerful mining abilities'
   },
@@ -131,7 +142,16 @@ export const NFT_SETTINGS = {
     maxReward: 14400, 
     roi: 0.7, 
     yearReturn: 14300,
+    rate: 1,
     name: 'SSR',
     description: 'The most powerful NFT with exceptional mining power'
   }
+};
+
+// NFT 稀有度概率配置
+export const NFT_PROBABILITIES = {
+  N: 0.55,
+  R: 0.15,
+  SR: 0.20,
+  SSR: 0.10
 };

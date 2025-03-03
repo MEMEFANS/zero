@@ -4,21 +4,30 @@ import { injected } from '../utils/connectors';
 import { ethers } from 'ethers';
 import { LanguageContext } from '../App';
 import boxImage from '../images/mystery-box/box-bg.png';
+import { ZONE_NFT_ADDRESS, ZONE_TOKEN_ADDRESS } from '../constants/contracts';
 
-// 这些地址需要替换为实际部署的合约地址
-const ZONE_TOKEN_ADDRESS = "YOUR_TOKEN_CONTRACT_ADDRESS";
-const MYSTERY_BOX_ADDRESS = "YOUR_MYSTERY_BOX_CONTRACT_ADDRESS";
-
-// 代币ABI
-const ZONE_TOKEN_ABI = [
-  "function approve(address spender, uint256 amount) public returns (bool)",
-  "function allowance(address owner, address spender) public view returns (uint256)"
+// NFT合约ABI
+const ZONE_NFT_ABI = [
+  "function openBox(string memory _inviteCode) external returns (uint256)",
+  "function openBoxDirect() external returns (uint256)",
+  "function boxPrice() view returns (uint256)",
+  "function nftAttributes(uint256 tokenId) view returns (uint8 rarity, uint256 power, uint256 dailyReward, uint256 maxReward, uint256 minedAmount, bool isStaked, uint256 stakeTime)",
+  "event BoxOpened(address indexed user, uint256 indexed tokenId, uint8 rarity)"
 ];
 
-// 盲盒ABI
-const MYSTERY_BOX_ABI = [
-  "function openBox() public returns (uint8)",
-  "function BOX_PRICE() public view returns (uint256)"
+// ZONE代币ABI
+const ZONE_TOKEN_ABI = [
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function totalSupply() view returns (uint256)",
+  "function balanceOf(address account) view returns (uint256)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function transfer(address to, uint256 amount) external returns (bool)",
+  "function transferFrom(address from, address to, uint256 amount) external returns (bool)",
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+  "event Approval(address indexed owner, address indexed spender, uint256 value)"
 ];
 
 const NFT_SETTINGS = {
@@ -47,16 +56,6 @@ const MysteryBox = () => {
     }
   }, [active, library]);
 
-  // const fetchBoxPrice = async () => {
-  //   try {
-  //     const boxContract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
-  //     const price = await boxContract.BOX_PRICE();
-  //     setBoxPrice(ethers.utils.formatEther(price));
-  //   } catch (error) {
-  //     console.error('Error fetching box price:', error);
-  //   }
-  // };
-
   const connectWallet = async () => {
     try {
       await activate(injected);
@@ -68,9 +67,23 @@ const MysteryBox = () => {
   const checkAllowance = async () => {
     try {
       const tokenContract = new ethers.Contract(ZONE_TOKEN_ADDRESS, ZONE_TOKEN_ABI, library.getSigner());
-      const allowance = await tokenContract.allowance(account, MYSTERY_BOX_ADDRESS);
-      const boxContract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
-      const boxPrice = await boxContract.BOX_PRICE();
+      const nftContract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
+      
+      // 检查盲盒价格
+      const boxPrice = await nftContract.boxPrice();
+      console.log('Box Price:', ethers.utils.formatEther(boxPrice));
+      
+      // 检查余额
+      const balance = await tokenContract.balanceOf(account);
+      console.log('ZONE Balance:', ethers.utils.formatEther(balance));
+      if (balance.lt(boxPrice)) {
+        alert('ZONE Token 余额不足');
+        return false;
+      }
+      
+      // 检查授权
+      const allowance = await tokenContract.allowance(account, ZONE_NFT_ADDRESS);
+      console.log('Current Allowance:', ethers.utils.formatEther(allowance));
       return allowance.gte(boxPrice);
     } catch (error) {
       console.error('Error checking allowance:', error);
@@ -81,63 +94,146 @@ const MysteryBox = () => {
   const approveToken = async () => {
     try {
       setIsApproving(true);
-      const tokenContract = new ethers.Contract(ZONE_TOKEN_ADDRESS, ZONE_TOKEN_ABI, library.getSigner());
-      const boxContract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
-      const boxPrice = await boxContract.BOX_PRICE();
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
       
-      const approveAmount = boxPrice.mul(1000);
-      const tx = await tokenContract.approve(MYSTERY_BOX_ADDRESS, approveAmount);
-      await tx.wait();
+      // 获取代币信息
+      const tokenContract = new ethers.Contract(ZONE_TOKEN_ADDRESS, ZONE_TOKEN_ABI, signer);
+      const symbol = await tokenContract.symbol();
+      const decimals = await tokenContract.decimals();
+      console.log('Token symbol:', symbol);
+      console.log('Token decimals:', decimals);
+      
+      // 获取盲盒价格
+      const nftContract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, signer);
+      const boxPrice = await nftContract.boxPrice();
+      console.log('Box price:', ethers.utils.formatUnits(boxPrice, decimals));
+      
+      // 检查代币余额
+      const balance = await tokenContract.balanceOf(account);
+      console.log('Current balance:', ethers.utils.formatUnits(balance, decimals));
+      
+      if (balance.lt(boxPrice)) {
+        alert(`${symbol} 余额不足以开盲盒`);
+        setIsApproving(false);
+        return false;
+      }
+      
+      // 检查当前授权
+      const currentAllowance = await tokenContract.allowance(account, ZONE_NFT_ADDRESS);
+      console.log('Current allowance:', ethers.utils.formatUnits(currentAllowance, decimals));
+      
+      if (currentAllowance.gte(boxPrice)) {
+        console.log('Already approved enough');
+        setIsApproving(false);
+        return true;
+      }
+      
+      // 发送授权交易
+      console.log('Sending approve transaction...');
+      const tx = await tokenContract.approve(ZONE_NFT_ADDRESS, ethers.constants.MaxUint256, {  // 授权最大值
+        gasLimit: 200000  // 增加 gas limit
+      });
+      console.log('Approve tx hash:', tx.hash);
+      
+      // 等待交易确认
+      const receipt = await tx.wait();
+      console.log('Transaction confirmed!');
+      
+      // 验证授权结果
+      const newAllowance = await tokenContract.allowance(account, ZONE_NFT_ADDRESS);
+      console.log('New allowance:', ethers.utils.formatUnits(newAllowance, decimals));
+      
+      if (newAllowance.lt(boxPrice)) {
+        console.error('Approval failed: allowance not increased');
+        setIsApproving(false);
+        return false;
+      }
       
       setIsApproving(false);
       return true;
     } catch (error) {
-      console.error('Error approving token:', error);
+      console.error('Detailed error:', error);
+      if (error.error) {
+        console.error('Inner error:', error.error);
+      }
+      if (error.transaction) {
+        console.error('Failed transaction:', error.transaction);
+      }
+      alert('授权失败，请查看控制台获取详细信息');
       setIsApproving(false);
       return false;
     }
   };
-
-  const openBox = async () => {
-    if (!active) {
-      alert(t('connectWalletFirst'));
-      return;
-    }
-
-    try {
-      setIsOpening(true);
-      setShowAnimation(true);
-
-      const hasAllowance = await checkAllowance();
-      if (!hasAllowance) {
-        const approved = await approveToken();
-        if (!approved) {
-          setIsOpening(false);
-          setShowAnimation(false);
-          alert(t('approvalFailed'));
-          return;
-        }
+const openBox = async () => {
+  try {
+    setIsOpening(true);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+    const nftContract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, signer);
+    
+    // 检查合约状态
+    const boxPrice = await nftContract.boxPrice();
+    console.log('Box Price:', ethers.utils.formatEther(boxPrice));
+    
+    // 获取代币合约
+    const tokenContract = new ethers.Contract(ZONE_TOKEN_ADDRESS, ZONE_TOKEN_ABI, signer);
+    const balance = await tokenContract.balanceOf(account);
+    const allowance = await tokenContract.allowance(account, ZONE_NFT_ADDRESS);
+    
+    console.log('Current Balance:', ethers.utils.formatEther(balance));
+    console.log('Current Allowance:', ethers.utils.formatEther(allowance));
+    
+    // 开盲盒
+    console.log('Opening mystery box...');
+    const tx = await nftContract.openBox({  // 使用 openBox 而不是 openBoxDirect
+      gasLimit: 1000000
+    });
+    console.log('Transaction hash:', tx.hash);
+    
+    // 等待交易确认
+    const receipt = await tx.wait();
+    console.log('Transaction confirmed!');
+    
+    // 从事件中获取 NFT ID 和稀有度
+    let tokenId, rarity;
+    for (const event of receipt.events) {
+      if (event.event === 'BoxOpened') {
+        tokenId = event.args.tokenId.toNumber();
+        rarity = event.args.rarity;  // 这里不需要 toNumber() 因为是 string 类型
+        break;
       }
-
-      const boxContract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
-      const tx = await boxContract.openBox();
-      const receipt = await tx.wait();
-
-      // 模拟开箱动画
-      setTimeout(() => {
-        setShowAnimation(false);
-        setOpeningResult({ rarity: 'SSR', tokenId: 1 }); // 这里应该根据实际结果设置
-        setIsOpening(false);
-      }, 3000);
-
-    } catch (error) {
-      console.error('Error opening box:', error);
-      setIsOpening(false);
-      setShowAnimation(false);
-      alert(t('openFailed'));
     }
-  };
-
+    
+    if (!tokenId) {
+      throw new Error('Failed to get NFT ID from event');
+    }
+    
+    // 获取 NFT 属性
+    const attrs = await nftContract.nftAttributes(tokenId);
+    console.log('NFT attributes:', attrs);
+    
+    // 显示结果
+    alert(`恭喜！你获得了一个${rarity}级 NFT！\n算力：${attrs.power}\n日收益：${ethers.utils.formatUnits(attrs.dailyReward, 18)} ZONE\n最大收益：${ethers.utils.formatUnits(attrs.maxReward, 18)} ZONE`);
+    
+    setIsOpening(false);
+    return true;
+  } catch (error) {
+    console.error('Detailed error:', error);
+    if (error.error) {
+      console.error('Inner error:', error.error);
+      // 解析错误信息
+      if (error.error.message) {
+        alert(`开盲盒失败: ${error.error.message}`);
+      }
+    }
+    if (error.transaction) {
+      console.error('Failed transaction:', error.transaction);
+    }
+    setIsOpening(false);
+    return false;
+  }
+};
   return (
     <div className="min-h-screen bg-[#0B1120] pt-20 relative overflow-hidden">
       {/* 科技感背景 */}

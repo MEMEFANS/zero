@@ -5,19 +5,16 @@ import { ethers } from 'ethers';
 import { useNavigate } from 'react-router-dom';
 import { LanguageContext } from '../App';
 import { 
-  MYSTERY_BOX_ADDRESS, 
-  MYSTERY_BOX_ABI, 
+  ZONE_NFT_ADDRESS, 
+  ZONE_NFT_ABI, 
   NFT_RARITY,
   NFT_RARITY_COLORS,
   NFT_SETTINGS,
-  NFT_IMAGES
+  NFT_IMAGES,
+  NFT_MINING_ADDRESS
 } from '../constants/contracts';
 
-// 临时的合约地址，等待实际部署后替换
-const STAKING_ADDRESS = "0x0000000000000000000000000000000000000000";
-const MYSTERY_BOX_ADDRESS_TEMP = "0x0000000000000000000000000000000000000000";
-
-// 临时的合约 ABI，等待实际部署后替换
+// NFT Mining合约 ABI
 const STAKING_ABI = [
   "function stake(uint256 tokenId) external",
   "function isApprovedForAll(address owner, address operator) external view returns (bool)",
@@ -101,7 +98,7 @@ const NFTMarket = () => {
 
   const loadMarketData = async () => {
     try {
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
       
       // 加载我的NFT
       const myTokenIds = await contract.getOwnedNFTs(account);
@@ -154,7 +151,7 @@ const NFTMarket = () => {
 
   const loadNFTHistory = async (tokenId) => {
     try {
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
       const history = await contract.getTradeHistory(tokenId);
       setSelectedNFTHistory(history.map(trade => ({
         seller: trade.seller,
@@ -170,7 +167,7 @@ const NFTMarket = () => {
 
   const loadUserHistory = async () => {
     try {
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
       const [tokenIds, trades] = await contract.getUserTradeHistory(account);
       setUserHistory({
         tokenIds: tokenIds.map(id => id.toString()),
@@ -188,7 +185,7 @@ const NFTMarket = () => {
 
   const loadMarketStats = async () => {
     try {
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
       const stats = await contract.getMarketStats();
       
       setMarketStats({
@@ -266,7 +263,7 @@ const NFTMarket = () => {
 
   const handleBuy = async (nftId) => {
     try {
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
       const listing = await contract.getMarketListing(nftId);
       
       const tx = await contract.buyNFT(nftId, {
@@ -291,12 +288,12 @@ const NFTMarket = () => {
       }
 
       const priceInWei = ethers.utils.parseEther(price.toString());
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
       
       // 检查NFT授权
-      const isApproved = await contract.isApprovedForAll(account, MYSTERY_BOX_ADDRESS);
+      const isApproved = await contract.isApprovedForAll(account, ZONE_NFT_ADDRESS);
       if (!isApproved) {
-        const approveTx = await contract.setApprovalForAll(MYSTERY_BOX_ADDRESS, true);
+        const approveTx = await contract.setApprovalForAll(ZONE_NFT_ADDRESS, true);
         await approveTx.wait();
       }
 
@@ -313,7 +310,7 @@ const NFTMarket = () => {
 
   const handleDelist = async (nftId) => {
     try {
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, library.getSigner());
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
       const tx = await contract.unlistNFT(nftId);
       await tx.wait();
       
@@ -331,16 +328,16 @@ const NFTMarket = () => {
 
   const handleStakeConfirm = async () => {
     try {
-      const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS_TEMP, MYSTERY_BOX_ABI, library.getSigner());
+      const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, library.getSigner());
       
       // 检查NFT授权
-      const isApproved = await contract.isApprovedForAll(account, STAKING_ADDRESS);
+      const isApproved = await contract.isApprovedForAll(account, NFT_MINING_ADDRESS);
       if (!isApproved) {
-        const approveTx = await contract.setApprovalForAll(STAKING_ADDRESS, true);
+        const approveTx = await contract.setApprovalForAll(NFT_MINING_ADDRESS, true);
         await approveTx.wait();
       }
 
-      const stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, library.getSigner());
+      const stakingContract = new ethers.Contract(NFT_MINING_ADDRESS, STAKING_ABI, library.getSigner());
       const tx = await stakingContract.stake(selectedStakeNFT.id);
       await tx.wait();
       
@@ -451,7 +448,7 @@ const NFTMarket = () => {
         showNotification('info', '正在处理您的购买请求...');
 
         const signer = library.getSigner();
-        const contract = new ethers.Contract(MYSTERY_BOX_ADDRESS, MYSTERY_BOX_ABI, signer);
+        const contract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, signer);
         const price = ethers.utils.parseEther(nft.price.toString());
         
         // 发送购买交易
@@ -477,26 +474,21 @@ const NFTMarket = () => {
         {notification.show && (
           <div className="fixed inset-0 flex items-center justify-center z-50">
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setNotification({ show: false, type: '', message: '' })}></div>
-            <div className={`
-              relative rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4
+            <div className={`relative rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 backdrop-blur-xl animate-fade-in
               ${notification.type === 'success'
                 ? 'bg-green-500/10 border-2 border-green-500/20'
                 : notification.type === 'error'
                 ? 'bg-red-500/10 border-2 border-red-500/20'
                 : 'bg-blue-500/10 border-2 border-blue-500/20'
-              }
-              backdrop-blur-xl animate-fade-in
-            `}>
+              }`}>
               <div className="flex items-center gap-4">
-                <div className={`
-                  w-12 h-12 rounded-full flex items-center justify-center
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center
                   ${notification.type === 'success'
                     ? 'bg-green-500/20 text-green-400'
                     : notification.type === 'error'
                     ? 'bg-red-500/20 text-red-400'
                     : 'bg-blue-500/20 text-blue-400'
-                  }
-                `}>
+                  }`}>
                   {notification.type === 'success' ? (
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
@@ -524,15 +516,13 @@ const NFTMarket = () => {
               </div>
               <button
                 onClick={() => setNotification({ show: false, type: '', message: '' })}
-                className={`
-                  mt-6 w-full py-3 rounded-lg font-semibold transition-all
+                className={`mt-6 w-full py-3 rounded-lg font-semibold transition-all
                   ${notification.type === 'success'
                     ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400'
                     : notification.type === 'error'
                     ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400'
                     : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400'
-                  }
-                `}
+                  }`}
               >
                 确定
               </button>
@@ -709,48 +699,53 @@ const NFTMarket = () => {
       e.preventDefault();
       if (listingPrice && listingPrice > 0) {
         handleList(nft.id, listingPrice);
-        setListingPrice('');
         onClose();
       }
     };
 
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="bg-[#1A2438] rounded-xl max-w-md w-full mx-4 p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-white">{t('listNFT')} #{nft.id}</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <div className="mb-6">
-              <label className="block text-gray-400 mb-2">{t('listingPrice')}</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={listingPrice}
-                onChange={(e) => setListingPrice(e.target.value)}
-                className="w-full px-4 py-2 bg-black/20 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-green-500"
-                placeholder={t('pricePlaceholder')}
-                required
-              />
+        <div className="bg-[#1A2438] rounded-2xl max-w-md w-full mx-4 overflow-hidden">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-white">{t('listNFT')}</h3>
+              <button onClick={onClose} className="text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors"
-            >
-              {t('confirm')}
-            </button>
-          </form>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-gray-400 mb-2">{t('setPrice')}</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={listingPrice}
+                    onChange={(e) => setListingPrice(e.target.value)}
+                    placeholder="0.0"
+                    step="0.01"
+                    min="0"
+                    className="w-full bg-black/20 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/50"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">BNB</div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={!listingPrice || listingPrice <= 0}
+                className={`w-full py-3 px-4 rounded-lg font-bold transition-colors ${
+                  listingPrice && listingPrice > 0
+                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {t('confirm')}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     );
@@ -762,44 +757,41 @@ const NFTMarket = () => {
 
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="bg-[#1A2438] rounded-xl max-w-md w-full mx-4 p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-white">{t('stakeNFT')} #{nft.id}</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+        <div className="bg-[#1A2438] rounded-2xl max-w-md w-full mx-4 overflow-hidden">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-white">{t('stakeNFT')}</h3>
+              <button onClick={onClose} className="text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-          <div className="space-y-4 mb-6">
-            <div className="bg-black/20 p-4 rounded-lg">
-              <div className="text-gray-400 mb-1">{t('power')}</div>
-              <div className="text-xl font-bold text-white">{nft.power}</div>
-            </div>
-            <div className="bg-black/20 p-4 rounded-lg">
-              <div className="text-gray-400 mb-1">{t('dailyReward')}</div>
-              <div className="text-xl font-bold text-white">{nft.dailyReward} ZONE</div>
-            </div>
-            <div className="bg-black/20 p-4 rounded-lg">
-              <div className="text-gray-400 mb-1">{t('maxReward')}</div>
-              <div className="text-xl font-bold text-white">{nft.maxReward} ZONE</div>
-            </div>
-          </div>
+            <div className="space-y-4">
+              <div className="bg-black/20 p-4 rounded-lg">
+                <div className="text-gray-400 mb-1">{t('power')}</div>
+                <div className="text-xl font-bold text-white">{nft.power} H/s</div>
+              </div>
+              <div className="bg-black/20 p-4 rounded-lg">
+                <div className="text-gray-400 mb-1">{t('dailyReward')}</div>
+                <div className="text-xl font-bold text-white">{nft.dailyReward} ZONE</div>
+              </div>
+              <div className="bg-black/20 p-4 rounded-lg">
+                <div className="text-gray-400 mb-1">{t('maxReward')}</div>
+                <div className="text-xl font-bold text-white">{nft.maxReward} ZONE</div>
+              </div>
 
-          <div className="space-y-4">
-            <p className="text-gray-400 text-sm">
-              {t('stakeWarning')}
-            </p>
-            <button
-              onClick={handleStakeConfirm}
-              className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors"
-            >
-              {t('confirm')}
-            </button>
+              <button
+                onClick={() => {
+                  handleStakeConfirm(nft.id);
+                  onClose();
+                }}
+                className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors"
+              >
+                {t('confirm')}
+              </button>
+            </div>
           </div>
         </div>
       </div>

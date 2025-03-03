@@ -3,6 +3,7 @@ import { useWeb3React } from '@web3-react/core';
 import { injected } from '../utils/connectors';
 import { ethers } from 'ethers';
 import { LanguageContext } from '../App';
+import { IDO_DISTRIBUTOR_ADDRESS } from '../constants/contracts';
 
 // IDO合约ABI
 const IDO_ABI = [
@@ -25,7 +26,7 @@ const IDO_ABI = [
 ];
 
 // IDO合约地址 - BSC主网
-const IDO_CONTRACT_ADDRESS = "0xEEB028B3d7411366e3Ae43F3201202c0369d079B";
+const IDO_CONTRACT_ADDRESS = IDO_DISTRIBUTOR_ADDRESS;
 
 const IDO = () => {
   const { active, account, activate, library } = useWeb3React();
@@ -44,8 +45,8 @@ const IDO = () => {
   const [participantsCount, setParticipantsCount] = useState(0);
   const [averageInvestment, setAverageInvestment] = useState(0);
   const [idoStatus, setIdoStatus] = useState({
-    endTime: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,  // 30天后结束
-    claimTime: Math.floor(Date.now() / 1000) + 35 * 24 * 60 * 60,  // 35天后可以领取
+    endTime: 1742428826,  // 2025-03-18 10:00:26
+    claimTime: 1742515226,  // 2025-03-19 10:00:26
     isActive: true,
     isClaimable: false
   });
@@ -391,8 +392,7 @@ const IDO = () => {
       // 1. 检查 ZONE 代币地址
       const zoneTokenAddress = await contract.zoneToken();
       console.log("ZONE Token 地址:", zoneTokenAddress);
-      console.log("是否匹配:", zoneTokenAddress.toLowerCase() === "0x9b7C0EDE41E88779f7076099d77445eBE6388Abc".toLowerCase());
-
+      
       // 2. 检查时间设置
       const endTime = await contract.idoEndTime();
       const claimTime = await contract.claimStartTime();
