@@ -41,7 +41,7 @@ const IDO = () => {
   const [expectedTokens, setExpectedTokens] = useState(0);
   const [totalRaised, setTotalRaised] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [notification, setNotification] = useState({ show: false, type: '', message: '' });
+  const [notification, setNotification] = useState({ show: false, type: '', message: '', loading: false });
   const [referrer, setReferrer] = useState(null);
   const [contract, setContract] = useState(null);
   const [referralContract, setReferralContract] = useState(null);
@@ -58,9 +58,9 @@ const IDO = () => {
   });
 
   // 显示通知的函数
-  const showNotification = (type, message) => {
-    setNotification({ show: true, type, message });
-    setTimeout(() => setNotification({ show: false, type: '', message: '' }), 5000);
+  const showNotification = (type, message, loading = false) => {
+    setNotification({ show: true, type, message, loading });
+    setTimeout(() => setNotification({ show: false, type: '', message: '', loading: false }), 5000);
   };
 
   // 检查并处理推荐人绑定
@@ -80,13 +80,21 @@ const IDO = () => {
           console.log('URL referrer:', urlReferrer);
           
           if (urlReferrer && ethers.utils.isAddress(urlReferrer)) {
+            // 检查是否尝试自己推荐自己
+            if (urlReferrer.toLowerCase() === account.toLowerCase()) {
+              console.log('Cannot refer self');
+              showNotification('error', '不能将自己设为推荐人');
+              return;
+            }
+
             // 弹出确认框
             if (window.confirm(`检测到推荐人地址：${urlReferrer}\n是否将其设置为您的推荐人？`)) {
               console.log('User confirmed, binding referrer...');
               try {
+                setIsLoading(true);
                 // 绑定推荐人
                 const bindTx = await referralContract.bindReferrer(account, urlReferrer);
-                showNotification('info', '正在绑定推荐人...');
+                showNotification('info', '等待交易确认...', true);
                 console.log('Binding transaction sent:', bindTx.hash);
                 
                 await bindTx.wait();
@@ -95,7 +103,22 @@ const IDO = () => {
                 console.log('Binding successful');
               } catch (error) {
                 console.error('绑定推荐人失败:', error);
-                showNotification('error', '绑定推荐人失败');
+                // 解析错误信息
+                let errorMessage = '绑定推荐人失败';
+                if (error.message.includes('Already has referrer')) {
+                  errorMessage = '您已经有推荐人了';
+                } else if (error.message.includes('Cannot refer self')) {
+                  errorMessage = '不能将自己设为推荐人';
+                } else if (error.message.includes('Circular referral')) {
+                  errorMessage = '不能形成循环推荐';
+                } else if (error.message.includes('Invalid address')) {
+                  errorMessage = '无效的推荐人地址';
+                } else if (error.message.includes('user rejected transaction')) {
+                  errorMessage = '您取消了交易';
+                }
+                showNotification('error', errorMessage);
+              } finally {
+                setIsLoading(false);
               }
             } else {
               console.log('User declined to bind referrer');
@@ -107,6 +130,7 @@ const IDO = () => {
         }
       } catch (error) {
         console.error('检查推荐人失败:', error);
+        showNotification('error', '检查推荐人状态失败');
       }
     };
 
@@ -158,7 +182,7 @@ const IDO = () => {
         gasLimit: 500000 // 设置足够的 gas 限制
       });
 
-      showNotification('info', '交易已发送，等待确认...');
+      showNotification('info', '交易已发送，等待确认...', true);
       await tx.wait();
       showNotification('success', '投资成功！');
 
@@ -266,7 +290,7 @@ const IDO = () => {
     try {
       setIsLoading(true);
       const tx = await contract.claimTokens();
-      showNotification('info', '正在领取代币...');
+      showNotification('info', '正在领取代币...', true);
       await tx.wait();
       showNotification('success', '代币领取成功！');
       setHasClaimed(true);
@@ -426,54 +450,30 @@ const IDO = () => {
 
       {/* 通知弹窗 */}
       {notification.show && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setNotification({ show: false, type: '', message: '' })}></div>
-          <div className={`
-            relative rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4
-            ${notification.type === 'success'
-              ? 'bg-green-500/10 border-2 border-green-500/20'
-              : 'bg-red-500/10 border-2 border-red-500/20'
-            }
-            backdrop-blur-xl animate-fade-in
-          `}>
-            <div className="flex items-center gap-4">
-              <div className={`
-                w-12 h-12 rounded-full flex items-center justify-center
-                ${notification.type === 'success'
-                  ? 'bg-green-500/20 text-green-400'
-                  : 'bg-red-500/20 text-red-400'
-                }
-              `}>
-                {notification.type === 'success' ? (
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                ) : (
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                )}
-              </div>
-              <div>
-                <h3 className={`text-xl font-bold mb-1 ${notification.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
-                  {notification.type === 'success' ? t('transactionSuccess') : t('transactionFailed')}
-                </h3>
-                <p className="text-gray-300">{notification.message}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setNotification({ show: false, type: '', message: '' })}
-              className={`
-                mt-6 w-full py-3 rounded-lg font-semibold transition-all
-                ${notification.type === 'success'
-                  ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400'
-                  : 'bg-red-500/20 hover:bg-red-500/30 text-red-400'
-                }
-              `}
-            >
-              确定
-            </button>
-          </div>
+        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg flex items-center space-x-2 z-50 ${
+          notification.type === 'success' ? 'bg-green-500' :
+          notification.type === 'error' ? 'bg-red-500' :
+          'bg-blue-500'
+        }`}>
+          {notification.loading ? (
+            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : notification.type === 'success' ? (
+            <svg className="h-5 w-5 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M5 13l4 4L19 7"></path>
+            </svg>
+          ) : notification.type === 'error' ? (
+            <svg className="h-5 w-5 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          ) : (
+            <svg className="h-5 w-5 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          )}
+          <span className="text-white">{notification.message}</span>
         </div>
       )}
 
