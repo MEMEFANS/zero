@@ -20,7 +20,8 @@ const IDO_ABI = [
   "function getIDOInfo() external view returns (uint256 _totalRaised, uint256 _participantsCount, uint256 _averageInvestment)",
   "function getUserInvestment(address user) external view returns (uint256 investmentAmount, uint256 tokenAllocation, bool claimed)",
   "function claimTokens() external",
-  "function totalRaisedBNB() external view returns (uint256)"
+  "function totalRaisedBNB() external view returns (uint256)",
+  "function bindReferrer(address referrer) external"
 ];
 
 // 推荐系统合约ABI
@@ -66,11 +67,11 @@ const IDO = () => {
   // 检查并处理推荐人绑定
   useEffect(() => {
     const checkAndBindReferrer = async () => {
-      if (!referralContract || !account) return;
+      if (!contract || !account) return;
 
       try {
         // 检查是否已经绑定过推荐人
-        const currentReferrer = await referralContract.getUserReferrer(account);
+        const currentReferrer = await contract.getUserReferrer(account);
         console.log('Current referrer:', currentReferrer);
         
         if (currentReferrer === ethers.constants.AddressZero) {
@@ -92,8 +93,35 @@ const IDO = () => {
               console.log('User confirmed, binding referrer...');
               try {
                 setIsLoading(true);
-                // 绑定推荐人
-                const bindTx = await referralContract.bindReferrer(account, urlReferrer);
+                console.log('Attempting to bind referrer:', {
+                  account,
+                  urlReferrer,
+                  contract: contract.address
+                });
+
+                // 先检查是否已经有推荐人
+                const hasRef = await contract.hasReferrer(account);
+                console.log('Has referrer check:', hasRef);
+                if (hasRef) {
+                  showNotification('error', '您已经有推荐人了');
+                  return;
+                }
+
+                // 检查推荐人地址是否有效
+                if (!ethers.utils.isAddress(urlReferrer)) {
+                  showNotification('error', '无效的推荐人地址');
+                  return;
+                }
+
+                // 检查是否是自己
+                if (urlReferrer.toLowerCase() === account.toLowerCase()) {
+                  showNotification('error', '不能将自己设为推荐人');
+                  return;
+                }
+
+                // 通过 IDO 合约绑定推荐人
+                console.log('Calling IDO contract bindReferrer with:', urlReferrer);
+                const bindTx = await contract.bindReferrer(urlReferrer);
                 showNotification('info', '等待交易确认...', true);
                 console.log('Binding transaction sent:', bindTx.hash);
                 
@@ -113,8 +141,10 @@ const IDO = () => {
                   errorMessage = '不能形成循环推荐';
                 } else if (error.message.includes('Invalid address')) {
                   errorMessage = '无效的推荐人地址';
-                } else if (error.message.includes('user rejected transaction')) {
+                } else if (error.message.includes('user rejected')) {
                   errorMessage = '您取消了交易';
+                } else if (error.message.includes('insufficient funds')) {
+                  errorMessage = 'BNB余额不足';
                 }
                 showNotification('error', errorMessage);
               } finally {
@@ -135,7 +165,7 @@ const IDO = () => {
     };
 
     checkAndBindReferrer();
-  }, [referralContract, account, urlReferrer]);
+  }, [contract, account, urlReferrer]);
 
   // 初始化合约
   useEffect(() => {
