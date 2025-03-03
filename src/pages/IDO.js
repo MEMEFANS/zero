@@ -1,17 +1,15 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useWeb3React } from '@web3-react/core';
+import { useParams } from 'react-router-dom';
 import { injected } from '../utils/connectors';
 import { ethers } from 'ethers';
 import { LanguageContext } from '../App';
-import { IDO_DISTRIBUTOR_ADDRESS } from '../constants/contracts';
+import { IDO_DISTRIBUTOR_ADDRESS, REFERRAL_REGISTRY_ADDRESS } from '../constants/contracts';
 
 // IDO合约ABI
 const IDO_ABI = [
   "function invest() external payable",
-  "function bindReferrer(address referrer) external",
-  "function getUserReferrer(address user) external view returns (address)",
   "function projectWallet() external view returns (address)",
-  "function referralPercentage() external view returns (uint256)",
   "function paused() external view returns (bool)",
   "function zoneToken() external view returns (address)",
   "function MIN_INVESTMENT() external view returns (uint256)",
@@ -25,12 +23,19 @@ const IDO_ABI = [
   "function totalRaisedBNB() external view returns (uint256)"
 ];
 
-// IDO合约地址 - BSC主网
-const IDO_CONTRACT_ADDRESS = IDO_DISTRIBUTOR_ADDRESS;
+// 推荐系统合约ABI
+const REFERRAL_ABI = [
+  "function bindReferrer(address user, address referrer) external",
+  "function getUserReferrer(address user) external view returns (address)",
+  "function hasReferrer(address user) external view returns (bool)",
+  "function getReferrerUsers(address referrer) external view returns (address[])",
+  "function getDirectReferrals(address user) external view returns (uint256)"
+];
 
 const IDO = () => {
   const { active, account, activate, library } = useWeb3React();
   const { t } = useContext(LanguageContext);
+  const { referrer: urlReferrer } = useParams();
   const [amount, setAmount] = useState('');
   const [userContribution, setUserContribution] = useState(0);
   const [expectedTokens, setExpectedTokens] = useState(0);
@@ -39,6 +44,7 @@ const IDO = () => {
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
   const [referrer, setReferrer] = useState(null);
   const [contract, setContract] = useState(null);
+  const [referralContract, setReferralContract] = useState(null);
   const [userReferrer, setUserReferrer] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [hasClaimed, setHasClaimed] = useState(false);
@@ -51,54 +57,126 @@ const IDO = () => {
     isClaimable: false
   });
 
-  // 显示通知
+  // 显示通知的函数
   const showNotification = (type, message) => {
     setNotification({ show: true, type, message });
     setTimeout(() => setNotification({ show: false, type: '', message: '' }), 5000);
   };
 
-  // 检查并绑定推荐人
-  const checkAndBindReferrer = async () => {
-    if (!contract || !account) return;
+  // 检查并处理推荐人绑定
+  useEffect(() => {
+    const checkAndBindReferrer = async () => {
+      if (!referralContract || !account) return;
 
-    try {
-      // 从 URL 获取推荐人地址
-      const urlParams = new URLSearchParams(window.location.search);
-      const refAddress = urlParams.get('ref');
-
-      if (refAddress) {
-        // 检查当前用户是否已经有推荐人
-        const hasReferrer = await contract.getUserReferrer(account);
-        if (hasReferrer === '0x0000000000000000000000000000000000000000') {
-          // 如果没有推荐人，弹出确认框
-          if (window.confirm('检测到推荐人地址，是否绑定？')) {
-            const bindTx = await contract.bindReferrer(refAddress);
-            await bindTx.wait();
-            showNotification('success', '推荐人绑定成功');
+      try {
+        // 检查是否已经绑定过推荐人
+        const currentReferrer = await referralContract.getUserReferrer(account);
+        console.log('Current referrer:', currentReferrer);
+        
+        if (currentReferrer === ethers.constants.AddressZero) {
+          console.log('User does not have a referrer');
+          
+          // 使用路由参数中的推荐人地址
+          console.log('URL referrer:', urlReferrer);
+          
+          if (urlReferrer && ethers.utils.isAddress(urlReferrer)) {
+            // 弹出确认框
+            if (window.confirm(`检测到推荐人地址：${urlReferrer}\n是否将其设置为您的推荐人？`)) {
+              console.log('User confirmed, binding referrer...');
+              try {
+                // 绑定推荐人
+                const bindTx = await referralContract.bindReferrer(account, urlReferrer);
+                showNotification('info', '正在绑定推荐人...');
+                console.log('Binding transaction sent:', bindTx.hash);
+                
+                await bindTx.wait();
+                setUserReferrer(urlReferrer);
+                showNotification('success', '推荐人绑定成功！');
+                console.log('Binding successful');
+              } catch (error) {
+                console.error('绑定推荐人失败:', error);
+                showNotification('error', '绑定推荐人失败');
+              }
+            } else {
+              console.log('User declined to bind referrer');
+            }
           }
+        } else {
+          console.log('User already has a referrer:', currentReferrer);
+          setUserReferrer(currentReferrer);
         }
+      } catch (error) {
+        console.error('检查推荐人失败:', error);
       }
-    } catch (error) {
-      console.error('检查推荐人失败:', error);
-      showNotification('error', '检查推荐人失败');
-    }
-  };
+    };
+
+    checkAndBindReferrer();
+  }, [referralContract, account, urlReferrer]);
 
   // 初始化合约
   useEffect(() => {
+    console.log('Contract initialization effect running...', { library, active });
     if (library && active) {
       const signer = library.getSigner();
-      const idoContract = new ethers.Contract(IDO_CONTRACT_ADDRESS, IDO_ABI, signer);
+      const idoContract = new ethers.Contract(IDO_DISTRIBUTOR_ADDRESS, IDO_ABI, signer);
+      const referralRegistryContract = new ethers.Contract(REFERRAL_REGISTRY_ADDRESS, REFERRAL_ABI, signer);
       setContract(idoContract);
+      setReferralContract(referralRegistryContract);
+      console.log('Contracts initialized');
     }
   }, [library, active]);
 
-  // 检查推荐人状态
-  useEffect(() => {
-    if (contract && account) {
-      checkAndBindReferrer();
+  // 处理投资
+  const handleContribute = async () => {
+    if (!active || !account) {
+      showNotification('error', t('pleaseConnect'));
+      return;
     }
-  }, [contract, account]);
+
+    if (!contract || !referralContract) {
+      showNotification('error', '合约未初始化');
+      return;
+    }
+
+    if (!idoStatus.isActive) {
+      showNotification('error', 'IDO未开始或已结束');
+      return;
+    }
+
+    const bnbAmount = parseFloat(amount);
+    if (isNaN(bnbAmount) || bnbAmount < 0.1 || bnbAmount > 2) {
+      showNotification('error', t('invalidAmount').replace('{min}', '0.1').replace('{max}', '2'));
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // 投资
+      const tx = await contract.invest({
+        value: ethers.utils.parseEther(amount),
+        gasLimit: 500000 // 设置足够的 gas 限制
+      });
+
+      showNotification('info', '交易已发送，等待确认...');
+      await tx.wait();
+      showNotification('success', '投资成功！');
+
+      // 更新数据
+      fetchUserInvestment();
+      fetchTotalRaised();
+      setAmount('');
+    } catch (error) {
+      console.error('投资失败:', error);
+      if (error.message.includes('insufficient funds')) {
+        showNotification('error', '钱包 BNB 余额不足，请确保有足够的 BNB 支付 gas 费用');
+      } else {
+        showNotification('error', error.message || '交易失败，请重试');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 获取IDO状态
   const fetchIDOStatus = async () => {
@@ -200,56 +278,6 @@ const IDO = () => {
     }
   };
 
-  // 处理投资
-  const handleContribute = async () => {
-    if (!active || !account) {
-      showNotification('error', t('pleaseConnect'));
-      return;
-    }
-
-    if (!contract) {
-      showNotification('error', '合约未初始化');
-      return;
-    }
-
-    if (!idoStatus.isActive) {
-      showNotification('error', 'IDO未开始或已结束');
-      return;
-    }
-
-    const bnbAmount = parseFloat(amount);
-    if (isNaN(bnbAmount) || bnbAmount < 0.1 || bnbAmount > 2) {
-      showNotification('error', t('invalidAmount').replace('{min}', '0.1').replace('{max}', '2'));
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const tx = await contract.invest({
-        value: ethers.utils.parseEther(amount),
-        gasLimit: 500000 // 设置足够的 gas 限制
-      });
-
-      showNotification('info', '交易已发送，等待确认...');
-      await tx.wait();
-      showNotification('success', '投资成功！');
-
-      // 更新数据
-      fetchUserInvestment();
-      fetchTotalRaised();
-      setAmount('');
-    } catch (error) {
-      console.error('投资失败:', error);
-      if (error.message.includes('insufficient funds')) {
-        showNotification('error', '钱包 BNB 余额不足，请确保有足够的 BNB 支付 gas 费用');
-      } else {
-        showNotification('error', error.message || '交易失败，请重试');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // 连接钱包函数
   const connectWallet = async () => {
     try {
@@ -262,7 +290,7 @@ const IDO = () => {
   // 生成推荐链接
   const generateReferralLink = () => {
     if (!account) return '';
-    return `${window.location.origin}?ref=${account}`;
+    return `${window.location.origin}/mint/${account}`;
   };
 
   // 复制推荐链接
@@ -275,75 +303,12 @@ const IDO = () => {
 
   // 获取URL中的推荐人地址
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search);
-    const ref = queryParams.get('ref');
+    const pathParts = window.location.pathname.split('/');
+    const ref = pathParts[2]; // /mint/0x... 中的地址部分
     if (ref && ethers.utils.isAddress(ref)) {
       setReferrer(ref);
     }
   }, []);
-
-  // 初始化时检查用户是否已有绑定的推荐人
-  useEffect(() => {
-    const checkUserReferrer = async () => {
-      if (contract && account) {
-        try {
-          const referrer = await contract.getUserReferrer(account);
-          if (referrer !== ethers.constants.AddressZero) {
-            setUserReferrer(referrer);
-          }
-        } catch (error) {
-          console.error('获取用户推荐人失败:', error);
-        }
-      }
-    };
-    
-    checkUserReferrer();
-  }, [contract, account]);
-
-  // 处理推荐人绑定
-  const handleReferrerBinding = async () => {
-    if (!contract || !account || !referrer) return;
-
-    try {
-      setIsLoading(true);
-      
-      // 检查是否已经绑定过推荐人
-      const currentReferrer = await contract.getUserReferrer(account);
-      if (currentReferrer !== ethers.constants.AddressZero) {
-        showNotification('error', '您已经绑定了推荐人');
-        return;
-      }
-
-      // 绑定推荐人
-      const tx = await contract.bindReferrer(referrer);
-      showNotification('info', '正在绑定推荐人...');
-      
-      await tx.wait();
-      setUserReferrer(referrer);
-      showNotification('success', '推荐人绑定成功！');
-      
-    } catch (error) {
-      console.error('绑定推荐人失败:', error);
-      showNotification('error', error.message || '绑定失败，请重试');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 在组件加载时检查URL中的推荐人并尝试绑定
-  useEffect(() => {
-    const bindReferrerFromURL = async () => {
-      if (contract && account && referrer && !userReferrer) {
-        try {
-          await handleReferrerBinding();
-        } catch (error) {
-          console.error('自动绑定推荐人失败:', error);
-        }
-      }
-    };
-
-    bindReferrerFromURL();
-  }, [contract, account, referrer]);
 
   // 添加一个格式化日期的函数
   const formatDate = (timestamp) => {
@@ -369,7 +334,7 @@ const IDO = () => {
       ], library.getSigner());
 
       // 2. 检查合约中的ZONE余额
-      const balance = await zoneTokenContract.balanceOf(IDO_CONTRACT_ADDRESS);
+      const balance = await zoneTokenContract.balanceOf(IDO_DISTRIBUTOR_ADDRESS);
       const decimals = await zoneTokenContract.decimals();
       console.log("IDO Contract ZONE Balance:", ethers.utils.formatUnits(balance, decimals));
 
@@ -568,7 +533,7 @@ const IDO = () => {
 
             <div className="p-4 md:p-8">
               {/* IDO信息网格 */}
-              <div className="grid grid-cols-2 gap-3 md:gap-6 mb-6 md:mb-8">
+              <div className="grid grid-cols-2 gap-3 md:gap-6 mb-6">
                 <div className="bg-gray-900/50 rounded-xl md:rounded-2xl p-3 md:p-6">
                   <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">{t('totalIssuance')}</p>
                   <p className="text-base md:text-2xl font-bold text-white">{t('oneHundredMillion')} <span className="text-green-400">ZONE</span></p>

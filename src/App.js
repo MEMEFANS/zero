@@ -38,6 +38,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/mint" element={<Mint />} />
+                <Route path="/mint/:referrer" element={<Mint />} />
                 <Route path="/mystery-box" element={<MysteryBox />} />
                 <Route path="/mining" element={<NFTMining />} />
                 <Route path="/lpmining" element={<LPMining />} />
