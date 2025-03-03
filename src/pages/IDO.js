@@ -57,6 +57,33 @@ const IDO = () => {
     setTimeout(() => setNotification({ show: false, type: '', message: '' }), 5000);
   };
 
+  // 检查并绑定推荐人
+  const checkAndBindReferrer = async () => {
+    if (!contract || !account) return;
+
+    try {
+      // 从 URL 获取推荐人地址
+      const urlParams = new URLSearchParams(window.location.search);
+      const refAddress = urlParams.get('ref');
+
+      if (refAddress) {
+        // 检查当前用户是否已经有推荐人
+        const hasReferrer = await contract.getUserReferrer(account);
+        if (hasReferrer === '0x0000000000000000000000000000000000000000') {
+          // 如果没有推荐人，弹出确认框
+          if (window.confirm('检测到推荐人地址，是否绑定？')) {
+            const bindTx = await contract.bindReferrer(refAddress);
+            await bindTx.wait();
+            showNotification('success', '推荐人绑定成功');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('检查推荐人失败:', error);
+      showNotification('error', '检查推荐人失败');
+    }
+  };
+
   // 初始化合约
   useEffect(() => {
     if (library && active) {
@@ -65,6 +92,13 @@ const IDO = () => {
       setContract(idoContract);
     }
   }, [library, active]);
+
+  // 检查推荐人状态
+  useEffect(() => {
+    if (contract && account) {
+      checkAndBindReferrer();
+    }
+  }, [contract, account]);
 
   // 获取IDO状态
   const fetchIDOStatus = async () => {
@@ -180,21 +214,6 @@ const IDO = () => {
 
     if (!idoStatus.isActive) {
       showNotification('error', 'IDO未开始或已结束');
-      return;
-    }
-
-    // 检查是否绑定了推荐人
-    try {
-      const hasReferrer = await contract.getUserReferrer(account);
-      if (hasReferrer === '0x0000000000000000000000000000000000000000' && referrer) {
-        // 如果没有推荐人但提供了推荐人地址，先绑定推荐人
-        const bindTx = await contract.bindReferrer(referrer);
-        await bindTx.wait();
-        showNotification('success', '推荐人绑定成功');
-      }
-    } catch (error) {
-      console.error('检查推荐人失败:', error);
-      showNotification('error', '检查推荐人失败');
       return;
     }
 
