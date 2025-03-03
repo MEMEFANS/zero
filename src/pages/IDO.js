@@ -448,32 +448,43 @@ const IDO = () => {
         <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-green-500/10 to-transparent"></div>
       </div>
 
-      {/* 通知弹窗 */}
+      {/* 通知组件 */}
       {notification.show && (
-        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg flex items-center space-x-2 z-50 ${
-          notification.type === 'success' ? 'bg-green-500' :
-          notification.type === 'error' ? 'bg-red-500' :
-          'bg-blue-500'
+        <div className={`fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 ${
+          notification.type === 'success' ? 'bg-[#1A2235] border border-green-500/20' :
+          notification.type === 'error' ? 'bg-[#1A2235] border border-red-500/20' :
+          'bg-[#1A2235] border border-blue-500/20'
         }`}>
-          {notification.loading ? (
-            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          ) : notification.type === 'success' ? (
-            <svg className="h-5 w-5 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M5 13l4 4L19 7"></path>
-            </svg>
-          ) : notification.type === 'error' ? (
-            <svg className="h-5 w-5 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          ) : (
-            <svg className="h-5 w-5 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          )}
-          <span className="text-white">{notification.message}</span>
+          <div className="flex items-center gap-3">
+            {notification.loading ? (
+              <div className="w-5 h-5 relative">
+                <div className="w-5 h-5 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin"></div>
+              </div>
+            ) : notification.type === 'success' ? (
+              <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                <svg className="w-3 h-3 text-green-500" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+            ) : notification.type === 'error' ? (
+              <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center">
+                <svg className="w-3 h-3 text-red-500" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </div>
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <svg className="w-3 h-3 text-blue-500" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+            )}
+            <span className={`text-sm ${
+              notification.type === 'success' ? 'text-green-500' :
+              notification.type === 'error' ? 'text-red-500' :
+              'text-blue-500'
+            }`}>{notification.message}</span>
+          </div>
         </div>
       )}
 
