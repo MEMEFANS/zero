@@ -55,6 +55,7 @@ const NFTMarket = () => {
   const [nftMarketContract, setNFTMarketContract] = useState(null);
   const [stakingContract, setStakingContract] = useState(null);
   const [stakingContractAddress] = useState(STAKING_ADDRESS);  
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // 过滤和排序函数
   const getFilteredAndSortedItems = (items) => {
@@ -129,16 +130,23 @@ const NFTMarket = () => {
     }
   }, [active, account, library]);
 
+  // 初始化合约
   useEffect(() => {
     const initializeContracts = async () => {
-      if (!library || !active) return;
+      if (!library || !active) {
+        console.log('Web3 not ready yet');
+        return;
+      }
 
       try {
+        console.log('Initializing contracts...');
+        const signer = library.getSigner();
+        
         // 初始化 NFT 合约
         const nftContractInstance = new ethers.Contract(
           ZONE_NFT_ADDRESS,
           ZONE_NFT_ABI,
-          library.getSigner()
+          signer
         );
         setNFTContract(nftContractInstance);
 
@@ -146,7 +154,7 @@ const NFTMarket = () => {
         const marketContractInstance = new ethers.Contract(
           NFT_MARKETPLACE_ADDRESS,
           NFT_MARKETPLACE_ABI,
-          library.getSigner()
+          signer
         );
         setNFTMarketContract(marketContractInstance);
 
@@ -154,12 +162,12 @@ const NFTMarket = () => {
         const stakingContractInstance = new ethers.Contract(
           stakingContractAddress,
           STAKING_ABI,
-          library.getSigner()
+          signer
         );
         setStakingContract(stakingContractInstance);
 
-        // 加载市场数据
-        await loadMarketData();
+        setIsInitialized(true);
+        console.log('Contracts initialized successfully');
       } catch (error) {
         console.error('初始化合约失败:', error);
         toast.error('初始化合约失败，请刷新页面重试');
@@ -168,6 +176,26 @@ const NFTMarket = () => {
 
     initializeContracts();
   }, [library, active]);
+
+  // 加载市场数据
+  useEffect(() => {
+    const loadData = async () => {
+      if (!isInitialized || !nftContract || !nftMarketContract) {
+        console.log('Waiting for contracts to initialize...');
+        return;
+      }
+
+      try {
+        console.log('Starting to load market data...');
+        await loadMarketData();
+      } catch (error) {
+        console.error('加载市场数据失败:', error);
+        toast.error('加载市场数据失败，请刷新页面重试');
+      }
+    };
+
+    loadData();
+  }, [isInitialized, nftContract, nftMarketContract]);
 
   const loadMarketData = async () => {
     try {
@@ -191,7 +219,17 @@ const NFTMarket = () => {
         try {
           console.log('Getting data for my NFT:', tokenId.toString());
           const attributes = await nftContract.getNFTAttributes(tokenId);
-          console.log('Got attributes for my NFT:', tokenId.toString(), attributes);
+          console.log('Got attributes for my NFT:', tokenId.toString(), 'Raw attributes:', attributes);
+          console.log('Attributes array:', Object.values(attributes));
+          console.log('Attributes object:', {
+            rarity: attributes[0]?.toString(),
+            power: attributes[1]?.toString(),
+            dailyReward: attributes[2]?.toString(),
+            maxReward: attributes[3]?.toString(),
+            minedAmount: attributes[4]?.toString(),
+            isStaked: attributes[5],
+            stakeTime: attributes[6]?.toString()
+          });
           
           const marketInfo = await nftMarketContract.getNFTMarketInfo(tokenId);
           console.log('Got market info for my NFT:', tokenId.toString(), marketInfo);
@@ -209,20 +247,22 @@ const NFTMarket = () => {
           // 将 IPFS 链接转换为 HTTP 链接
           const httpImageURI = imageURI.replace('ipfs://', 'https://ipfs.io/ipfs/');
           
-          return {
+          const nftData = {
             id: tokenId.toString(),
             tokenId: tokenId.toString(),
             rarity: rarity,
-            power: attributes[1].toString() || '0',
-            dailyReward: ethers.utils.formatEther(attributes[2]),
-            maxReward: ethers.utils.formatEther(attributes[3]),
-            minedAmount: ethers.utils.formatEther(attributes[4]),
+            power: attributes[1]?.toString() || '0',
+            dailyReward: attributes[2] ? ethers.utils.formatEther(attributes[2]) : '0',
+            maxReward: attributes[3] ? ethers.utils.formatEther(attributes[3]) : '0',
+            minedAmount: attributes[4] ? ethers.utils.formatEther(attributes[4]) : '0',
             isStaked: attributes[5] || false,
-            stakeTime: attributes[6].toString() || '0',
+            stakeTime: attributes[6]?.toString() || '0',
             image: httpImageURI,
             listed: marketInfo.isActive,
             price: marketInfo.isActive ? ethers.utils.formatEther(marketInfo.price) : '0'
           };
+          console.log('Final NFT data:', nftData);
+          return nftData;
         } catch (error) {
           console.error('Error getting NFT data for token', tokenId.toString(), ':', error);
           return null;
@@ -250,7 +290,8 @@ const NFTMarket = () => {
                 try {
                   console.log('Getting attributes for listed NFT:', tokenId);
                   const attributes = await nftContract.getNFTAttributes(tokenId);
-                  console.log('Got attributes for listed NFT:', tokenId, attributes);
+                  console.log('Got attributes for listed NFT:', tokenId, 'Raw attributes:', attributes);
+                  console.log('Attributes array:', Object.values(attributes));
                   
                   console.log('Getting image URI for listed NFT:', tokenId);
                   const imageURI = await nftContract.getNFTImageURI(tokenId);
@@ -263,19 +304,21 @@ const NFTMarket = () => {
                   }
                   console.log('Rarity for listed NFT:', tokenId, rarity);
                   
-                  return {
+                  const nftData = {
                     id: tokenId.toString(),
                     tokenId: tokenId.toString(),
                     seller: marketInfo.seller,
                     price: ethers.utils.formatEther(marketInfo.price),
                     rarity: rarity,
-                    power: attributes[1].toString() || '0',
-                    dailyReward: ethers.utils.formatEther(attributes[2]),
-                    maxReward: ethers.utils.formatEther(attributes[3]),
-                    minedAmount: ethers.utils.formatEther(attributes[4]),
+                    power: attributes[1]?.toString() || '0',
+                    dailyReward: attributes[2] ? ethers.utils.formatEther(attributes[2]) : '0',
+                    maxReward: attributes[3] ? ethers.utils.formatEther(attributes[3]) : '0',
+                    minedAmount: attributes[4] ? ethers.utils.formatEther(attributes[4]) : '0',
                     image: httpImageURI,
                     listed: true
                   };
+                  console.log('Final market item data:', nftData);
+                  return nftData;
                 } catch (error) {
                   console.error('Error getting NFT data for token', tokenId, ':', error);
                   return null;
