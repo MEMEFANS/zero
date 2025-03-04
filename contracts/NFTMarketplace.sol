@@ -56,6 +56,7 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
     event MinPriceUpdated(uint256 newMinPrice);
     event BatchNFTsListed(uint256[] tokenIds, uint256[] prices);
     event BatchNFTsUnlisted(uint256[] tokenIds);
+    event NFTContractUpdated(address newNFTContract);
 
     constructor(
         address _nft,
@@ -151,7 +152,6 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
         // 更新地板价
         if (floorPrice == 0 || price < floorPrice) {
             floorPrice = price;
-            emit MarketFeeUpdated(floorPrice);
         }
 
         emit NFTListed(tokenId, msg.sender, price);
@@ -169,14 +169,38 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
 
     // 购买NFT
     function buyNFT(uint256 tokenId) external payable nonReentrant whenNotPaused {
+        _buyNFT(tokenId);
+    }
+
+    // 批量购买NFT
+    function batchBuyNFTs(uint256[] calldata tokenIds) external payable nonReentrant whenNotPaused {
+        require(tokenIds.length <= 20, "Too many NFTs");
+        uint256 totalPrice = 0;
+        
+        // 计算总价
+        for(uint256 i = 0; i < tokenIds.length; i++) {
+            Listing storage listing = listings[tokenIds[i]];
+            require(listing.isActive, "Not listed");
+            require(listing.seller != msg.sender, "Cannot buy your own NFT");
+            totalPrice += listing.price;
+        }
+        
+        require(msg.value == totalPrice, "Incorrect payment amount");
+        
+        // 执行购买
+        for(uint256 i = 0; i < tokenIds.length; i++) {
+            _buyNFT(tokenIds[i]);
+        }
+    }
+
+    // 内部购买函数
+    function _buyNFT(uint256 tokenId) internal {
         Listing storage listing = listings[tokenId];
         require(listing.isActive, "Not listed");
         
         uint256 price = listing.price;
         address seller = listing.seller;
         require(seller != msg.sender, "Cannot buy your own NFT");
-
-        // 检查支付金额
         require(msg.value == price, "Incorrect payment amount");
 
         // 计算费用
@@ -203,7 +227,7 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
             } else {
                 dailyVolume += price;
             }
-
+            
             // 更新交易历史
             tradeHistory.push(TradeHistory({
                 tokenId: tokenId,
@@ -212,56 +236,57 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
                 price: price,
                 timestamp: block.timestamp
             }));
-
-            // 更新用户交易次数
+            
             userTradeCount[msg.sender]++;
-            userTradeCount[seller]++;
-
+            
             emit NFTSold(tokenId, seller, msg.sender, price);
         } catch {
-            // NFT转移失败，退还BNB
-            (bool refundSuccess,) = msg.sender.call{value: msg.value}("");
-            require(refundSuccess, "Refund failed");
             revert("NFT transfer failed");
         }
     }
 
-    // 更新NFT价格
-    function updatePrice(uint256 tokenId, uint256 newPrice) external nonReentrant {
-        require(newPrice >= minPrice, "Price too low");
-        Listing storage listing = listings[tokenId];
-        require(listing.isActive, "Not listed");
-        require(listing.seller == msg.sender, "Not seller");
-
-        listing.price = newPrice;
-
-        // 更新地板价
-        if (newPrice < floorPrice) {
-            floorPrice = newPrice;
-            emit MarketFeeUpdated(floorPrice);
-        }
-
-        emit NFTListed(tokenId, msg.sender, newPrice);
-    }
-
-    // 设置市场费率（仅管理员）
-    function setMarketFeeRate(uint256 newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(newFee <= 100, "Fee too high"); // 最高10%
+    // 设置市场费率
+    function setMarketFee(uint256 newFee) external onlyRole(ADMIN_ROLE) {
+        require(newFee <= 100, "Fee too high"); // 最高 10%
         marketFeeRate = newFee;
         emit MarketFeeUpdated(newFee);
     }
 
-    // 设置最低价格（仅管理员）
-    function setMinPrice(uint256 newMinPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    // 设置费用接收地址
+    function setFeeReceiver(address newReceiver) external onlyRole(ADMIN_ROLE) {
+        require(newReceiver != address(0), "Invalid address");
+        feeReceiver = newReceiver;
+        emit FeeReceiverUpdated(newReceiver);
+    }
+
+    // 设置最低价格
+    function setMinPrice(uint256 newMinPrice) external onlyRole(ADMIN_ROLE) {
         minPrice = newMinPrice;
         emit MinPriceUpdated(newMinPrice);
     }
 
-    // 设置费用接收地址（仅管理员）
-    function setFeeReceiver(address newReceiver) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(newReceiver != address(0), "Invalid address");
-        feeReceiver = newReceiver;
-        emit FeeReceiverUpdated(newReceiver);
+    // 设置 NFT 合约地址
+    function setNFTContract(address _nft) external onlyRole(ADMIN_ROLE) {
+        require(_nft != address(0), "Invalid NFT address");
+        nft = IZoneNFT(_nft);
+        emit NFTContractUpdated(_nft);
+    }
+
+    // 紧急取回NFT
+    function emergencyWithdraw(uint256 tokenId) external onlyRole(ADMIN_ROLE) {
+        require(listings[tokenId].isActive, "Not listed");
+        address seller = listings[tokenId].seller;
+        delete listings[tokenId];
+        emit NFTUnlisted(tokenId, seller);
+    }
+
+    // 暂停/恢复市场
+    function togglePause() external onlyRole(ADMIN_ROLE) {
+        if (paused()) {
+            _unpause();
+        } else {
+            _pause();
+        }
     }
 
     // 查询NFT市场信息
@@ -274,20 +299,32 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
         return (listing.isActive, listing.price, listing.seller);
     }
 
-    // 查询市场统计数据
+    // 获取市场统计数据
     function getMarketStats() external view returns (
-        uint256 totalVol,
-        uint256 dailyVol,
-        uint256 floor
+        uint256 _totalVolume,
+        uint256 _dailyVolume,
+        uint256 _floorPrice,
+        uint256 _marketFeeRate,
+        address _feeReceiver,
+        uint256 _minPrice
     ) {
-        return (totalVolume, dailyVolume, floorPrice);
+        return (
+            totalVolume,
+            dailyVolume,
+            floorPrice,
+            marketFeeRate,
+            feeReceiver,
+            minPrice
+        );
     }
 
-    // 查询用户交易历史
-    function getUserTradeHistory(address user, uint256 offset, uint256 limit) external view returns (TradeHistory[] memory) {
+    // 获取用户交易历史
+    function getUserTradeHistory(address user, uint256 offset, uint256 limit) external view returns (
+        TradeHistory[] memory
+    ) {
         uint256 count = 0;
         for(uint256 i = 0; i < tradeHistory.length; i++) {
-            if(tradeHistory[i].seller == user || tradeHistory[i].buyer == user) {
+            if (tradeHistory[i].seller == user || tradeHistory[i].buyer == user) {
                 count++;
             }
         }
@@ -298,8 +335,8 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
         uint256 skipped = 0;
 
         for(uint256 i = 0; i < tradeHistory.length && current < resultCount; i++) {
-            if(tradeHistory[i].seller == user || tradeHistory[i].buyer == user) {
-                if(skipped >= offset) {
+            if (tradeHistory[i].seller == user || tradeHistory[i].buyer == user) {
+                if (skipped >= offset) {
                     result[current] = tradeHistory[i];
                     current++;
                 } else {
@@ -310,17 +347,4 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
 
         return result;
     }
-
-    // 暂停/恢复合约（仅管理员）
-    function togglePause() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (paused()) {
-            _unpause();
-        } else {
-            _pause();
-        }
-    }
-
-    // 接收BNB
-    receive() external payable {}
-    fallback() external payable {}
 }

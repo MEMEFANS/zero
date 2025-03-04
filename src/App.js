@@ -11,11 +11,19 @@ import NFTMarket from './pages/NFTMarket';
 import MysteryBox from './pages/MysteryBox';
 import Airdrop from './pages/Airdrop';
 import { translations } from './translations';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export const LanguageContext = createContext();
 
 function getLibrary(provider) {
-  return new ethers.providers.Web3Provider(provider);
+  const library = new ethers.providers.Web3Provider(provider, {
+    url: 'https://side-falling-ensemble.bsc.quiknode.pro/049fcfd0e81b7b299018b5774557ae1c0d4c9110',
+    chainId: 56,
+    name: 'Binance Smart Chain'
+  });
+  library.pollingInterval = 12000;
+  return library;
 }
 
 function App() {
@@ -45,6 +53,18 @@ function App() {
                 <Route path="/market" element={<NFTMarket />} />
                 <Route path="/airdrop" element={<Airdrop />} />
               </Routes>
+              <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="dark"
+              />
             </div>
           </div>
         </Router>

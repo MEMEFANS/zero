@@ -1,26 +1,31 @@
-export const ZONE_NFT_ADDRESS = "0xb43C8B9B56A7e4f3ea2f04465aCB5fe3Fb90826F"; // 原 MYSTERY_BOX_ADDRESS
-export const ZONE_TOKEN_ADDRESS = "0xfc57f8625688D85A332437FF1aacE8731d952955";
-export const NFT_MARKETPLACE_ADDRESS = "0x7EB2F701206B52b034201a608A6b73cc7423d747";
+export const ZONE_NFT_ADDRESS = "0x73b9A33D78AD18804C898946b315CF515D798666"; // 新部署的合约地址
+export const ZONE_TOKEN_ADDRESS = "0xfc57f8625688D85A332437FF1aacE8731d952955"; // 正确的 ZONE 代币地址
+export const NFT_MARKETPLACE_ADDRESS = "0xa0A286938BeDa5b2061F680b6A47577750c908Ab";  // 新部署的市场合约地址
 export const NFT_MINING_ADDRESS = "0x71fcB50d20052511b545A9f42E2F857aaCB5b76a";
 export const REFERRAL_REGISTRY_ADDRESS = "0x32Ef65Add373412446400F3A6Ed460f61E599360";
 export const IDO_DISTRIBUTOR_ADDRESS = "0xBcFFfC6D090daF69E46D30cfaf49e39d4ce77ef1";
+export const STAKING_ADDRESS = "0x...";  // TODO: 需要替换为实际的质押合约地址
 
 export const ZONE_NFT_ABI = [
   "function openBox() external returns (uint256)",
   "function boxPrice() view returns (uint256)",
-  "function nftAttributes(uint256 tokenId) view returns (uint8 rarity, uint256 power, uint256 dailyReward, uint256 maxReward, uint256 minedAmount, bool isStaked, uint256 stakeTime)",
+  "function getNFTAttributes(uint256) view returns (uint8 rarity, uint256 power, uint256 dailyReward, uint256 maxReward, uint256 minedAmount, bool isStaked, uint256 stakeTime)",
+  "function paused() view returns (bool)",
+  "function tokenURI(uint256 tokenId) view returns (string)",
+  "function getNFTImageURI(uint256 tokenId) view returns (string)",
+  "function getNFTImage(uint256 tokenId) view returns (string)",
   "event BoxOpened(address indexed user, uint256 indexed tokenId, string rarity)",
-  "function getMarketListing(uint256 tokenId) external view returns (tuple(address seller, uint256 price, bool isActive))",
-  "function getOwnedNFTs(address user) external view returns (uint256[])",
-  "function listNFT(uint256 tokenId, uint256 price) external",
-  "function unlistNFT(uint256 tokenId) external",
-  "function buyNFT(uint256 tokenId) external payable",
-  "function stakeNFT(uint256 tokenId) external",
+  "function balanceOf(address owner) view returns (uint256)",
+  "function ownerOf(uint256 tokenId) view returns (address)",
   "function approve(address to, uint256 tokenId) external",
-  "function isApprovedForAll(address owner, address operator) external view returns (bool)",
+  "function getApproved(uint256 tokenId) view returns (address)",
   "function setApprovalForAll(address operator, bool approved) external",
-  "function getTradeHistory(uint256 tokenId) external view returns (tuple(address seller, address buyer, uint256 price, uint256 timestamp)[])",
-  "function getUserTradeHistory(address user) external view returns (uint256[], tuple(address seller, address buyer, uint256 price, uint256 timestamp)[])"
+  "function isApprovedForAll(address owner, address operator) view returns (bool)",
+  "function transferFrom(address from, address to, uint256 tokenId) external",
+  "function safeTransferFrom(address from, address to, uint256 tokenId) external",
+  "function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) external",
+  "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
+  "function totalSupply() view returns (uint256)"
 ];
 
 export const ZONE_TOKEN_ABI = [
@@ -35,6 +40,42 @@ export const ZONE_TOKEN_ABI = [
   "function transferFrom(address from, address to, uint256 amount) external returns (bool)",
   "event Transfer(address indexed from, address indexed to, uint256 value)",
   "event Approval(address indexed owner, address indexed spender, uint256 value)"
+];
+
+export const NFT_MARKETPLACE_ABI = [
+  "function listNFT(uint256 tokenId, uint256 price) external",
+  "function unlistNFT(uint256 tokenId) external",
+  "function buyNFT(uint256 tokenId) external payable",
+  "function batchListNFTs(uint256[] tokenIds, uint256[] prices) external",
+  "function batchUnlistNFTs(uint256[] tokenIds) external",
+  "function minPrice() view returns (uint256)",
+  "function marketFeeRate() view returns (uint256)",
+  "function totalVolume() view returns (uint256)",
+  "function dailyVolume() view returns (uint256)",
+  "function floorPrice() view returns (uint256)",
+  "function paused() view returns (bool)",
+  "function getNFTMarketInfo(uint256 tokenId) view returns (bool isActive, uint256 price, address seller)",
+  "event NFTListed(uint256 indexed tokenId, address indexed seller, uint256 price)",
+  "event NFTUnlisted(uint256 indexed tokenId, address indexed seller)",
+  "event NFTSold(uint256 indexed tokenId, address indexed seller, address indexed buyer, uint256 price)",
+  "event BatchNFTsListed(uint256[] tokenIds, uint256[] prices)",
+  "event BatchNFTsUnlisted(uint256[] tokenIds)",
+  "event MarketFeeUpdated(uint256 newFee)",
+  "event FeeReceiverUpdated(address newReceiver)",
+  "event MinPriceUpdated(uint256 newMinPrice)",
+  "event Paused(address account)",
+  "event Unpaused(address account)"
+];
+
+export const STAKING_ABI = [
+  "function stake(uint256 tokenId) external",
+  "function unstake(uint256 tokenId) external",
+  "function getStakingInfo(uint256 tokenId) view returns (bool isStaked, uint256 stakeTime, uint256 rewards)",
+  "function claimRewards(uint256 tokenId) external returns (uint256)",
+  "function getClaimableRewards(uint256 tokenId) view returns (uint256)",
+  "event Staked(address indexed user, uint256 indexed tokenId)",
+  "event Unstaked(address indexed user, uint256 indexed tokenId)",
+  "event RewardsClaimed(address indexed user, uint256 indexed tokenId, uint256 amount)"
 ];
 
 export const NFT_RARITY = ['N', 'R', 'SR', 'SSR'];

@@ -8,11 +8,11 @@ import { ZONE_NFT_ADDRESS, ZONE_TOKEN_ADDRESS } from '../constants/contracts';
 
 // NFT合约ABI
 const ZONE_NFT_ABI = [
-  "function openBox(string memory _inviteCode) external returns (uint256)",
-  "function openBoxDirect() external returns (uint256)",
+  "function openBox() external returns (uint256)",
   "function boxPrice() view returns (uint256)",
   "function nftAttributes(uint256 tokenId) view returns (uint8 rarity, uint256 power, uint256 dailyReward, uint256 maxReward, uint256 minedAmount, bool isStaked, uint256 stakeTime)",
-  "event BoxOpened(address indexed user, uint256 indexed tokenId, uint8 rarity)"
+  "function tokenURI(uint256 tokenId) view returns (string)",
+  "event BoxOpened(address indexed user, uint256 indexed tokenId, string rarity)"
 ];
 
 // ZONE代币ABI
@@ -37,9 +37,47 @@ const NFT_SETTINGS = {
   SSR: { probability: 1, power: 6400, price: 100, dailyReward: 160, maxReward: 14400, roi: 0.7, yearReturn: 14300 }
 };
 
+// 机器人图片映射
+const ROBOT_IMAGES = {
+  N: [
+    "ipfs://bafkreicg2o5srn26flfurg3aks2ozenazepewyug776xxsc3hznrtjvdfq",
+    "ipfs://bafkreigygfxouqc2wwarzqbjpbuk5px7q6ywkihxopy6svzbw5i6ks6jnq",
+    "ipfs://bafkreibjwpuw2f7vm42efx5f2yf3nmjqrvf2yn45iepys2do5deecjcwaq",
+    "ipfs://bafkreidqbaffdedxivwncxb3n4ivzr75jj25od35lz7urgyvih7g3rpfdm"
+  ],
+  R: [
+    "ipfs://bafkreib75y2zt6dygbqvr675k77qkvamuozrq3ehcjhj63uiwvatfpnwcy",
+    "ipfs://bafkreifzp2mf37rqhv7jbllgdtno3pafny66neyr4chfun5dipt7pyc5lq",
+    "ipfs://bafkreib44hbtd5mw6bnljd5idvmyheedw4uldyngqdqyrnr237zbtd5ydy",
+    "ipfs://bafkreidbzii233sbt53kprnpguupt4r3vkrnkzxkqtojitsinclbbrxmmy"
+  ],
+  SR: [
+    "ipfs://bafkreiejcncdya3dofutwzjbppr7iesbnbqny5hiuivkkmqizolmsul7wa",
+    "ipfs://bafkreicg7kb3yq22s3jh4jxp7nd4rovzvmsnpuf4dnn7syctstlaec7aja",
+    "ipfs://bafkreifdm6yc2ey6qlejbg3ohhcgtswy4uywcxrvvys37k745t54xqoscu",
+    "ipfs://bafkreibrsyio7fwpb773vryfo7byr5mzor5pty6i6cdle3qxvsm7qoq2ba"
+  ],
+  SSR: [
+    "ipfs://bafkreigggfktmbu4foz3dwtcbhfldvqbvv73ogdn3hcphfyvwaswwqjbna",
+    "ipfs://bafkreidhdgn3bhyyjyiy6nj7nix72fbnyry2iesz3gjyav6tv7ych63wme",
+    "ipfs://bafkreibyitzhuxdf46ynyyyw6jzavd2o54vlndrkn2d2pfwanu3cq3ouke",
+    "ipfs://bafkreihtjpm2wxxpf5fcm7fdo73ycrm5thvybi6mpom4ml47gadrzq2yd4"
+  ]
+};
+
+// 获取 NFT 图片
 const getNFTImage = (rarity, tokenId) => {
-  // TODO: 根据稀有度和tokenId获取NFT图片地址
-  return `/images/nft-${rarity}-${tokenId}.svg`;
+  const images = ROBOT_IMAGES[rarity];
+  if (!images) return null;
+  // 使用 tokenId 作为索引来选择图片，如果超出范围则循环
+  const index = tokenId % images.length;
+  return images[index];
+};
+
+// 将 IPFS URL 转换为可访问的 URL
+const ipfsToHttp = (ipfsUrl) => {
+  if (!ipfsUrl) return null;
+  return ipfsUrl.replace('ipfs://', 'https://ipfs.io/ipfs/');
 };
 
 const MysteryBox = () => {
@@ -165,75 +203,103 @@ const MysteryBox = () => {
       return false;
     }
   };
-const openBox = async () => {
-  try {
-    setIsOpening(true);
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    const nftContract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, signer);
-    
-    // 检查合约状态
-    const boxPrice = await nftContract.boxPrice();
-    console.log('Box Price:', ethers.utils.formatEther(boxPrice));
-    
-    // 获取代币合约
-    const tokenContract = new ethers.Contract(ZONE_TOKEN_ADDRESS, ZONE_TOKEN_ABI, signer);
-    const balance = await tokenContract.balanceOf(account);
-    const allowance = await tokenContract.allowance(account, ZONE_NFT_ADDRESS);
-    
-    console.log('Current Balance:', ethers.utils.formatEther(balance));
-    console.log('Current Allowance:', ethers.utils.formatEther(allowance));
-    
-    // 开盲盒
-    console.log('Opening mystery box...');
-    const tx = await nftContract.openBox({  // 使用 openBox 而不是 openBoxDirect
-      gasLimit: 1000000
-    });
-    console.log('Transaction hash:', tx.hash);
-    
-    // 等待交易确认
-    const receipt = await tx.wait();
-    console.log('Transaction confirmed!');
-    
-    // 从事件中获取 NFT ID 和稀有度
-    let tokenId, rarity;
-    for (const event of receipt.events) {
-      if (event.event === 'BoxOpened') {
-        tokenId = event.args.tokenId.toNumber();
-        rarity = event.args.rarity;  // 这里不需要 toNumber() 因为是 string 类型
-        break;
+
+  const openBox = async () => {
+    try {
+      setIsOpening(true);
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const nftContract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, signer);
+      
+      // 检查合约状态
+      const boxPrice = await nftContract.boxPrice();
+      console.log('Box Price:', ethers.utils.formatEther(boxPrice));
+      
+      // 获取代币合约
+      const tokenContract = new ethers.Contract(ZONE_TOKEN_ADDRESS, ZONE_TOKEN_ABI, signer);
+      const balance = await tokenContract.balanceOf(account);
+      const allowance = await tokenContract.allowance(account, ZONE_NFT_ADDRESS);
+      
+      console.log('Current Balance:', ethers.utils.formatEther(balance));
+      console.log('Current Allowance:', ethers.utils.formatEther(allowance));
+      
+      // 检查余额
+      if (balance.lt(boxPrice)) {
+        throw new Error(`余额不足，需要 ${ethers.utils.formatEther(boxPrice)} ZONE`);
       }
-    }
-    
-    if (!tokenId) {
-      throw new Error('Failed to get NFT ID from event');
-    }
-    
-    // 获取 NFT 属性
-    const attrs = await nftContract.nftAttributes(tokenId);
-    console.log('NFT attributes:', attrs);
-    
-    // 显示结果
-    alert(`恭喜！你获得了一个${rarity}级 NFT！\n算力：${attrs.power}\n日收益：${ethers.utils.formatUnits(attrs.dailyReward, 18)} ZONE\n最大收益：${ethers.utils.formatUnits(attrs.maxReward, 18)} ZONE`);
-    
-    setIsOpening(false);
-    return true;
-  } catch (error) {
-    console.error('Detailed error:', error);
-    if (error.error) {
-      console.error('Inner error:', error.error);
-      // 解析错误信息
-      if (error.error.message) {
-        alert(`开盲盒失败: ${error.error.message}`);
+      
+      // 检查授权
+      if (allowance.lt(boxPrice)) {
+        const approved = await approveToken();
+        if (!approved) {
+          throw new Error('授权失败');
+        }
       }
+      
+      // 开盲盒
+      console.log('Opening mystery box...');
+      
+      // 调用合约的 openBox 函数
+      const tx = await nftContract.openBox({
+        gasLimit: 1000000
+      });
+      console.log('Transaction hash:', tx.hash);
+      
+      // 等待交易确认
+      const receipt = await tx.wait();
+      console.log('Transaction confirmed!');
+      
+      // 从事件中获取 NFT ID 和稀有度
+      let tokenId, rarity;
+      for (const event of receipt.events) {
+        if (event.event === 'BoxOpened') {
+          tokenId = event.args.tokenId.toNumber();
+          rarity = event.args.rarity; // 这是一个字符串
+          break;
+        }
+      }
+      
+      if (!tokenId) {
+        throw new Error('Failed to get NFT ID from event');
+      }
+      
+      // 获取 NFT 属性
+      const attrs = await nftContract.nftAttributes(tokenId);
+      console.log('NFT attributes:', attrs);
+      
+      // 获取 NFT 图片
+      const imageUrl = ipfsToHttp(getNFTImage(rarity, tokenId));
+      
+      // 设置开盒结果
+      setOpeningResult({
+        tokenId: tokenId.toString(),
+        rarity,
+        power: attrs.power.toNumber(),  // 使用实际算力
+        dailyReward: ethers.utils.formatEther(attrs.dailyReward),
+        maxReward: ethers.utils.formatEther(attrs.maxReward),
+        imageUrl
+      });
+      
+      setIsOpening(false);
+      return true;
+    } catch (error) {
+      console.error('Detailed error:', error);
+      if (error.error) {
+        console.error('Inner error:', error.error);
+        // 解析错误信息
+        if (error.error.message) {
+          alert(`开盲盒失败: ${error.error.message}`);
+        }
+      }
+      if (error.transaction) {
+        console.error('Failed transaction:', error.transaction);
+      }
+      alert(error.message || '开盲盒失败，请查看控制台获取详细信息');
+      setIsOpening(false);
+      return false;
     }
-    if (error.transaction) {
-      console.error('Failed transaction:', error.transaction);
-    }
-    setIsOpening(false);
-    return false;
-  }
-};
+  };
+
   return (
     <div className="min-h-screen bg-[#0B1120] pt-20 relative overflow-hidden">
       {/* 科技感背景 */}
@@ -412,61 +478,55 @@ const openBox = async () => {
 
       {/* 开箱结果弹窗 */}
       {openingResult && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-[#1A2438]/95 backdrop-blur-xl rounded-2xl p-8 max-w-lg w-full mx-4 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-2xl"></div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#1A1B1F] rounded-lg p-6 max-w-md w-full mx-4">
             <div className="relative">
-              {/* NFT 图片 */}
-              <div className="relative group mb-6">
+              {openingResult.imageUrl ? (
                 <img 
-                  src={getNFTImage(openingResult.rarity, openingResult.tokenId)}
-                  alt={`NFT ${openingResult.rarity}`}
-                  className="w-full aspect-square object-cover rounded-xl"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/images/nft-placeholder.svg';
-                  }}
+                  src={openingResult.imageUrl} 
+                  alt={`NFT #${openingResult.tokenId}`} 
+                  className="w-full h-auto rounded-lg mb-4"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl"></div>
-                {/* 稀有度标签 */}
-                <div className={`absolute top-4 left-4 px-3 py-1 rounded-lg ${
-                  openingResult.rarity === 'SSR' ? 'bg-amber-500/90' :
-                  openingResult.rarity === 'SR' ? 'bg-purple-500/90' :
-                  openingResult.rarity === 'R' ? 'bg-blue-500/90' :
-                  'bg-gray-500/90'
-                }`}>
-                  <span className="text-white font-medium">{openingResult.rarity}</span>
+              ) : (
+                <div className="w-full h-64 bg-gray-800 rounded-lg mb-4 flex items-center justify-center">
+                  <span className="text-gray-400">Loading NFT Image...</span>
                 </div>
-                {/* 战力标签 */}
-                <div className="absolute bottom-4 right-4 px-3 py-1 rounded-lg bg-black/70">
-                  <span className="text-white font-medium">{NFT_SETTINGS[openingResult.rarity].power} H/s</span>
-                </div>
+              )}
+              <div className="absolute top-2 right-2 bg-[#2C2D31] px-2 py-1 rounded">
+                #{openingResult.tokenId}
               </div>
-
-              {/* NFT 属性 */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-black/20 rounded-lg p-4">
-                  <div className="text-gray-400 text-sm mb-1">{t('dailyReward')}</div>
-                  <div className="text-green-400 font-bold">
-                    {NFT_SETTINGS[openingResult.rarity].dailyReward} ZONE
-                  </div>
-                </div>
-                <div className="bg-black/20 rounded-lg p-4">
-                  <div className="text-gray-400 text-sm mb-1">{t('maxReward')}</div>
-                  <div className="text-green-400 font-bold">
-                    {NFT_SETTINGS[openingResult.rarity].maxReward}
-                  </div>
-                </div>
-              </div>
-
-              {/* 关闭按钮 */}
-              <button
-                onClick={() => setOpeningResult(null)}
-                className="w-full py-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-bold hover:from-green-600 hover:to-green-700 transition-colors"
-              >
-                {t('confirm')}
-              </button>
             </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-400">稀有度:</span>
+                <span className={`font-bold ${
+                  openingResult.rarity === 'SSR' ? 'text-purple-500' :
+                  openingResult.rarity === 'SR' ? 'text-yellow-500' :
+                  openingResult.rarity === 'R' ? 'text-blue-500' :
+                  'text-gray-500'
+                }`}>{openingResult.rarity}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">算力:</span>
+                <span className="text-white">{openingResult.power} H/s</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">日收益:</span>
+                <span className="text-green-500">{openingResult.dailyReward} ZONE</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">最大收益:</span>
+                <span className="text-green-500">{openingResult.maxReward} ZONE</span>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setOpeningResult(null)}
+              className="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors"
+            >
+              确认
+            </button>
           </div>
         </div>
       )}

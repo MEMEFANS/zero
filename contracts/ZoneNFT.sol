@@ -21,6 +21,9 @@ contract ZoneNFT is ERC721, ERC721Enumerable, Pausable, AccessControl, Reentranc
     
     Counters.Counter private _tokenIdCounter;
 
+    // 销毁地址
+    address public constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
+
     // NFT属性结构
     struct NFTAttributes {
         uint8 rarity;        // 稀有度 (N=0, R=1, SR=2, SSR=3)
@@ -60,7 +63,7 @@ contract ZoneNFT is ERC721, ERC721Enumerable, Pausable, AccessControl, Reentranc
     event BoxPriceUpdated(uint256 newPrice);
 
     constructor(address _zoneToken) ERC721("Zone NFT", "ZONE") {
-        require(_zoneToken != address(0), "Invalid token address");
+        require(_zoneToken != BURN_ADDRESS, "Invalid token address");
         
         zoneToken = IERC20(_zoneToken);
         
@@ -149,7 +152,7 @@ contract ZoneNFT is ERC721, ERC721Enumerable, Pausable, AccessControl, Reentranc
     // 开启神秘盒子
     function openBox() external nonReentrant whenNotPaused returns (uint256) {
         require(zoneToken.balanceOf(msg.sender) >= boxPrice, "Insufficient ZONE balance");
-        require(zoneToken.transferFrom(msg.sender, address(0), boxPrice), "Burn failed"); // 直接销毁到0地址
+        require(zoneToken.transferFrom(msg.sender, BURN_ADDRESS, boxPrice), "Burn failed"); // 销毁到特定地址
 
         // 生成NFT
         uint256 tokenId = _tokenIdCounter.current();
@@ -246,7 +249,7 @@ contract ZoneNFT is ERC721, ERC721Enumerable, Pausable, AccessControl, Reentranc
 
     // 更新NFT质押状态（仅质押合约）
     function updateStakeStatus(uint256 tokenId, bool isStaked) external onlyRole(STAKING_ROLE) {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) != BURN_ADDRESS, "Token does not exist");
         nftAttributes[tokenId].isStaked = isStaked;
         if (isStaked) {
             nftAttributes[tokenId].stakeTime = block.timestamp;
@@ -257,13 +260,13 @@ contract ZoneNFT is ERC721, ERC721Enumerable, Pausable, AccessControl, Reentranc
 
     // 授权质押合约
     function setStakingContract(address stakingContract) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(stakingContract != address(0), "Invalid staking contract");
+        require(stakingContract != BURN_ADDRESS, "Invalid staking contract");
         _grantRole(STAKING_ROLE, stakingContract);
     }
 
     // 销毁NFT（仅质押合约）
     function burn(uint256 tokenId) external onlyRole(STAKING_ROLE) {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) != BURN_ADDRESS, "Token does not exist");
         _burn(tokenId);
     }
 
@@ -277,7 +280,7 @@ contract ZoneNFT is ERC721, ERC721Enumerable, Pausable, AccessControl, Reentranc
         bool isStaked,
         uint256 stakeTime
     ) {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) != BURN_ADDRESS, "Token does not exist");
         NFTAttributes memory attrs = nftAttributes[tokenId];
         return (
             attrs.rarity,
@@ -292,7 +295,7 @@ contract ZoneNFT is ERC721, ERC721Enumerable, Pausable, AccessControl, Reentranc
 
     // 获取NFT授权地址
     function getApproved(uint256 tokenId) public view override(ERC721, IERC721) returns (address) {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) != BURN_ADDRESS, "Token does not exist");
         return super.getApproved(tokenId);
     }
 
@@ -303,13 +306,13 @@ contract ZoneNFT is ERC721, ERC721Enumerable, Pausable, AccessControl, Reentranc
 
     // 更新已挖矿数量（仅质押合约）
     function updateMinedAmount(uint256 tokenId, uint256 amount) external onlyRole(STAKING_ROLE) {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) != BURN_ADDRESS, "Token does not exist");
         nftAttributes[tokenId].minedAmount = amount;
     }
 
     // 生成NFT元数据
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) != BURN_ADDRESS, "Token does not exist");
         return _generateTokenURI(tokenId);
     }
 
@@ -342,7 +345,7 @@ contract ZoneNFT is ERC721, ERC721Enumerable, Pausable, AccessControl, Reentranc
 
     // 获取NFT图片URI
     function getNFTImageURI(uint256 tokenId) public view returns (string memory) {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) != BURN_ADDRESS, "Token does not exist");
         uint8 rarity = nftAttributes[tokenId].rarity;
         
         string[] storage images = _nftImages[rarity];
@@ -353,19 +356,19 @@ contract ZoneNFT is ERC721, ERC721Enumerable, Pausable, AccessControl, Reentranc
 
     // 获取NFT等级
     function getNFTRarity(uint256 tokenId) external view returns (string memory) {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) != BURN_ADDRESS, "Token does not exist");
         return _rarityToString(nftAttributes[tokenId].rarity);
     }
 
     // 获取NFT算力
     function getNFTPower(uint256 tokenId) external view returns (uint256) {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) != BURN_ADDRESS, "Token does not exist");
         return nftAttributes[tokenId].power;
     }
 
     // 获取NFT每日收益
     function getNFTDailyReward(uint256 tokenId) external view returns (uint256) {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) != BURN_ADDRESS, "Token does not exist");
         return nftAttributes[tokenId].dailyReward;
     }
 
