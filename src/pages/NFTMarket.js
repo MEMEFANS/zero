@@ -57,6 +57,17 @@ const NFTMarket = () => {
   const [stakingContractAddress] = useState(STAKING_ADDRESS);  
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // 根据稀有度获取颜色样式
+  const getRarityColor = (rarity) => {
+    const colors = {
+      'N': 'bg-gray-500',
+      'R': 'bg-blue-500',
+      'SR': 'bg-purple-500',
+      'SSR': 'bg-yellow-500'
+    };
+    return colors[rarity] || 'bg-gray-500';
+  };
+
   // 过滤和排序函数
   const getFilteredAndSortedItems = (items) => {
     try {
@@ -752,34 +763,34 @@ const NFTMarket = () => {
   // 市场统计组件
   const MarketStats = () => {
     return (
-      <div className="grid grid-cols-4 gap-4 mb-8 text-center text-white">
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-sm">总交易额</div>
-          <div className="text-xl font-bold">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-8 text-center text-white">
+        <div className="bg-gray-800 p-2 md:p-4 rounded-lg">
+          <div className="text-xs md:text-sm">总交易额</div>
+          <div className="text-sm md:text-xl font-bold">
             {typeof marketStats.totalVolume === 'object' && marketStats.totalVolume._isBigNumber
               ? ethers.utils.formatEther(marketStats.totalVolume)
               : marketStats.totalVolume} BNB
           </div>
         </div>
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-sm">24h交易额</div>
-          <div className="text-xl font-bold">
+        <div className="bg-gray-800 p-2 md:p-4 rounded-lg">
+          <div className="text-xs md:text-sm">24h交易额</div>
+          <div className="text-sm md:text-xl font-bold">
             {typeof marketStats.dailyVolume === 'object' && marketStats.dailyVolume._isBigNumber
               ? ethers.utils.formatEther(marketStats.dailyVolume)
               : marketStats.dailyVolume} BNB
           </div>
         </div>
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-sm">地板价</div>
-          <div className="text-xl font-bold">
+        <div className="bg-gray-800 p-2 md:p-4 rounded-lg">
+          <div className="text-xs md:text-sm">地板价</div>
+          <div className="text-sm md:text-xl font-bold">
             {typeof marketStats.floorPrice === 'object' && marketStats.floorPrice._isBigNumber
               ? ethers.utils.formatEther(marketStats.floorPrice)
               : marketStats.floorPrice} BNB
           </div>
         </div>
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="text-sm">持有人数</div>
-          <div className="text-xl font-bold">
+        <div className="bg-gray-800 p-2 md:p-4 rounded-lg">
+          <div className="text-xs md:text-sm">持有人数</div>
+          <div className="text-sm md:text-xl font-bold">
             {typeof marketStats.totalHolders === 'object' && marketStats.totalHolders._isBigNumber
               ? marketStats.totalHolders.toString()
               : marketStats.totalHolders}
@@ -787,6 +798,66 @@ const NFTMarket = () => {
         </div>
       </div>
     );
+  };
+
+  // 处理购买 NFT
+  const handleBuyNFT = async (nft) => {
+    try {
+      setIsLoading(true);
+      console.log('Buying NFT:', nft);
+
+      // 检查 NFT 是否仍在市场上
+      const [isActive, price, seller] = await nftMarketContract.getNFTMarketInfo(nft.tokenId);
+      console.log('Market info:', { isActive, price: ethers.utils.formatEther(price), seller });
+
+      if (!isActive) {
+        toast.error('该 NFT 已不在市场上');
+        return;
+      }
+
+      // 检查余额
+      const balance = await library.getSigner().getBalance();
+      if (balance.lt(price)) {
+        toast.error('余额不足');
+        return;
+      }
+
+      // 购买 NFT
+      console.log('Buying NFT...');
+      const tx = await nftMarketContract.buyNFT(nft.tokenId, {
+        value: price,
+        gasLimit: 300000
+      });
+      console.log('Transaction sent:', tx.hash);
+
+      const receipt = await tx.wait();
+      console.log('Transaction confirmed:', receipt);
+
+      // 检查事件
+      const buyEvent = receipt.events?.find(e => e.event === 'NFTSold');
+      if (buyEvent) {
+        console.log('NFTSold event:', buyEvent.args);
+        toast.success('NFT 购买成功！');
+        // 重新加载数据
+        await loadMarketData();
+      } else {
+        console.error('No NFTSold event found in receipt');
+        toast.error('购买交易已确认，但未找到购买事件');
+      }
+    } catch (error) {
+      console.error('Error buying NFT:', error);
+      if (error.code === 'ACTION_REJECTED') {
+        toast.error('您取消了交易');
+      } else if (error.code === -32603) {
+        toast.error('交易执行失败，请检查 Gas 费用');
+      } else if (error.message.includes('insufficient funds')) {
+        toast.error('余额不足');
+      } else {
+        toast.error(`购买失败: ${error.message || '未知错误'}`);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -806,45 +877,35 @@ const NFTMarket = () => {
         <>
           <MarketStats />
 
-          <div className="mb-6">
+          <div className="mb-4 md:mb-8 space-y-2 md:space-y-4">
             <input
               type="text"
               placeholder="搜索 NFT..."
-              className="w-full p-2 bg-gray-800 text-white rounded-lg"
+              className="w-full p-2 md:p-3 rounded-lg bg-gray-800 text-white text-sm md:text-base"
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </div>
-
-          <div className="mb-6">
-            <select
-              className="w-full p-2 bg-gray-800 text-white rounded-lg"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="default">排序方式</option>
-              <option value="priceAsc">价格从低到高</option>
-              <option value="priceDesc">价格从高到低</option>
-              <option value="powerAsc">算力从低到高</option>
-              <option value="powerDesc">算力从高到低</option>
-            </select>
-          </div>
-
-          <div className="flex space-x-4 mb-8">
-            <button
-              className={`px-4 py-2 rounded-lg ${filterType === 'all' ? 'bg-green-600' : 'bg-gray-800'} text-white`}
-              onClick={() => setFilterType('all')}
-            >
-              全部
-            </button>
-            {NFT_RARITY.map((rarity) => (
+            <div className="flex flex-wrap gap-2">
               <button
-                key={rarity}
-                className={`px-4 py-2 rounded-lg ${filterType === rarity ? 'bg-green-600' : 'bg-gray-800'} text-white`}
-                onClick={() => setFilterType(rarity)}
+                className={`px-3 py-1 md:px-4 md:py-2 rounded-lg text-sm md:text-base ${
+                  filterType === 'all' ? 'bg-green-600' : 'bg-gray-800'
+                } text-white`}
+                onClick={() => setFilterType('all')}
               >
-                {rarity}
+                全部
               </button>
-            ))}
+              {NFT_RARITY.map((rarity) => (
+                <button
+                  key={rarity}
+                  className={`px-3 py-1 md:px-4 md:py-2 rounded-lg text-sm md:text-base ${
+                    filterType === rarity ? 'bg-green-600' : 'bg-gray-800'
+                  } text-white`}
+                  onClick={() => setFilterType(rarity)}
+                >
+                  {rarity}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex space-x-4 mb-8">
@@ -874,64 +935,40 @@ const NFTMarket = () => {
               <div className="mt-4">加载中...</div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {selectedTab === 'market' && marketItems.map((item) => (
-                <div key={item.tokenId} className="bg-gray-800 rounded-lg overflow-hidden">
-                  <img src={item.image} alt={`NFT #${item.tokenId}`} className="w-full h-48 object-cover" />
-                  <div className="p-4">
-                    <div className="text-white">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-lg font-bold">#{item.tokenId}</span>
-                        <span className={`px-2 py-1 rounded ${NFT_RARITY_COLORS[item.rarity].bg}`}>
-                          {item.rarity}
-                        </span>
-                      </div>
-                      <div className="mb-2">算力: {parseFloat(item.power).toFixed(4)}</div>
-                      <div className="mb-2">每日收益: {parseFloat(item.dailyReward).toFixed(4)} BNB</div>
-                      <div className="mb-2">已挖矿量: {parseFloat(item.minedAmount).toFixed(4)} BNB</div>
-                      <div className="mb-4">价格: {item.price} BNB</div>
-                      <button
-                        onClick={() => handleBuyNFT(item)}
-                        className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                      >
-                        购买
-                      </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+              {getFilteredAndSortedItems(marketItems).map((item) => (
+                <div key={item.id} className="bg-gray-800 rounded-lg overflow-hidden">
+                  {/* NFT 图片容器 */}
+                  <div className="relative w-full pb-[100%]">
+                    <img
+                      src={item.image}
+                      alt={`NFT #${item.id}`}
+                      className="absolute top-0 left-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <span className={`px-2 py-1 rounded text-xs md:text-sm ${getRarityColor(item.rarity)}`}>
+                        {item.rarity}
+                      </span>
                     </div>
                   </div>
-                </div>
-              ))}
-              {selectedTab === 'my-nfts' && myNFTs.map((item) => (
-                <div key={item.tokenId} className="bg-gray-800 rounded-lg overflow-hidden">
-                  <img src={item.image} alt={`NFT #${item.tokenId}`} className="w-full h-48 object-cover" />
-                  <div className="p-4">
-                    <div className="text-white">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-lg font-bold">#{item.tokenId}</span>
-                        <span className={`px-2 py-1 rounded ${NFT_RARITY_COLORS[item.rarity].bg}`}>
-                          {item.rarity}
-                        </span>
+                  {/* NFT 信息 */}
+                  <div className="p-2 md:p-3">
+                    <div className="text-sm md:text-base font-semibold mb-1 text-white">NFT #{item.id}</div>
+                    <div className="space-y-1 text-xs md:text-sm text-gray-300">
+                      <div>算力: {parseFloat(item.power).toFixed(2)} H/s</div>
+                      <div>每日收益: {parseFloat(item.dailyReward).toFixed(4)} ZONE</div>
+                      <div>最大收益: {parseFloat(item.maxReward).toFixed(4)} ZONE</div>
+                      <div>已挖矿量: {parseFloat(item.minedAmount).toFixed(4)} ZONE</div>
+                      <div className="text-sm md:text-base font-semibold text-white">
+                        价格: {item.price} BNB
                       </div>
-                      <div className="mb-2">算力: {parseFloat(item.power).toFixed(4)}</div>
-                      <div className="mb-2">每日收益: {parseFloat(item.dailyReward).toFixed(4)} BNB</div>
-                      {item.listed ? (
-                        <div className="mb-4">已上架价格: {item.price} BNB</div>
-                      ) : (
-                        <button
-                          onClick={() => handleListNFT(item)}
-                          className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors mb-2"
-                        >
-                          上架出售
-                        </button>
-                      )}
-                      {false && !item.isStaked && (
-                        <button
-                          onClick={() => handleStakeNFT(item)}
-                          className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                          质押挖矿
-                        </button>
-                      )}
                     </div>
+                    <button
+                      onClick={() => handleBuyNFT(item)}
+                      className="w-full mt-2 bg-blue-600 text-white px-3 py-1 md:px-4 md:py-2 rounded text-xs md:text-sm hover:bg-blue-700 transition-colors"
+                    >
+                      购买
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1222,42 +1259,6 @@ const NFTMarket = () => {
     return NFT_IMAGES[rarity] || NFT_IMAGES['Common'];
   };
 
-  // 购买 NFT
-  const handleBuyNFT = async (nft) => {
-    try {
-      if (!nft || !nft.tokenId || !nft.price) {
-        toast.error('无效的 NFT 信息');
-        return;
-      }
-
-      const marketContract = new ethers.Contract(NFT_MARKETPLACE_ADDRESS, NFT_MARKETPLACE_ABI, library.getSigner());
-
-      // 购买 NFT
-      console.log('Buying NFT:', {
-        tokenId: nft.tokenId,
-        price: nft.price
-      });
-
-      const tx = await marketContract.buyNFT(nft.tokenId, {
-        value: ethers.utils.parseEther(nft.price.toString()),
-        gasLimit: ethers.BigNumber.from(500000) // 使用固定的 gas limit
-      });
-
-      await tx.wait();
-
-      // 重新加载数据
-      loadMarketData();
-      toast.success('NFT 购买成功！');
-    } catch (error) {
-      console.error('Error buying NFT:', error);
-      if (error.message.includes('user rejected transaction')) {
-        toast.error('您取消了交易');
-      } else {
-        toast.error('购买失败，请重试: ' + error.message);
-      }
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-8 text-center text-white">NFT 交易市场</h1>
@@ -1275,45 +1276,35 @@ const NFTMarket = () => {
         <>
           <MarketStats />
 
-          <div className="mb-6">
+          <div className="mb-4 md:mb-8 space-y-2 md:space-y-4">
             <input
               type="text"
               placeholder="搜索 NFT..."
-              className="w-full p-2 bg-gray-800 text-white rounded-lg"
+              className="w-full p-2 md:p-3 rounded-lg bg-gray-800 text-white text-sm md:text-base"
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </div>
-
-          <div className="mb-6">
-            <select
-              className="w-full p-2 bg-gray-800 text-white rounded-lg"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="default">排序方式</option>
-              <option value="priceAsc">价格从低到高</option>
-              <option value="priceDesc">价格从高到低</option>
-              <option value="powerAsc">算力从低到高</option>
-              <option value="powerDesc">算力从高到低</option>
-            </select>
-          </div>
-
-          <div className="flex space-x-4 mb-8">
-            <button
-              className={`px-4 py-2 rounded-lg ${filterType === 'all' ? 'bg-green-600' : 'bg-gray-800'} text-white`}
-              onClick={() => setFilterType('all')}
-            >
-              全部
-            </button>
-            {NFT_RARITY.map((rarity) => (
+            <div className="flex flex-wrap gap-2">
               <button
-                key={rarity}
-                className={`px-4 py-2 rounded-lg ${filterType === rarity ? 'bg-green-600' : 'bg-gray-800'} text-white`}
-                onClick={() => setFilterType(rarity)}
+                className={`px-3 py-1 md:px-4 md:py-2 rounded-lg text-sm md:text-base ${
+                  filterType === 'all' ? 'bg-green-600' : 'bg-gray-800'
+                } text-white`}
+                onClick={() => setFilterType('all')}
               >
-                {rarity}
+                全部
               </button>
-            ))}
+              {NFT_RARITY.map((rarity) => (
+                <button
+                  key={rarity}
+                  className={`px-3 py-1 md:px-4 md:py-2 rounded-lg text-sm md:text-base ${
+                    filterType === rarity ? 'bg-green-600' : 'bg-gray-800'
+                  } text-white`}
+                  onClick={() => setFilterType(rarity)}
+                >
+                  {rarity}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex space-x-4 mb-8">
@@ -1343,7 +1334,7 @@ const NFTMarket = () => {
               <div className="mt-4">加载中...</div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
               {selectedTab === 'market' && marketItems.map((item) => (
                 <NFTCard key={item.tokenId} nft={item} isMyNFT={false} />
               ))}
