@@ -56,6 +56,11 @@ function NFTList({ onNFTsLoaded, onStakeSuccess }) {
       // 使用重试机制获取余额
       const balance = await retryOperation(() => nftContract.balanceOf(account));
       
+      // 获取已质押的 NFT 列表
+      const miningContract = new ethers.Contract(NFT_MINING_ADDRESS, NFT_MINING_ABI, signer);
+      const stakedInfo = await miningContract.getUserStakeInfo(account);
+      const stakedTokenIds = stakedInfo[5].map(id => id.toString()); // 转换为字符串以便比较
+      
       // 分批获取 NFT 数据，避免一次性请求过多
       const batchSize = 5;
       const nftList = [];
@@ -68,10 +73,15 @@ function NFTList({ onNFTsLoaded, onStakeSuccess }) {
               retryOperation(async () => {
                 const tokenId = await nftContract.tokenOfOwnerByIndex(account, i + j);
                 const attributes = await nftContract.getNFTAttributes(tokenId);
-                return {
-                  tokenId,
-                  ...attributes
-                };
+                // 检查该 NFT 是否已质押
+                const isStaked = stakedTokenIds.includes(tokenId.toString());
+                if (!isStaked) {
+                  return {
+                    tokenId,
+                    ...attributes
+                  };
+                }
+                return null; // 如果已质押，返回 null
               })
             );
           } catch (error) {
@@ -79,9 +89,9 @@ function NFTList({ onNFTsLoaded, onStakeSuccess }) {
           }
         }
         
-        // 等待当前批次完成
+        // 等待当前批次完成并过滤掉 null 值
         const batchResults = await Promise.all(batch);
-        nftList.push(...batchResults);
+        nftList.push(...batchResults.filter(nft => nft !== null));
         
         // 在批次之间添加延迟
         if (i + batchSize < balance.toNumber()) {

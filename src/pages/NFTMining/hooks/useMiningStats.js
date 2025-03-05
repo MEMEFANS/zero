@@ -39,6 +39,13 @@ const formatBigNumber = (value, decimals = 18, displayDecimals = 4) => {
   }
 };
 
+// 格式化地址显示：0x....5678
+const formatAddress = (address) => {
+  if (!address) return null;
+  const suffix = address.slice(-6);   // 最后6位
+  return `0x....${suffix}`;
+};
+
 // 添加延迟函数
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -268,7 +275,7 @@ export const useMiningStats = (account, library) => {
         totalOutputAll: formatBigNumber(reward.add(teamBonus)),
 
         // 推荐关系
-        referrer: referrer === ethers.constants.AddressZero ? null : referrer,
+        referrer: referrer === ethers.constants.AddressZero ? null : formatAddress(referrer),
         stakedNFTs: stakedTokenIds.map(id => id.toString())
       }));
 
