@@ -49,24 +49,25 @@ function App() {
                 <Route path="/mint/:referrer" element={<Mint />} />
                 <Route path="/mystery-box" element={<MysteryBox />} />
                 <Route path="/mining" element={<NFTMining />} />
+                <Route path="/mining/:referrer" element={<NFTMining />} />
                 <Route path="/lpmining" element={<LPMining />} />
                 <Route path="/market" element={<NFTMarket />} />
                 <Route path="/airdrop" element={<Airdrop />} />
               </Routes>
-              <ToastContainer
-                position="top-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-              />
             </div>
           </div>
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="dark"
+          />
         </Router>
       </Web3ReactProvider>
     </LanguageContext.Provider>

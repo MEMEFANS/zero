@@ -1,31 +1,44 @@
 export const ZONE_NFT_ADDRESS = "0x73b9A33D78AD18804C898946b315CF515D798666"; // 新部署的合约地址
 export const ZONE_TOKEN_ADDRESS = "0xfc57f8625688D85A332437FF1aacE8731d952955"; // 正确的 ZONE 代币地址
 export const NFT_MARKETPLACE_ADDRESS = "0xa0A286938BeDa5b2061F680b6A47577750c908Ab";  // 新部署的市场合约地址
-export const NFT_MINING_ADDRESS = "0x71fcB50d20052511b545A9f42E2F857aaCB5b76a";
+export const NFT_MINING_ADDRESS = "0x4a2107DeBf85f6D9B39f4356Ca669c79342f942b";  // 新部署的挖矿合约地址
 export const REFERRAL_REGISTRY_ADDRESS = "0x32Ef65Add373412446400F3A6Ed460f61E599360";
 export const IDO_DISTRIBUTOR_ADDRESS = "0xBcFFfC6D090daF69E46D30cfaf49e39d4ce77ef1";
 export const STAKING_ADDRESS = "0x...";  // TODO: 需要替换为实际的质押合约地址
 
 export const ZONE_NFT_ABI = [
+  // ERC721 基本功能
+  "function balanceOf(address owner) view returns (uint256)",
+  "function ownerOf(uint256 tokenId) view returns (address)",
+  "function approve(address to, uint256 tokenId)",
+  "function getApproved(uint256 tokenId) view returns (address)",
+  "function setApprovalForAll(address operator, bool approved)",
+  "function isApprovedForAll(address owner, address operator) view returns (bool)",
+  "function transferFrom(address from, address to, uint256 tokenId)",
+  "function safeTransferFrom(address from, address to, uint256 tokenId)",
+  "function safeTransferFrom(address from, address to, uint256 tokenId, bytes data)",
+  "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
+  "function totalSupply() view returns (uint256)",
+
+  // NFT 特定功能
   "function openBox() external returns (uint256)",
   "function boxPrice() view returns (uint256)",
-  "function getNFTAttributes(uint256) view returns (uint8 rarity, uint256 power, uint256 dailyReward, uint256 maxReward, uint256 minedAmount, bool isStaked, uint256 stakeTime)",
   "function paused() view returns (bool)",
   "function tokenURI(uint256 tokenId) view returns (string)",
   "function getNFTImageURI(uint256 tokenId) view returns (string)",
   "function getNFTImage(uint256 tokenId) view returns (string)",
-  "event BoxOpened(address indexed user, uint256 indexed tokenId, string rarity)",
-  "function balanceOf(address owner) view returns (uint256)",
-  "function ownerOf(uint256 tokenId) view returns (address)",
-  "function approve(address to, uint256 tokenId) external",
-  "function getApproved(uint256 tokenId) view returns (address)",
-  "function setApprovalForAll(address operator, bool approved) external",
-  "function isApprovedForAll(address owner, address operator) view returns (bool)",
-  "function transferFrom(address from, address to, uint256 tokenId) external",
-  "function safeTransferFrom(address from, address to, uint256 tokenId) external",
-  "function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) external",
-  "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
-  "function totalSupply() view returns (uint256)"
+  "function getNFTAttributes(uint256 tokenId) view returns (uint8 rarity, uint256 power, uint256 dailyReward, uint256 maxReward, uint256 minedAmount, bool isStaked, uint256 stakeTime)",
+  "function updateStakeStatus(uint256 tokenId, bool isStaked)",
+  
+  // 权限相关
+  "function STAKING_ROLE() view returns (bytes32)",
+  "function hasRole(bytes32 role, address account) view returns (bool)",
+  
+  // 事件
+  "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
+  "event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId)",
+  "event ApprovalForAll(address indexed owner, address indexed operator, bool approved)",
+  "event BoxOpened(address indexed user, uint256 indexed tokenId, string rarity)"
 ];
 
 export const ZONE_TOKEN_ABI = [
@@ -76,6 +89,59 @@ export const STAKING_ABI = [
   "event Staked(address indexed user, uint256 indexed tokenId)",
   "event Unstaked(address indexed user, uint256 indexed tokenId)",
   "event RewardsClaimed(address indexed user, uint256 indexed tokenId, uint256 amount)"
+];
+
+export const NFT_MINING_ABI = [
+  // 基本功能
+  "function stakeNFT(uint256 tokenId) external",
+  "function unstakeNFT(uint256 tokenId) external",
+  "function claimReward() external",
+  
+  // 管理员功能
+  "function pause() external",
+  "function unpause() external",
+  "function setFeeReceiver(address feeReceiver) external",
+  "function setLevelConfig(uint256 level, uint256 minPower, uint256 maxPower, uint256 bonusRate, uint256 teamRequired, uint256 teamBonusRate) external",
+  "function setMarketFeeRate(uint256 marketFeeRate) external",
+  "function setReferrer(address referrer) external",
+  
+  // 查询函数
+  "function nft() external view returns (address)",
+  "function zoneToken() external view returns (address)",
+  "function referralRegistry() external view returns (address)",
+  "function ADMIN_ROLE() external view returns (bytes32)",
+  "function currentMaxLevel() external view returns (uint256)",
+  "function dailyVolume() external view returns (uint256)",
+  "function getClaimableReward(address user) external view returns (uint256 reward, uint256 totalTeamBonus)",
+  "function getUserStakeInfo(address user) external view returns (uint256 totalPower, uint256 directPower, uint256 teamPower, uint256 level, uint256 lastClaimTime, uint256[] memory tokenIds)",
+  
+  // 权限相关
+  "function hasRole(bytes32 role, address account) external view returns (bool)",
+  "function grantRole(bytes32 role, address account) external",
+  "function revokeRole(bytes32 role, address account) external",
+  
+  // 事件
+  "event NFTStaked(address indexed user, uint256 indexed tokenId, uint256 power)",
+  "event NFTUnstaked(address indexed user, uint256 indexed tokenId)",
+  "event RewardClaimed(address indexed user, uint256 amount)",
+  "event ReferrerSet(address indexed user, address referrer)"
+];
+
+export const REFERRAL_REGISTRY_ABI = [
+  // 基本功能
+  "function bindReferrer(address user, address referrer) external",
+  "function getUserReferrer(address user) external view returns (address)",
+  "function hasReferrer(address user) external view returns (bool)",
+  "function getReferralCount(address user) view returns (uint256)",
+  "function getDirectRewards(address user) view returns (uint256)",
+  "function getTeamRewards(address user) view returns (uint256)",
+  "function getInviteCode(address user) view returns (string)",
+  "function hasInviteCode(address user) view returns (bool)",
+  "function generateInviteCode() external returns (string)",
+  "function registerInviteCode(string memory code) external",
+  // 事件
+  "event ReferralBound(address indexed user, address indexed referrer)",
+  "event AdminRoleGranted(address indexed admin, address indexed account)"
 ];
 
 export const NFT_RARITY = ['N', 'R', 'SR', 'SSR'];

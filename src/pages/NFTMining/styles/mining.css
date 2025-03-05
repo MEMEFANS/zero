@@ -1,0 +1,107 @@
+@keyframes mine {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes flowParticle {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes lightBeam {
+  0% {
+    opacity: 0.2;
+    transform: scaleY(0.8);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scaleY(1.2);
+  }
+  100% {
+    opacity: 0.2;
+    transform: scaleY(0.8);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+}
+
+.mining-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: rgba(13, 17, 23, 0.8);
+  border-radius: 0.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.data-stream {
+  position: absolute;
+  width: 2px;
+  height: 20px;
+  background: rgba(34, 197, 94, 0.2);
+  animation: mine 2s infinite;
+}
+
+.mining-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 2rem;
+  border: 2px solid rgba(34, 197, 94, 0.2);
+  border-radius: 0.5rem;
+}
+
+.mining-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 2rem;
+}
+
+.mining-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: rgb(34, 197, 94);
+  margin-bottom: 1rem;
+  text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.mining-subtitle {
+  color: rgba(34, 197, 94, 0.6);
+  font-size: 1rem;
+}
