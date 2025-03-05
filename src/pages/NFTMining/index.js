@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { LanguageContext } from '../../App';
 import { injected } from '../../utils/connectors';
 import { ethers } from 'ethers';
-import { REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI, NFT_MINING_ADDRESS } from '../../constants/contracts';
+import { REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI, NFT_MINING_ADDRESS, NFT_MINING_ABI } from '../../constants/contracts';
 import MiningBackground from './components/MiningBackground';
 import GlobalStats from './components/GlobalStats';
 import { NFTStatusCard, RevenueStatsCard } from './components/StatusCards';
@@ -99,18 +99,14 @@ const NFTMining = () => {
       }
 
       const signer = library.getSigner();
-      const referralContract = new ethers.Contract(REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI, signer);
-
-      // 检查是否已经有推荐人
-      const hasRef = await referralContract.hasReferrer(account);
-      if (hasRef) {
-        toast.error('您已经有推荐人了');
-        return;
-      }
+      const miningContract = new ethers.Contract(NFT_MINING_ADDRESS, NFT_MINING_ABI, signer);
 
       // 绑定推荐人
-      const tx = await referralContract.bindReferrer(account, referrerInput);
+      const tx = await miningContract.setReferrer(referrerInput, {
+        gasLimit: 500000
+      });
       await tx.wait();
+
       toast.success('推荐人绑定成功');
       loadMiningData(); // 刷新数据
     } catch (error) {

@@ -192,6 +192,7 @@ export const useMiningStats = (account, library) => {
       const signer = library.getSigner();
       const nftContract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, signer);
       const miningContract = new ethers.Contract(NFT_MINING_ADDRESS, NFT_MINING_ABI, signer);
+      const referralContract = new ethers.Contract(REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI, signer);
 
       console.log('Loading mining stats for account:', account);
 
@@ -218,17 +219,56 @@ export const useMiningStats = (account, library) => {
         dailyOutput = dailyOutput.add(dailyReward);
       }
 
+      // 从推荐系统获取直推信息
+      let referrer = null;
+      let directCount = 0;
+
+      try {
+        // 先尝试从 IDO 推荐系统获取
+        referrer = await referralContract.getUserReferrer(account);
+        if (referrer !== ethers.constants.AddressZero) {
+          // 如果有推荐人，获取直推人数
+          directCount = await referralContract.getReferralCount(account);
+        }
+      } catch (error) {
+        console.warn('从推荐系统获取信息失败:', error);
+        // 如果失败了，使用挖矿合约的数据
+        directCount = directPower.gt(0) ? 1 : 0;
+      }
+
       // 更新状态
       setStats(prevStats => ({
         ...prevStats,
+        // NFT 状态
         totalPower: formatBigNumber(totalPower, 0),
         hasNFT: stakedTokenIds.length > 0,
+        nftLevel: level.toNumber(),
+        directIncrease: 5,
+
+        // 收益统计
         currentReward: formatBigNumber(reward),
         dailyOutput: formatBigNumber(dailyOutput),
-        directIncome: formatBigNumber(directPower),
-        teamIncome: formatBigNumber(teamPower),
-        minerCount: stakedTokenIds.length,
+        totalOutput: formatBigNumber(reward.add(teamBonus)),
+        yearReturn: dailyOutput.gt(0) ? 
+          formatBigNumber(dailyOutput.mul(365).mul(100).div(reward.add(teamBonus))) + '%' : 
+          '0%',
+
+        // 直推和团队状态
+        directCount: directCount,
+        directIncome: formatBigNumber(directPower), // 直推收益用挖矿合约的 directPower
+        teamIncome: formatBigNumber(teamPower),     // 团队收益用挖矿合约的 teamPower
         currentLevel: level.toNumber(),
+        directStatus: 5,
+
+        // 矿工数量
+        minerCount: stakedTokenIds.length,
+
+        // 产出统计
+        todayOutput: formatBigNumber(dailyOutput),
+        totalOutputAll: formatBigNumber(reward.add(teamBonus)),
+
+        // 推荐关系
+        referrer: referrer === ethers.constants.AddressZero ? null : referrer,
         stakedNFTs: stakedTokenIds.map(id => id.toString())
       }));
 
