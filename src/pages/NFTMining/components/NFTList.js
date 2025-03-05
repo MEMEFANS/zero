@@ -36,7 +36,7 @@ const retryOperation = async (operation, maxRetries = 3, initialDelay = 1000) =>
   throw lastError;
 };
 
-function NFTList({ onNFTsLoaded }) {
+function NFTList({ onNFTsLoaded, onStakeSuccess }) {
   const { account, library } = useWeb3React();
   const [isLoading, setIsLoading] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState({
@@ -45,7 +45,7 @@ function NFTList({ onNFTsLoaded }) {
   const [nfts, setNfts] = useState([]);
 
   // 加载 NFT 列表
-  const loadNFTs = async () => {
+  const fetchNFTs = async () => {
     if (!account || !library) return;
 
     try {
@@ -206,6 +206,13 @@ function NFTList({ onNFTsLoaded }) {
           console.log('质押交易已发送，hash:', tx.hash);
           await tx.wait();
           console.log('质押交易已确认');
+
+          // 立即刷新数据
+          await fetchNFTs();
+          // 通知父组件更新统计数据
+          if (onStakeSuccess) {
+            onStakeSuccess();
+          }
         } catch (error) {
           console.error('质押失败:', error);
           throw error;
@@ -213,8 +220,6 @@ function NFTList({ onNFTsLoaded }) {
       });
 
       toast.success('质押成功！');
-      // 刷新数据
-      await loadNFTs();
     } catch (error) {
       console.error('质押失败:', error);
       const errorMessage = error.data?.message || error.message || '未知错误';
@@ -284,10 +289,13 @@ function NFTList({ onNFTsLoaded }) {
     checkApprovals();
   }, [account, library]);
 
-  // 初始化加载
+  // 定期刷新 NFT 列表
   useEffect(() => {
     if (account && library) {
-      loadNFTs();
+      fetchNFTs();
+      // 每 30 秒刷新一次
+      const interval = setInterval(fetchNFTs, 30000);
+      return () => clearInterval(interval);
     }
   }, [account, library]);
 

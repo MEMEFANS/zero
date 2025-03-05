@@ -192,101 +192,60 @@ export const useMiningStats = (account, library) => {
       const signer = library.getSigner();
       const nftContract = new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, signer);
       const miningContract = new ethers.Contract(NFT_MINING_ADDRESS, NFT_MINING_ABI, signer);
-      const referralContract = new ethers.Contract(REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI, signer);
 
       console.log('Loading mining stats for account:', account);
 
-      // 检查合约是否已经授权
-      const isApproved = await retryWithDelay(() => 
-        safeContractCall(nftContract, 'isApprovedForAll', account, NFT_MINING_ADDRESS)
-      );
-      console.log('NFT approval status:', isApproved);
+      // 获取用户的质押信息
+      const [totalPower, directPower, teamPower, level, lastClaimTime, stakedTokenIds] = 
+        await miningContract.getUserStakeInfo(account);
+      
+      console.log('质押信息:', {
+        totalPower: totalPower.toString(),
+        directPower: directPower.toString(),
+        teamPower: teamPower.toString(),
+        level: level.toString(),
+        lastClaimTime: lastClaimTime.toString(),
+        stakedTokenIds: stakedTokenIds.map(id => id.toString())
+      });
 
-      // 获取基本数据
-      const [
-        minerCount,
-        dailyOutput,
-        totalOutput,
-        minerPower,
-        pendingRewards,
-        dailyRewards,
-        referralCount,
-        referrer
-      ] = await Promise.all([
-        retryWithDelay(() => safeContractCall(miningContract, 'minerCount')).catch(() => ethers.BigNumber.from(0)),
-        retryWithDelay(() => safeContractCall(miningContract, 'dailyOutput')).catch(() => ethers.BigNumber.from(0)),
-        retryWithDelay(() => safeContractCall(miningContract, 'totalOutput')).catch(() => ethers.BigNumber.from(0)),
-        retryWithDelay(() => safeContractCall(miningContract, 'minerPower', account)).catch(() => ethers.BigNumber.from(0)),
-        retryWithDelay(() => safeContractCall(miningContract, 'pendingRewards', account)).catch(() => ethers.BigNumber.from(0)),
-        retryWithDelay(() => safeContractCall(miningContract, 'dailyRewards', account)).catch(() => ethers.BigNumber.from(0)),
-        retryWithDelay(() => safeContractCall(miningContract, 'referralCount', account)).catch(() => ethers.BigNumber.from(0)),
-        retryWithDelay(() => safeContractCall(referralContract, 'getUserReferrer', account)).catch(() => ethers.constants.AddressZero)
-      ]);
-
-      // 获取推荐系统数据
-      const [directRewards, teamRewards] = await Promise.all([
-        retryWithDelay(() => safeContractCall(referralContract, 'getDirectRewards', account)).catch(() => ethers.BigNumber.from(0)),
-        retryWithDelay(() => safeContractCall(referralContract, 'getTeamRewards', account)).catch(() => ethers.BigNumber.from(0))
-      ]);
-
-      // 获取质押的NFT列表
-      let stakedNFTs = [];
-      try {
-        stakedNFTs = await retryWithDelay(() => safeContractCall(miningContract, 'getStakedNFTs', account));
-        console.log('Staked NFTs:', stakedNFTs);
-      } catch (error) {
-        console.warn('Failed to get staked NFTs:', error);
+      // 获取可领取的奖励
+      const [reward, teamBonus] = await miningContract.getClaimableReward(account);
+      
+      // 获取每个质押的 NFT 的日收益总和
+      let dailyOutput = ethers.BigNumber.from(0);
+      for (const tokenId of stakedTokenIds) {
+        const [, , dailyReward] = await nftContract.getNFTAttributes(tokenId);
+        dailyOutput = dailyOutput.add(dailyReward);
       }
 
-      // 计算年化收益率
-      const yearReturn = dailyRewards.gt(0) && totalOutput.gt(0)
-        ? dailyRewards.mul(365).mul(100).div(totalOutput)
-        : ethers.BigNumber.from(0);
+      // 更新状态
+      setStats(prevStats => ({
+        ...prevStats,
+        totalPower: formatBigNumber(totalPower, 0),
+        hasNFT: stakedTokenIds.length > 0,
+        currentReward: formatBigNumber(reward),
+        dailyOutput: formatBigNumber(dailyOutput),
+        directIncome: formatBigNumber(directPower),
+        teamIncome: formatBigNumber(teamPower),
+        minerCount: stakedTokenIds.length,
+        currentLevel: level.toNumber(),
+        stakedNFTs: stakedTokenIds.map(id => id.toString())
+      }));
 
-      setStats({
-        // NFT 状态
-        hasNFT: minerPower.gt(0),
-        totalPower: minerPower.toString(),
-        nftLevel: 1,
-        directIncrease: 5,
-
-        // 收益统计
-        currentReward: formatBigNumber(pendingRewards, 18, 4),
-        dailyOutput: formatBigNumber(dailyRewards, 18, 4),
-        totalOutput: formatBigNumber(totalOutput, 18, 2),
-        yearReturn: yearReturn.toString() + '%',
-
-        // 直推状态
-        directCount: referralCount.toNumber(),
-        directIncome: ethers.utils.formatEther(directRewards),
-        teamIncome: ethers.utils.formatEther(teamRewards),
-        currentLevel: 1,
-        directStatus: 5,
-
-        // 矿工数量
-        minerCount: minerCount.toNumber(),
-
-        // 产出统计
-        todayOutput: formatBigNumber(dailyOutput, 18, 2),
-        totalOutputAll: formatBigNumber(totalOutput, 18, 2),
-
-        // 推荐关系
-        referrer: referrer === ethers.constants.AddressZero ? null : referrer,
-        stakedNFTs
-      });
     } catch (error) {
-      console.error('Error loading mining stats:', error);
-      setError(error.message);
+      console.error('Error loading mining data:', error);
+      setError(error);
     } finally {
       setIsLoading(false);
     }
   }, [account, library]);
 
+  // 每 30 秒更新一次数据
   useEffect(() => {
-    if (account && library) {
-      loadMiningData();
-    }
-  }, [account, library, loadMiningData]);
+    loadMiningData();
+    const interval = setInterval(loadMiningData, 30000);
+    return () => clearInterval(interval);
+  }, [loadMiningData]);
 
   return { stats, isLoading, error, loadMiningData };
 };
