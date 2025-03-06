@@ -5,7 +5,6 @@ import { CpuChipIcon, CurrencyDollarIcon, BanknotesIcon, TrophyIcon, UserGroupIc
 import Background from '../../components/Layout/Background';
 import { StatusCard, NFTCard } from './components/Cards';
 import ReferralTree from './components/Referral/ReferralTree';
-import { RewardsChart } from './components/Charts';
 import { injected } from '../../utils/web3';
 import useNFTMining from './hooks/useNFTMining';
 
@@ -133,12 +132,6 @@ const NFTMining = () => {
         <div className="bg-[#1A2438]/80 backdrop-blur-sm p-6 rounded-lg border border-green-500/20">
           <h2 className="text-2xl font-bold text-green-400 mb-6">推荐关系</h2>
           <ReferralTree account={account} provider={library} />
-        </div>
-
-        {/* 收益图表 */}
-        <div className="bg-[#1A2438]/80 backdrop-blur-sm p-6 rounded-lg border border-green-500/20">
-          <h2 className="text-2xl font-bold text-green-400 mb-6">收益历史</h2>
-          <RewardsChart account={account} provider={library} />
         </div>
       </div>
     </Background>

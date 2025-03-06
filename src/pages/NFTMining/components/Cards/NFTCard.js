@@ -79,25 +79,29 @@ const NFTCard = ({ nft, onStake, onUnstake, isStaked }) => {
             </div>
           </div>
 
-          {/* 质押时间 */}
+          {/* 质押时间和挖矿状态 */}
           {isStaked && (
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400">质押时长</span>
-              <span className="text-blue-400">{formatStakeTime(stakeTime)}</span>
-            </div>
+            <>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">质押时长</span>
+                <span className="text-blue-400">{formatStakeTime(stakeTime)}</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2 py-2 px-4 rounded-lg bg-green-500/10">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-green-400 text-sm">正在挖矿中...</span>
+              </div>
+            </>
           )}
 
           {/* 操作按钮 */}
-          <button
-            onClick={() => isStaked ? onUnstake(tokenId) : onStake(tokenId)}
-            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-              isStaked
-                ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-            }`}
-          >
-            {isStaked ? '解除质押' : '质押'}
-          </button>
+          {!isStaked && (
+            <button
+              onClick={() => onStake(tokenId)}
+              className="w-full py-2 px-4 rounded-lg font-medium transition-colors bg-green-500/20 text-green-400 hover:bg-green-500/30"
+            >
+              质押
+            </button>
+          )}
         </div>
       </div>
     </div>

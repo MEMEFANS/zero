@@ -28,63 +28,75 @@ const ReferralTree = ({ account, provider }) => {
       const contract = new ethers.Contract(REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI, provider);
       console.log('Contract instance created');
       
-      // 尝试调用每个方法并记录结果
-      console.log('Testing contract methods...');
-      
-      // 1. 检查是否有推荐人
-      console.log('Checking hasReferrer...');
-      const hasReferrer = await contract.callStatic.hasReferrer(account).catch(e => {
-        console.error('hasReferrer failed:', e);
-        return false;
-      });
-      console.log('Has referrer:', hasReferrer);
-      
-      // 2. 获取推荐人
-      let referrer = null;
-      if (hasReferrer) {
-        console.log('Getting referrer...');
-        referrer = await contract.callStatic.getUserReferrer(account).catch(e => {
-          console.error('getUserReferrer failed:', e);
-          return null;
+      try {
+        // 1. 检查是否有推荐人
+        console.log('Checking hasReferrer...');
+        const hasReferrer = await contract.hasReferrer(account);
+        console.log('Has referrer:', hasReferrer);
+        
+        // 2. 获取推荐人
+        let referrer = null;
+        if (hasReferrer) {
+          console.log('Getting referrer...');
+          referrer = await contract.getUserReferrer(account);
+          console.log('Referrer:', referrer);
+        }
+
+        // 3. 获取推荐统计数据，如果失败则默认为0
+        let referralCount = 0;
+        let teamMembers = [];
+        let directReferrals = [];
+        let directRewards = ethers.BigNumber.from(0);
+        let teamRewards = ethers.BigNumber.from(0);
+
+        try {
+          referralCount = await contract.getReferralCount(account);
+        } catch (e) {
+          console.log('No referrals yet');
+        }
+
+        try {
+          teamMembers = await contract.getTeamMembers(account);
+        } catch (e) {
+          console.log('No team members yet');
+        }
+
+        try {
+          if (referralCount > 0) {
+            directReferrals = await contract.getDirectReferrals(account);
+          }
+        } catch (e) {
+          console.log('Failed to get direct referrals');
+        }
+
+        try {
+          directRewards = await contract.getDirectRewards(account);
+        } catch (e) {
+          console.log('No direct rewards yet');
+        }
+
+        try {
+          teamRewards = await contract.getTeamRewards(account);
+        } catch (e) {
+          console.log('No team rewards yet');
+        }
+
+        setStats({
+          directCount: Number(referralCount || 0),
+          teamCount: teamMembers.length,
+          hasReferrer,
+          referrer: hasReferrer ? referrer : null,
+          directReferrals,
+          teamMembers,
+          directRewards: directRewards || ethers.BigNumber.from(0),
+          teamRewards: teamRewards || ethers.BigNumber.from(0)
         });
-        console.log('Referrer:', referrer);
+
+        setError(null);
+      } catch (err) {
+        console.error('Error initializing referral tree:', err);
+        setError('加载推荐系统数据失败');
       }
-      
-      // 3. 获取直推人数
-      console.log('Getting referral count...');
-      const referralCount = await contract.callStatic.getReferralCount(account).catch(e => {
-        console.error('getReferralCount failed:', e);
-        return 0;
-      });
-      console.log('Referral count:', referralCount?.toString());
-      
-      // 4. 获取直推列表
-      let directReferrals = [];
-      if (referralCount > 0) {
-        console.log('Getting direct referrals...');
-        directReferrals = await contract.callStatic.getDirectReferrals(account).catch(e => {
-          console.error('getDirectReferrals failed:', e);
-          return [];
-        });
-        console.log('Direct referrals:', directReferrals);
-      }
-      
-      // 5. 获取团队成员
-      console.log('Getting team members...');
-      const teamMembers = await contract.callStatic.getTeamMembers(account).catch(e => {
-        console.error('getTeamMembers failed:', e);
-        return [];
-      });
-      console.log('Team members:', teamMembers);
-      
-      setStats({
-        hasReferrer,
-        referrer: hasReferrer ? referrer : null,
-        directCount: Number(referralCount || 0),
-        directReferrals,
-        teamCount: teamMembers.length
-      });
-      setError(null);
     } catch (err) {
       console.error('Error initializing referral tree:', err);
       if (err.message.includes('Contract not deployed')) {
