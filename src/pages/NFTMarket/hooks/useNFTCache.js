@@ -1,55 +1,76 @@
-// NFT 数据缓存系统
-const CACHE_KEY = 'nft_market_cache';
-const CACHE_EXPIRY = 5 * 60 * 1000; // 5分钟过期
+import { useState, useCallback, useEffect } from 'react';
 
-export const useNFTCache = () => {
-  // 从缓存中获取数据
-  const getCachedData = () => {
+const CACHE_KEY = 'nft_market_cache';
+const CACHE_EXPIRY = 5 * 60 * 1000; // 5分钟缓存
+
+const useNFTCache = () => {
+  const [cache, setCache] = useState(() => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
-      if (!cached) return null;
-
-      const { data, timestamp } = JSON.parse(cached);
-      const now = Date.now();
-
-      // 检查是否过期
-      if (now - timestamp > CACHE_EXPIRY) {
-        localStorage.removeItem(CACHE_KEY);
-        return null;
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_EXPIRY) {
+          return data;
+        }
       }
-
-      return data;
-    } catch (error) {
-      console.error('Error reading from cache:', error);
-      return null;
+      return {};
+    } catch {
+      return {};
     }
-  };
+  });
 
-  // 将数据存入缓存
-  const setCachedData = (data) => {
-    try {
-      const cacheData = {
-        data,
-        timestamp: Date.now()
-      };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    } catch (error) {
-      console.error('Error writing to cache:', error);
-    }
-  };
+  // 更新缓存
+  const updateCache = useCallback((key, data) => {
+    setCache(prev => {
+      const newCache = { ...prev, [key]: data };
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          data: newCache,
+          timestamp: Date.now()
+        }));
+      } catch (error) {
+        console.error('Cache update failed:', error);
+      }
+      return newCache;
+    });
+  }, []);
+
+  // 获取缓存
+  const getCache = useCallback((key) => {
+    return cache[key];
+  }, [cache]);
 
   // 清除缓存
-  const clearCache = () => {
-    try {
-      localStorage.removeItem(CACHE_KEY);
-    } catch (error) {
-      console.error('Error clearing cache:', error);
-    }
-  };
+  const clearCache = useCallback(() => {
+    setCache({});
+    localStorage.removeItem(CACHE_KEY);
+  }, []);
+
+  // 定期清理过期缓存
+  useEffect(() => {
+    const interval = setInterval(() => {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const { timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp >= CACHE_EXPIRY) {
+            clearCache();
+          }
+        }
+      } catch {
+        clearCache();
+      }
+    }, CACHE_EXPIRY);
+
+    return () => clearInterval(interval);
+  }, [clearCache]);
 
   return {
-    getCachedData,
-    setCachedData,
+    cache,
+    updateCache,
+    getCache,
     clearCache
   };
 };
+
+export default useNFTCache;

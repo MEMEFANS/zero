@@ -17,11 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 export const LanguageContext = createContext();
 
 function getLibrary(provider) {
-  const library = new ethers.providers.Web3Provider(provider, {
-    url: 'https://side-falling-ensemble.bsc.quiknode.pro/049fcfd0e81b7b299018b5774557ae1c0d4c9110',
-    chainId: 56,
-    name: 'Binance Smart Chain'
-  });
+  const library = new ethers.providers.Web3Provider(provider);
   library.pollingInterval = 12000;
   return library;
 }

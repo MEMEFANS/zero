@@ -1,0 +1,313 @@
+/* 自定义 antd 组件样式 */
+.custom-tabs .ant-tabs-nav::before {
+  border-bottom: none;
+}
+
+.custom-tabs .ant-tabs-tab {
+  color: #94A3B8;
+  font-size: 16px;
+  padding: 12px 24px;
+  margin: 0;
+  transition: all 0.3s;
+  opacity: 0.7;
+}
+
+.custom-tabs .ant-tabs-tab:hover {
+  color: #00FF9D;
+  opacity: 1;
+}
+
+.custom-tabs .ant-tabs-tab.ant-tabs-tab-active {
+  background-image: linear-gradient(90deg, #00FF9D 0%, #00B8FF 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 1;
+}
+
+.custom-tabs .ant-tabs-ink-bar {
+  background: linear-gradient(90deg, #00FF9D 0%, #00B8FF 100%);
+  height: 3px;
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+}
+
+/* 自定义下拉菜单样式 */
+.custom-select {
+  min-width: 120px !important;
+}
+
+.custom-select .ant-select-selector {
+  background-color: rgba(31, 41, 55, 0.7) !important;
+  border: 1px solid rgba(55, 65, 81, 0.5) !important;
+  border-radius: 8px !important;
+  height: 40px !important;
+  padding: 4px 12px !important;
+}
+
+.custom-select .ant-select-selection-item {
+  color: #E2E8F0 !important;
+  line-height: 32px !important;
+}
+
+.custom-select .ant-select-arrow {
+  color: #94A3B8 !important;
+}
+
+.custom-dropdown {
+  background-color: rgba(31, 41, 55, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(55, 65, 81, 0.5) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+}
+
+.custom-dropdown .ant-select-item {
+  border-radius: 4px !important;
+  padding: 8px 12px !important;
+  color: #E2E8F0 !important;
+}
+
+.custom-dropdown .ant-select-item:hover {
+  background-color: rgba(55, 65, 81, 0.5) !important;
+}
+
+.custom-dropdown .ant-select-item-option-selected {
+  background-color: rgba(0, 255, 157, 0.1) !important;
+  color: #00FF9D !important;
+}
+
+/* 自定义输入框样式 */
+.custom-input {
+  background-color: rgba(31, 41, 55, 0.7) !important;
+  border: 1px solid rgba(55, 65, 81, 0.5) !important;
+  border-radius: 8px !important;
+  height: 40px !important;
+}
+
+.custom-input input {
+  background: transparent !important;
+  color: #E2E8F0 !important;
+}
+
+.custom-input input::placeholder {
+  color: #94A3B8 !important;
+}
+
+.custom-input:hover {
+  border-color: rgba(0, 255, 157, 0.5) !important;
+}
+
+.custom-input:focus,
+.custom-input-focused {
+  border-color: #00FF9D !important;
+  box-shadow: 0 0 0 2px rgba(0, 255, 157, 0.2) !important;
+}
+
+/* 自定义按钮样式 */
+.custom-button {
+  background-color: rgba(31, 41, 55, 0.7) !important;
+  border: 1px solid rgba(55, 65, 81, 0.5) !important;
+  border-radius: 8px !important;
+  color: #E2E8F0 !important;
+  transition: all 0.3s !important;
+  backdrop-filter: blur(10px) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.custom-button:hover {
+  border-color: #00FF9D !important;
+  color: #00FF9D !important;
+  box-shadow: 0 0 15px rgba(0, 255, 157, 0.2) !important;
+  transform: translateY(-1px) !important;
+}
+
+.custom-button:hover .anticon {
+  color: #00FF9D !important;
+}
+
+.custom-button .anticon {
+  color: #E2E8F0 !important;
+  transition: all 0.3s !important;
+}
+
+.custom-button-active {
+  background: linear-gradient(90deg, rgba(0, 255, 157, 0.1), rgba(0, 184, 255, 0.1)) !important;
+  border-color: #00FF9D !important;
+  color: #00FF9D !important;
+}
+
+.custom-button-active .anticon {
+  color: #00FF9D !important;
+}
+
+/* 动画效果 */
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 自定义分页样式 */
+.custom-pagination .ant-pagination-item {
+  background-color: rgba(31, 41, 55, 0.7);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.custom-pagination .ant-pagination-item:hover {
+  border-color: #00FF9D;
+  transform: translateY(-1px);
+}
+
+.custom-pagination .ant-pagination-item-active {
+  border-color: #00FF9D;
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
+}
+
+.custom-pagination .ant-pagination-item a {
+  color: #94A3B8;
+}
+
+.custom-pagination .ant-pagination-item-active a {
+  color: #00FF9D;
+}
+
+/* 自定义表格样式 */
+.custom-table {
+  background: transparent !important;
+}
+
+.custom-table .ant-table {
+  background: transparent !important;
+  color: #94A3B8 !important;
+}
+
+.custom-table .ant-table-wrapper,
+.custom-table .ant-spin-container,
+.custom-table .ant-table-container,
+.custom-table .ant-table-content,
+.custom-table .ant-table-body,
+.custom-table .ant-table-thead,
+.custom-table .ant-table-tbody,
+.custom-table .ant-table-row,
+.custom-table .ant-table-cell {
+  background: transparent !important;
+}
+
+.custom-table .ant-table-thead > tr > th {
+  background-color: rgba(31, 41, 55, 0.7) !important;
+  color: #94A3B8 !important;
+  border-bottom: 1px solid #2D3748 !important;
+  padding: 16px !important;
+  font-weight: 500 !important;
+}
+
+.custom-table .ant-table-tbody > tr > td {
+  background-color: transparent !important;
+  border-bottom: 1px solid #2D3748 !important;
+  padding: 16px !important;
+  transition: all 0.3s !important;
+  color: #94A3B8 !important;
+}
+
+.custom-table .ant-table-tbody > tr:hover > td {
+  background-color: rgba(31, 41, 55, 0.5) !important;
+}
+
+.custom-table .ant-table-tbody > tr.ant-table-row:hover > td {
+  background-color: rgba(31, 41, 55, 0.5) !important;
+}
+
+.custom-table .ant-empty {
+  background: transparent !important;
+}
+
+.custom-table .ant-empty-image {
+  filter: invert(0.7) !important;
+  opacity: 0.5 !important;
+}
+
+.custom-table .ant-empty-description {
+  color: #94A3B8 !important;
+  opacity: 0.7 !important;
+}
+
+.custom-table .ant-pagination {
+  margin-top: 16px !important;
+  padding: 16px !important;
+  background: transparent !important;
+}
+
+.custom-table .ant-pagination-item {
+  background: rgba(31, 41, 55, 0.7) !important;
+  border: 1px solid #2D3748 !important;
+}
+
+.custom-table .ant-pagination-item a {
+  color: #94A3B8 !important;
+}
+
+.custom-table .ant-pagination-item-active {
+  border-color: #00FF9D !important;
+}
+
+.custom-table .ant-pagination-item-active a {
+  color: #00FF9D !important;
+}
+
+.custom-table .ant-pagination-prev button,
+.custom-table .ant-pagination-next button {
+  background: rgba(31, 41, 55, 0.7) !important;
+  border: 1px solid #2D3748 !important;
+  color: #94A3B8 !important;
+}
+
+.custom-table .ant-pagination-prev:hover button,
+.custom-table .ant-pagination-next:hover button {
+  border-color: #00FF9D !important;
+  color: #00FF9D !important;
+}
+
+.custom-table .ant-pagination-disabled button {
+  color: #4B5563 !important;
+  border-color: #2D3748 !important;
+  background: rgba(31, 41, 55, 0.4) !important;
+}
+
+/* Empty 状态样式 */
+.ant-empty {
+  background: transparent !important;
+}
+
+.ant-empty-image {
+  filter: invert(0.7) !important;
+  opacity: 0.5 !important;
+}
+
+.ant-empty-description {
+  color: #94A3B8 !important;
+  opacity: 0.7 !important;
+}
+
+.custom-empty {
+  color: #94A3B8;
+  opacity: 0.7;
+}
+
+.custom-empty .ant-empty-description {
+  color: #94A3B8;
+  opacity: 0.7;
+}

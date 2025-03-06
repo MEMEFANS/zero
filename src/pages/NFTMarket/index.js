@@ -1,151 +1,117 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Tabs } from 'antd';
 import { useWeb3React } from '@web3-react/core';
-import { toast } from 'react-toastify';
+import MarketStats from './components/MarketStats';
+import NFTList from './components/NFTList';
+import ListingModal from './components/ListingModal';
+import TradeHistory from './components/TradeHistory';
 import { useNFTMarket } from './hooks/useNFTMarket';
-import { MarketStats } from './components/MarketStats';
-import { NFTList } from './components/NFTList';
-import { NFTDetailModal } from './components/NFTDetailModal';
-import { ListingModal } from './components/ListingModal';
-import { StakeModal } from './components/StakeModal';
-import { ConnectWallet } from './components/ConnectWallet';
-import { MarketTabs } from './components/MarketTabs';
-import { SearchAndFilter } from './components/SearchAndFilter';
+import { motion } from 'framer-motion';
+import './styles/market.css';
 
 const NFTMarket = () => {
   const { active } = useWeb3React();
   const {
     marketState,
-    loadMarketData,
+    loadingState,
+    fetchMarketItems,
     handlePageChange,
     handleBuy,
     handleList,
-    handleDelist,
-    handleStake,
+    handleUnlist,
     setSelectedTab,
     setFilterType,
     setSearchTerm,
     setModal
   } = useNFTMarket();
+  const [activeTab, setActiveTab] = useState('market');
 
-  const {
-    isLoading,
-    selectedTab,
-    filterType,
-    searchTerm,
-    marketItems,
-    myNFTs,
-    marketStats,
-    userHistory,
-    modals,
-    pagination,
-    balance
-  } = marketState;
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+  };
 
+  // 处理分页变化
+  const onPageChange = (page) => {
+    handlePageChange(page);
+  };
+
+  // 初始加载
   useEffect(() => {
-    if (active) {
-      console.log('Wallet connected, loading market data...');
-      loadMarketData(1);
-    } else {
-      console.log('Wallet not connected');
-    }
-  }, [active, loadMarketData]);
+    fetchMarketItems(1);
+  }, [fetchMarketItems]);
 
-  if (!active) {
-    return <ConnectWallet />;
-  }
+  const items = [
+    {
+      key: 'market',
+      label: <span className="text-lg">NFT市场</span>,
+      children: <NFTList type="market" onPageChange={onPageChange} />
+    },
+    ...(active ? [{
+      key: 'myNFTs',
+      label: <span className="text-lg">我的NFT</span>,
+      children: <NFTList type="myNFTs" />
+    }] : []),
+    {
+      key: 'history',
+      label: <span className="text-lg">交易历史</span>,
+      children: <TradeHistory history={marketState.tradeHistory} />
+    }
+  ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <MarketStats stats={marketStats} />
-      
-      <SearchAndFilter
-        searchTerm={searchTerm}
-        filterType={filterType}
-        onSearchChange={setSearchTerm}
-        onFilterChange={setFilterType}
-      />
-      
-      <MarketTabs
-        selectedTab={selectedTab}
-        onTabChange={setSelectedTab}
-      />
-
-      {isLoading ? (
-        <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
-          <div className="mt-4">加载中...</div>
-        </div>
-      ) : (
-        <>
-          <NFTList
-            items={selectedTab === 'market' ? marketItems : myNFTs}
-            userHistory={userHistory}
-            selectedTab={selectedTab}
-            onBuy={handleBuy}
-            onList={(nft) => setModal('listing', true, nft)}
-            onDelist={handleDelist}
-            onStake={handleStake}
-          />
-          
-          {/* 分页控件 */}
-          <div className="flex justify-center mt-8">
-            <nav className="flex items-center space-x-2">
-              <button
-                onClick={() => handlePageChange(pagination.currentPage - 1)}
-                disabled={pagination.currentPage === 1}
-                className={`px-4 py-2 rounded ${
-                  pagination.currentPage === 1
-                    ? 'bg-gray-600 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700'
-                } text-white`}
-              >
-                上一页
-              </button>
-              <span className="text-white">
-                第 {pagination.currentPage} 页 / 共 {Math.ceil(pagination.total / pagination.pageSize)} 页
-              </span>
-              <button
-                onClick={() => handlePageChange(pagination.currentPage + 1)}
-                disabled={pagination.currentPage >= Math.ceil(pagination.total / pagination.pageSize)}
-                className={`px-4 py-2 rounded ${
-                  pagination.currentPage >= Math.ceil(pagination.total / pagination.pageSize)
-                    ? 'bg-gray-600 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700'
-                } text-white`}
-              >
-                下一页
-              </button>
-            </nav>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#0B1120' }}>
+      {/* 背景动画效果 */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0">
+          {/* 网格线 */}
+          <div className="absolute inset-0 grid grid-cols-12 grid-rows-8">
+            {[...Array(96)].map((_, i) => (
+              <div key={i} className="border-[0.5px] border-green-500/5"></div>
+            ))}
           </div>
-        </>
-      )}
+          {/* 渐变背景 */}
+          <div 
+            className="absolute inset-0" 
+            style={{
+              backgroundImage: 'linear-gradient(to bottom, rgba(0, 255, 157, 0.05), transparent, rgba(0, 255, 157, 0.05))'
+            }}
+          ></div>
+        </div>
+      </div>
 
-      {modals.detail.isOpen && (
-        <NFTDetailModal
-          nft={modals.detail.nft}
-          onClose={() => setModal('detail', false)}
-          onBuy={handleBuy}
-          onList={handleList}
-          onDelist={handleDelist}
-          onStake={handleStake}
-          selectedTab={selectedTab}
+      <div className="container mx-auto px-4 py-8 relative">
+        {/* 市场数据统计 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <MarketStats />
+        </motion.div>
+        
+        {/* 市场/我的NFT切换标签 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mt-8 rounded-xl p-6 shadow-xl"
+          style={{ backgroundColor: '#1A2333' }}
+        >
+          <Tabs 
+            activeKey={activeTab} 
+            onChange={handleTabChange}
+            className="custom-tabs"
+            items={items}
+          />
+        </motion.div>
+
+        {/* 上架模态框 */}
+        <ListingModal 
+          isOpen={marketState.modals?.listing?.isOpen}
+          nft={marketState.modals?.listing?.nft}
+          onClose={() => setModal('listing', false)}
         />
-      )}
-
-      <ListingModal
-        nft={modals.listing.nft}
-        isOpen={modals.listing.isOpen}
-        onClose={() => setModal('listing', false)}
-        onConfirm={handleList}
-      />
-
-      {modals.stake.isOpen && (
-        <StakeModal
-          nft={modals.stake.nft}
-          onClose={() => setModal('stake', false)}
-          onStake={handleStake}
-        />
-      )}
+      </div>
     </div>
   );
 };

@@ -13,7 +13,7 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
     IZoneNFT public nft;        // NFT合约
 
     // 市场配置
-    uint256 public marketFeeRate = 25;    // 市场费率 2.5%
+    uint256 public marketFeeRate = 30;    // 市场费率 3%
     address public feeReceiver;            // 费用接收地址
     uint256 public constant FEE_DENOMINATOR = 1000;
     uint256 public minPrice = 0.01 ether;  // 最低价格 0.01 BNB
@@ -42,6 +42,8 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
 
     // NFT上架信息
     mapping(uint256 => Listing) public listings;
+    // 在售的NFT ID列表
+    uint256[] public activeListings;
     // 交易历史
     TradeHistory[] public tradeHistory;
     // 用户交易次数
@@ -101,6 +103,9 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
                 seller: msg.sender
             });
 
+            // 添加到在售列表
+            activeListings.push(tokenIds[i]);
+
             // 更新地板价
             if (floorPrice == 0 || prices[i] < floorPrice) {
                 floorPrice = prices[i];
@@ -118,6 +123,9 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
             Listing storage listing = listings[tokenIds[i]];
             require(listing.isActive, "Not listed");
             require(listing.seller == msg.sender, "Not seller");
+
+            // 从在售列表中移除
+            _removeFromActiveListings(tokenIds[i]);
 
             delete listings[tokenIds[i]];
         }
@@ -149,6 +157,9 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
             seller: msg.sender
         });
 
+        // 添加到在售列表
+        activeListings.push(tokenId);
+
         // 更新地板价
         if (floorPrice == 0 || price < floorPrice) {
             floorPrice = price;
@@ -162,6 +173,9 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
         Listing storage listing = listings[tokenId];
         require(listing.isActive, "Not listed");
         require(listing.seller == msg.sender, "Not seller");
+
+        // 从在售列表中移除
+        _removeFromActiveListings(tokenId);
 
         delete listings[tokenId];
         emit NFTUnlisted(tokenId, msg.sender);
@@ -217,6 +231,9 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
             require(sellerSuccess, "Seller transfer failed");
 
             // 更新市场数据
+            // 从在售列表中移除
+            _removeFromActiveListings(tokenId);
+
             delete listings[tokenId];
             totalVolume += price;
             
@@ -276,6 +293,9 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
     function emergencyWithdraw(uint256 tokenId) external onlyRole(ADMIN_ROLE) {
         require(listings[tokenId].isActive, "Not listed");
         address seller = listings[tokenId].seller;
+        // 从在售列表中移除
+        _removeFromActiveListings(tokenId);
+
         delete listings[tokenId];
         emit NFTUnlisted(tokenId, seller);
     }
@@ -346,5 +366,48 @@ contract NFTMarketplace is ReentrancyGuard, AccessControl, Pausable {
         }
 
         return result;
+    }
+
+    // 获取所有在售的NFT
+    function getActiveListings(uint256 offset, uint256 limit) external view returns (
+        uint256[] memory tokenIds,
+        uint256[] memory prices,
+        address[] memory sellers
+    ) {
+        // 直接返回在售列表中的NFT
+        uint256 totalActive = activeListings.length;
+        uint256 end = offset + limit > totalActive ? totalActive : offset + limit;
+        uint256 size = end - offset;
+
+        tokenIds = new uint256[](size);
+        prices = new uint256[](size);
+        sellers = new address[](size);
+
+        for (uint256 i = 0; i < size; i++) {
+            uint256 tokenId = activeListings[offset + i];
+            Listing storage listing = listings[tokenId];
+            tokenIds[i] = tokenId;
+            prices[i] = listing.price;
+            sellers[i] = listing.seller;
+        }
+
+        return (tokenIds, prices, sellers);
+    }
+
+    // 获取在售NFT总数
+    function getActiveListingsCount() external view returns (uint256) {
+        return activeListings.length;
+    }
+
+    // 从在售列表中移除
+    function _removeFromActiveListings(uint256 tokenId) internal {
+        for (uint256 i = 0; i < activeListings.length; i++) {
+            if (activeListings[i] == tokenId) {
+                // 把最后一个元素移到当前位置，然后删除最后一个元素
+                activeListings[i] = activeListings[activeListings.length - 1];
+                activeListings.pop();
+                break;
+            }
+        }
     }
 }

@@ -1,111 +1,126 @@
 import React from 'react';
-import { formatPower, formatZONE, formatAddress } from '../utils/formatters';
+import { Modal, Descriptions, Button, Typography, Tooltip, Divider } from 'antd';
+import { formatEther } from 'ethers/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 
-export const NFTDetailModal = ({ nft, onClose, onBuy, onList, onDelist, onStake, selectedTab }) => {
+const { Text, Link } = Typography;
+
+const NFTDetailModal = ({ isOpen, nft, onClose, onAction }) => {
   if (!nft) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="bg-[#1A2438] rounded-2xl max-w-2xl w-full mx-4 overflow-hidden">
-        <div className="relative">
-          {/* 关闭按钮 */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+  const rarityNames = ['N', 'R', 'SR', 'SSR'];
+  const rarityColors = ['default', 'blue', 'purple', 'gold'];
 
-          {/* NFT图片 */}
-          <div className="aspect-square bg-gray-800 relative">
-            <img 
+  const renderActionButton = () => {
+    if (!nft.isActive && nft.owner === window.ethereum?.selectedAddress) {
+      return (
+        <Button 
+          type="primary" 
+          onClick={() => onAction('list', nft)}
+        >
+          上架
+        </Button>
+      );
+    }
+
+    if (nft.isActive && nft.seller === window.ethereum?.selectedAddress) {
+      return (
+        <Button 
+          danger 
+          onClick={() => onAction('delist', nft)}
+        >
+          下架
+        </Button>
+      );
+    }
+
+    if (nft.isActive && nft.seller !== window.ethereum?.selectedAddress) {
+      return (
+        <Button 
+          type="primary" 
+          onClick={() => onAction('buy', nft)}
+        >
+          购买 ({formatEther(nft.price)} BNB)
+        </Button>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <Modal
+      title="NFT详情"
+      open={isOpen}
+      onCancel={onClose}
+      width={600}
+      footer={[
+        <Button key="close" onClick={onClose}>
+          关闭
+        </Button>,
+        renderActionButton()
+      ].filter(Boolean)}
+    >
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="w-full md:w-1/2">
+          <div className="relative pt-[100%]">
+            <img
               src={nft.image}
-              alt={`NFT #${nft.tokenId}`}
-              className="w-full h-full object-cover"
+              alt={`NFT #${nft.id}`}
+              className="absolute top-0 left-0 w-full h-full object-cover rounded-lg"
             />
           </div>
+        </div>
 
-          {/* NFT信息 */}
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-white">#{nft.tokenId}</h3>
-              {nft.owner && (
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400">拥有者:</span>
-                  <span className="text-white">{formatAddress(nft.owner)}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-black/20 p-4 rounded-lg">
-                <div className="text-gray-400 mb-1">算力</div>
-                <div className="text-xl font-bold text-white">
-                  {formatPower(nft.power)} H/s
-                </div>
-              </div>
-              <div className="bg-black/20 p-4 rounded-lg">
-                <div className="text-gray-400 mb-1">每日收益</div>
-                <div className="text-xl font-bold text-white">
-                  {formatZONE(nft.dailyReward)} ZONE
-                </div>
-              </div>
-              <div className="bg-black/20 p-4 rounded-lg">
-                <div className="text-gray-400 mb-1">最大收益</div>
-                <div className="text-xl font-bold text-white">
-                  {formatZONE(nft.maxReward)} ZONE
-                </div>
-              </div>
-              {nft.price && (
-                <div className="bg-black/20 p-4 rounded-lg">
-                  <div className="text-gray-400 mb-1">当前价格</div>
-                  <div className="text-xl font-bold text-white">
-                    {nft.price} BNB
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 操作按钮 */}
-            {selectedTab === 'market' ? (
-              <button
-                onClick={() => onBuy(nft)}
-                className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors"
-              >
-                立即购买
-              </button>
-            ) : (
-              <div className="space-y-3">
-                {!nft.listed ? (
-                  <>
-                    <button
-                      onClick={() => onList(nft)}
-                      className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors"
-                    >
-                      上架出售
-                    </button>
-                    <button
-                      onClick={() => onStake(nft)}
-                      className="w-full bg-gray-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-600 transition-colors"
-                    >
-                      质押挖矿
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => onDelist(nft)}
-                    className="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 transition-colors"
-                  >
-                    取消上架
-                  </button>
-                )}
-              </div>
+        <div className="w-full md:w-1/2">
+          <Descriptions column={1} bordered size="small">
+            <Descriptions.Item label="NFT ID">#{nft.id}</Descriptions.Item>
+            <Descriptions.Item label="稀有度">
+              <Text type={rarityColors[nft.rarity]}>
+                {rarityNames[nft.rarity]}
+              </Text>
+            </Descriptions.Item>
+            <Descriptions.Item label="算力">{nft.power}</Descriptions.Item>
+            <Descriptions.Item label="每日收益">
+              {formatEther(nft.dailyReward)} ZONE
+            </Descriptions.Item>
+            <Descriptions.Item label="最大收益">
+              {formatEther(nft.maxReward)} ZONE
+            </Descriptions.Item>
+            {nft.isStaked && (
+              <Descriptions.Item label="质押时间">
+                <Tooltip title={new Date(nft.stakeTime * 1000).toLocaleString()}>
+                  {formatDistanceToNow(new Date(nft.stakeTime * 1000), {
+                    addSuffix: true,
+                    locale: zhCN
+                  })}
+                </Tooltip>
+              </Descriptions.Item>
             )}
-          </div>
+          </Descriptions>
+
+          {nft.isActive && (
+            <>
+              <Divider />
+              <Descriptions column={1} bordered size="small">
+                <Descriptions.Item label="价格">
+                  <Text strong>{formatEther(nft.price)} BNB</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="卖家">
+                  <Tooltip title={nft.seller}>
+                    <Link copyable>
+                      {`${nft.seller.slice(0, 6)}...${nft.seller.slice(-4)}`}
+                    </Link>
+                  </Tooltip>
+                </Descriptions.Item>
+              </Descriptions>
+            </>
+          )}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
+
+export default NFTDetailModal;
