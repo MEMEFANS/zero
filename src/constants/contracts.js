@@ -122,11 +122,31 @@ export const NFT_MINING_ABI = [
   "function grantRole(bytes32 role, address account) external",
   "function revokeRole(bytes32 role, address account) external",
   
+  // 等级系统查询
+  "function levelConfigs(uint256 level) external view returns (uint256 minPower, uint256 maxPower, uint256 bonusRate, uint256 teamRequired, uint256 teamBonusRate)",
+  "function getUserLevel(address user) external view returns (uint256)",
+  
+  // 全局统计查询
+  "function totalStakedPower() external view returns (uint256)",
+  "function totalMiners() external view returns (uint256)",
+  "function directBonusRate() external view returns (uint256)",
+  
+  // 产出统计查询
+  "function todayOutput() external view returns (uint256)",
+  "function totalOutput() external view returns (uint256)",
+  "function minersCount() external view returns (uint256)",
+  "function lastOutputReset() external view returns (uint256)",
+  
   // 事件
   "event NFTStaked(address indexed user, uint256 indexed tokenId, uint256 power)",
   "event NFTUnstaked(address indexed user, uint256 indexed tokenId)",
   "event RewardClaimed(address indexed user, uint256 amount)",
-  "event ReferrerSet(address indexed user, address referrer)"
+  "event ReferrerSet(address indexed user, address referrer)",
+  "event TeamBonusClaimed(address indexed user, uint256 amount)",
+  "event UserLevelUpdated(address indexed user, uint256 newLevel)",
+  "event DailyOutputReset(uint256 oldOutput, uint256 newOutput)",
+  "event OutputUpdated(uint256 todayOutput, uint256 totalOutput)",
+  "event TotalMinersUpdated(uint256 totalMiners)"
 ];
 
 export const NFT_MINING_ABI_V2 = [

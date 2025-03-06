@@ -13,7 +13,12 @@ const useNFTMining = (account, provider) => {
     stakedNfts: [],
     lastClaimTime: 0,
     claimableReward: 0,
-    teamBonus: 0
+    teamBonus: 0,
+    totalStakedPower: 0,
+    totalMiners: 0,
+    todayOutput: 0,
+    totalOutput: 0,
+    levelConfigs: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,6 +62,29 @@ const useNFTMining = (account, provider) => {
       
       // 使用重试机制获取可领取的收益
       const [reward, teamBonus] = await retryOperation(() => contract.getClaimableReward(account));
+
+      // 使用重试机制获取全局统计数据
+      const [totalStakedPower, totalMiners, todayOutput, totalOutput, maxLevel] = await retryOperation(() => Promise.all([
+        contract.totalStakedPower(),
+        contract.totalMiners(),
+        contract.todayOutput(),
+        contract.totalOutput(),
+        contract.currentMaxLevel()
+      ]));
+
+      // 获取所有等级配置
+      const levelConfigs = [];
+      for (let i = 1; i <= Number(maxLevel); i++) {
+        const config = await retryOperation(() => contract.levelConfigs(i));
+        levelConfigs.push({
+          level: i,
+          minPower: Number(config.minPower),
+          maxPower: Number(config.maxPower),
+          bonusRate: Number(config.bonusRate),
+          teamRequired: Number(config.teamRequired),
+          teamBonusRate: Number(config.teamBonusRate)
+        });
+      }
 
       // 使用重试机制获取用户的 NFT 列表
       const nftCount = await retryOperation(() => nftContract.balanceOf(account));
@@ -113,9 +141,13 @@ const useNFTMining = (account, provider) => {
         nfts,
         lastClaimTime: Number(userInfo.lastClaimTime),
         stakedNfts: userInfo.tokenIds.map(Number),
-        // 直接除以 1e20 来修正显示（相当于除以100再除以1e18）
         claimableReward: Number(reward) / 1e20,
-        teamBonus: Number(teamBonus) / 1e20
+        teamBonus: Number(teamBonus) / 1e20,
+        totalStakedPower: Number(totalStakedPower),
+        totalMiners: Number(totalMiners),
+        todayOutput: Number(todayOutput),
+        totalOutput: Number(totalOutput),
+        levelConfigs
       }));
       
       setError(null);

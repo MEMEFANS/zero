@@ -5,6 +5,9 @@ import { CpuChipIcon, CurrencyDollarIcon, BanknotesIcon, TrophyIcon, UserGroupIc
 import Background from '../../components/Layout/Background';
 import { StatusCard, NFTCard } from './components/Cards';
 import ReferralTree from './components/Referral/ReferralTree';
+import GlobalStats from './components/Stats/GlobalStats';
+import OutputStats from './components/Stats/OutputStats';
+import LevelSystem from './components/Stats/LevelSystem';
 import { injected } from '../../utils/web3';
 import useNFTMining from './hooks/useNFTMining';
 
@@ -97,6 +100,29 @@ const NFTMining = () => {
             title="团队奖励"
             value={`${Number(stats.teamBonus).toFixed(4)} ZONE`}
             icon={<BanknotesIcon className="w-6 h-6" />}
+          />
+        </div>
+
+        {/* 全局统计面板 */}
+        <GlobalStats
+          totalStakedPower={stats.totalStakedPower}
+          totalMiners={stats.totalMiners}
+        />
+
+        {/* 产出统计面板 */}
+        <div className="mt-6">
+          <OutputStats
+            todayOutput={stats.todayOutput}
+            totalOutput={stats.totalOutput}
+          />
+        </div>
+
+        {/* 等级系统面板 */}
+        <div className="mt-6">
+          <LevelSystem
+            currentLevel={stats.level}
+            currentPower={stats.totalPower}
+            levelConfigs={stats.levelConfigs}
           />
         </div>
 
