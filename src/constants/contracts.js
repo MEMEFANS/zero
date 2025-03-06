@@ -1,3 +1,5 @@
+import { ethers } from 'ethers';
+
 export const ZONE_NFT_ADDRESS = "0x73b9A33D78AD18804C898946b315CF515D798666"; // 新部署的合约地址
 export const ZONE_TOKEN_ADDRESS = "0xfc57f8625688D85A332437FF1aacE8731d952955"; // 正确的 ZONE 代币地址
 export const NFT_MARKETPLACE_ADDRESS = "0xa0A286938BeDa5b2061F680b6A47577750c908Ab";  // 新部署的市场合约地址
@@ -127,25 +129,47 @@ export const NFT_MINING_ABI = [
   "event ReferrerSet(address indexed user, address referrer)"
 ];
 
+export const NFT_MINING_ABI_V2 = [
+  // 查询功能
+  "function balanceOf(address owner) view returns (uint256)",
+  "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
+  "function getNFTInfo(uint256 tokenId) view returns (uint256 power, uint256 level, bool staked)",
+  "function getUserMiningInfo(address user) view returns (uint256 totalPower, uint256 level)",
+  "function getRewardsInfo(address user) view returns (uint256 available, uint256 claimed)",
+  "function getDirectReferrals(address user) view returns (address[])",
+  "function getTeamMembers(address user) view returns (address[])",
+  "function getRewardsHistory(address user, uint256 startTime, uint256 interval) view returns (uint256[] timestamps, uint256[] directRewards, uint256[] teamRewards)",
+  
+  // 操作功能
+  "function mint() external",
+  "function stake(uint256 tokenId) external",
+  "function unstake(uint256 tokenId) external",
+  "function claim() external returns (uint256)",
+  
+  // 事件
+  "event NFTMinted(address indexed owner, uint256 indexed tokenId, uint256 power, uint256 level)",
+  "event NFTStaked(address indexed owner, uint256 indexed tokenId)",
+  "event NFTUnstaked(address indexed owner, uint256 indexed tokenId)",
+  "event RewardsClaimed(address indexed user, uint256 amount)"
+];
+
 export const REFERRAL_REGISTRY_ABI = [
   // 基本功能
-  "function bindReferrer(address user, address referrer) external",
-  "function getUserReferrer(address user) external view returns (address)",
-  "function hasReferrer(address user) external view returns (bool)",
-  "function getReferralCount(address user) view returns (uint256)",
-  "function getDirectRewards(address user) view returns (uint256)",
-  "function getTeamRewards(address user) view returns (uint256)",
-  "function getInviteCode(address user) view returns (string)",
-  "function hasInviteCode(address user) view returns (bool)",
-  "function generateInviteCode() external returns (string)",
-  "function registerInviteCode(string memory code) external",
+  "function bindReferrer(address _user, address _referrer) external",
+  "function getUserReferrer(address _user) external view returns (address)",
+  "function hasReferrer(address _user) external view returns (bool)",
+  "function getReferralCount(address _user) external view returns (uint256)",
+  "function getDirectReferrals(address _user) external view returns (address[])",
+  "function getTeamMembers(address _user) external view returns (address[])",
+  "function getDirectRewards(address _user) external view returns (uint256)",
+  "function getTeamRewards(address _user) external view returns (uint256)",
   // 事件
   "event ReferralBound(address indexed user, address indexed referrer)",
   "event AdminRoleGranted(address indexed admin, address indexed account)"
 ];
 
 export const NFT_RARITY = ['N', 'R', 'SR', 'SSR'];
-
+// NFT 稀有度颜色配置
 export const NFT_RARITY_COLORS = {
   'N': {
     text: 'text-white',
@@ -262,3 +286,9 @@ export const NFT_PROBABILITIES = {
   SR: 0.20,
   SSR: 0.10
 };
+
+// 创建合约实例
+export const nftMiningContract = (provider) => new ethers.Contract(NFT_MINING_ADDRESS, NFT_MINING_ABI, provider);
+export const zoneNFTContract = (provider) => new ethers.Contract(ZONE_NFT_ADDRESS, ZONE_NFT_ABI, provider);
+export const zoneTokenContract = (provider) => new ethers.Contract(ZONE_TOKEN_ADDRESS, ZONE_TOKEN_ABI, provider);
+export const referralRegistryContract = (provider) => new ethers.Contract(REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI, provider);

@@ -150,7 +150,7 @@ const safeContractCall = async (contract, method, ...args) => {
   }
 };
 
-export const useMiningStats = (account, library) => {
+const useMiningStats = (account, library) => {
   const [stats, setStats] = useState({
     // NFT 状态
     hasNFT: false,          // 是否持有 NFT
@@ -180,7 +180,24 @@ export const useMiningStats = (account, library) => {
 
     // 推荐关系
     referrer: null,         // 推荐人地址
-    stakedNFTs: []
+    stakedNFTs: [],         // 质押的NFT
+
+    // 新增邀请相关数据
+    inviteCode: '',         // 邀请码
+    totalReferrals: 0,      // 总邀请人数
+    teamCount: 0,           // 团队人数
+    
+    // 新增收益相关数据
+    todayDirectRewards: '0', // 今日直推收益
+    todayTeamRewards: '0',   // 今日团队收益
+    totalRewards: '0',       // 累计总收益
+    
+    // 新增等级相关数据
+    nextLevelRequirement: 0, // 下一等级要求
+    currentPower: 0,         // 当前算力
+    nextLevelPower: 0,       // 下一等级算力要求
+    directBonus: 0,          // 直推加成比例
+    teamBonus: 0            // 团队加成比例
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -207,15 +224,6 @@ export const useMiningStats = (account, library) => {
       const [totalPower, directPower, teamPower, level, lastClaimTime, stakedTokenIds] = 
         await miningContract.getUserStakeInfo(account);
       
-      console.log('质押信息:', {
-        totalPower: totalPower.toString(),
-        directPower: directPower.toString(),
-        teamPower: teamPower.toString(),
-        level: level.toString(),
-        lastClaimTime: lastClaimTime.toString(),
-        stakedTokenIds: stakedTokenIds.map(id => id.toString())
-      });
-
       // 获取可领取的奖励
       const [reward, teamBonus] = await miningContract.getClaimableReward(account);
       
@@ -226,20 +234,32 @@ export const useMiningStats = (account, library) => {
         dailyOutput = dailyOutput.add(dailyReward);
       }
 
-      // 从推荐系统获取直推信息
+      // 获取推荐系统信息
       let referrer = null;
       let directCount = 0;
+      let inviteCode = '';
+      let totalReferrals = 0;
+      let teamCount = 0;
+      let todayDirectRewards = ethers.BigNumber.from(0);
+      let todayTeamRewards = ethers.BigNumber.from(0);
 
       try {
-        // 先尝试从 IDO 推荐系统获取
+        // 获取推荐人和邀请码
         referrer = await referralContract.getUserReferrer(account);
+        inviteCode = await referralContract.getInviteCode(account);
+        
         if (referrer !== ethers.constants.AddressZero) {
-          // 如果有推荐人，获取直推人数
+          // 获取直推和团队统计
           directCount = await referralContract.getReferralCount(account);
+          totalReferrals = directCount;
+          teamCount = await referralContract.getTeamCount(account);
+          
+          // 获取今日奖励
+          todayDirectRewards = await referralContract.getDirectRewards(account);
+          todayTeamRewards = await referralContract.getTeamRewards(account);
         }
       } catch (error) {
         console.warn('从推荐系统获取信息失败:', error);
-        // 如果失败了，使用挖矿合约的数据
         directCount = directPower.gt(0) ? 1 : 0;
       }
 
@@ -262,8 +282,8 @@ export const useMiningStats = (account, library) => {
 
         // 直推和团队状态
         directCount: directCount,
-        directIncome: formatBigNumber(directPower), // 直推收益用挖矿合约的 directPower
-        teamIncome: formatBigNumber(teamPower),     // 团队收益用挖矿合约的 teamPower
+        directIncome: formatBigNumber(directPower),
+        teamIncome: formatBigNumber(teamPower),
         currentLevel: level.toNumber(),
         directStatus: 5,
 
@@ -276,7 +296,24 @@ export const useMiningStats = (account, library) => {
 
         // 推荐关系
         referrer: referrer === ethers.constants.AddressZero ? null : formatAddress(referrer),
-        stakedNFTs: stakedTokenIds.map(id => id.toString())
+        stakedNFTs: stakedTokenIds.map(id => id.toString()),
+
+        // 新增邀请相关数据
+        inviteCode,
+        totalReferrals,
+        teamCount,
+        
+        // 新增收益相关数据
+        todayDirectRewards: formatBigNumber(todayDirectRewards),
+        todayTeamRewards: formatBigNumber(todayTeamRewards),
+        totalRewards: formatBigNumber(reward.add(teamBonus)),
+        
+        // 新增等级相关数据
+        nextLevelRequirement: level.toNumber() + 1,
+        currentPower: totalPower.toNumber(),
+        nextLevelPower: totalPower.mul(2).toNumber(), // 示例：下一级需要当前算力的2倍
+        directBonus: level.toNumber() * 5, // 示例：每级增加5%直推加成
+        teamBonus: level.toNumber() * 2  // 示例：每级增加2%团队加成
       }));
 
     } catch (error) {
@@ -296,3 +333,5 @@ export const useMiningStats = (account, library) => {
 
   return { stats, isLoading, error, loadMiningData };
 };
+
+export default useMiningStats;

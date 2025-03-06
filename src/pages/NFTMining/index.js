@@ -1,221 +1,147 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React from 'react';
 import { useWeb3React } from '@web3-react/core';
-import { useParams } from 'react-router-dom';
-import { LanguageContext } from '../../App';
-import { injected } from '../../utils/connectors';
-import { ethers } from 'ethers';
-import { REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI, NFT_MINING_ADDRESS, NFT_MINING_ABI } from '../../constants/contracts';
-import MiningBackground from './components/MiningBackground';
-import GlobalStats from './components/GlobalStats';
-import { NFTStatusCard, RevenueStatsCard } from './components/StatusCards';
-import NFTList from './components/NFTList';
-import { useMiningStats } from './hooks/useMiningStats';
 import { toast } from 'react-toastify';
-import './styles/mining.css';
+import { CpuChipIcon, CurrencyDollarIcon, BanknotesIcon, TrophyIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import Background from '../../components/Layout/Background';
+import { StatusCard, NFTCard } from './components/Cards';
+import ReferralTree from './components/Referral/ReferralTree';
+import { RewardsChart } from './components/Charts';
+import { injected } from '../../utils/web3';
+import useNFTMining from './hooks/useNFTMining';
 
 const NFTMining = () => {
   const { active, account, activate, library } = useWeb3React();
-  const { t } = useContext(LanguageContext);
-  const { referrer: urlReferrer } = useParams();
-  const { stats, isLoading, error, loadMiningData } = useMiningStats(account, library);
-  const [nfts, setNfts] = useState([]);
-  const [notification, setNotification] = useState({ show: false, type: '', message: '', loading: false });
-  const [referrerInput, setReferrerInput] = useState('');
-
-  // 从 NFTList 组件获取 NFTs 数据
-  const handleNFTsLoaded = (loadedNfts) => {
-    setNfts(loadedNfts);
-  };
-
-  // 显示通知
-  const showNotification = (type, message) => {
-    setNotification({ show: true, type, message, loading: false });
-    setTimeout(() => {
-      setNotification({ show: false, type: '', message: '', loading: false });
-    }, 3000);
-  };
-
-  // 处理推荐人绑定
-  useEffect(() => {
-    const bindReferrer = async () => {
-      if (!account || !library || !urlReferrer) return;
-
-      try {
-        const signer = library.getSigner();
-        const referralContract = new ethers.Contract(REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI, signer);
-
-        // 检查是否已经有推荐人
-        const hasRef = await referralContract.hasReferrer(account);
-        if (hasRef) {
-          console.log('User already has a referrer');
-          return;
-        }
-
-        if (window.confirm(`检测到推荐人地址：${urlReferrer}\n是否将其设置为您的推荐人？`)) {
-          // 检查推荐人地址是否有效
-          if (!ethers.utils.isAddress(urlReferrer)) {
-            showNotification('error', '无效的推荐人地址');
-            return;
-          }
-
-          // 检查是否是自己
-          if (urlReferrer.toLowerCase() === account.toLowerCase()) {
-            showNotification('error', '不能将自己设为推荐人');
-            return;
-          }
-
-          // 绑定推荐人
-          const tx = await referralContract.bindReferrer(account, urlReferrer);
-          await tx.wait();
-          showNotification('success', '推荐人绑定成功');
-        }
-      } catch (error) {
-        console.error('绑定推荐人失败:', error);
-        showNotification('error', '绑定推荐人失败');
-      }
-    };
-
-    bindReferrer();
-  }, [account, library, urlReferrer]);
-
-  // 绑定推荐人
-  const bindReferrer = async () => {
-    if (!account || !library || !referrerInput) {
-      toast.error('请输入推荐码');
-      return;
-    }
-
-    try {
-      // 检查推荐人地址是否有效
-      if (!ethers.utils.isAddress(referrerInput)) {
-        toast.error('无效的推荐码');
-        return;
-      }
-
-      // 检查是否是自己
-      if (referrerInput.toLowerCase() === account.toLowerCase()) {
-        toast.error('不能将自己设为推荐人');
-        return;
-      }
-
-      const signer = library.getSigner();
-      const miningContract = new ethers.Contract(NFT_MINING_ADDRESS, NFT_MINING_ABI, signer);
-
-      // 绑定推荐人
-      const tx = await miningContract.setReferrer(referrerInput, {
-        gasLimit: 500000
-      });
-      await tx.wait();
-
-      toast.success('推荐人绑定成功');
-      loadMiningData(); // 刷新数据
-    } catch (error) {
-      console.error('绑定推荐人失败:', error);
-      toast.error('绑定推荐人失败: ' + (error.data?.message || error.message));
-    }
-  };
+  const { 
+    stats, 
+    loading, 
+    error, 
+    stakeNFT, 
+    unstakeNFT, 
+    claimReward 
+  } = useNFTMining(account, library);
 
   // 连接钱包
   const connectWallet = async () => {
     try {
       await activate(injected);
-    } catch (error) {
-      console.error('连接钱包失败:', error);
+    } catch (err) {
+      console.error('Error connecting wallet:', err);
+      toast.error('连接钱包失败');
     }
   };
 
+  if (!active) {
+    return (
+      <Background>
+        <div className="flex flex-col items-center justify-center min-h-screen p-4">
+          <h1 className="text-3xl font-bold text-green-400 mb-8">NFT 挖矿</h1>
+          <button
+            onClick={connectWallet}
+            className="px-6 py-3 bg-green-500/20 text-green-400 rounded-lg font-medium hover:bg-green-500/30 transition-colors"
+          >
+            连接钱包
+          </button>
+        </div>
+      </Background>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Background>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400"></div>
+        </div>
+      </Background>
+    );
+  }
+
+  if (error) {
+    return (
+      <Background>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-red-400 text-center">
+            <p className="text-xl font-bold mb-2">出错了</p>
+            <p>{error}</p>
+          </div>
+        </div>
+      </Background>
+    );
+  }
+
   return (
-    <div className="relative min-h-screen">
-      <MiningBackground />
-      
-      <div className="relative z-10 container mx-auto px-4 pt-20">
-        {!active ? (
-          <div className="flex justify-center items-center min-h-[60vh]">
-            <button
-              onClick={connectWallet}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg shadow-lg hover:from-blue-600 hover:to-purple-600 transition duration-300"
-            >
-              {t('connectWallet')}
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            <GlobalStats stats={stats} />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <NFTStatusCard stats={stats} nfts={nfts} />
-              <RevenueStatsCard stats={stats} />
-            </div>
+    <Background>
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* 头部状态卡片 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <StatusCard
+            title="总算力"
+            value={`${stats.totalPower} H/s`}
+            icon={<CpuChipIcon className="w-6 h-6" />}
+          />
+          <StatusCard
+            title="直推算力"
+            value={`${stats.directPower} H/s`}
+            icon={<CpuChipIcon className="w-6 h-6" />}
+          />
+          <StatusCard
+            title="团队算力"
+            value={`${stats.teamPower} H/s`}
+            icon={<UserGroupIcon className="w-6 h-6" />}
+          />
+          <StatusCard
+            title="可领取收益"
+            value={`${stats.claimableReward} ZONE`}
+            icon={<CurrencyDollarIcon className="w-6 h-6" />}
+          />
+          <StatusCard
+            title="团队奖励"
+            value={`${stats.teamBonus} ZONE`}
+            icon={<BanknotesIcon className="w-6 h-6" />}
+          />
+        </div>
 
-            {/* 推荐系统卡片 */}
-            <div className="bg-gray-800 p-4 rounded-lg">
-              <h2 className="text-xl font-bold text-green-400 mb-4">推荐系统</h2>
-              <div className="space-y-4">
-                {!stats.referrer ? (
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      value={referrerInput}
-                      onChange={(e) => setReferrerInput(e.target.value)}
-                      placeholder="请输入推荐码"
-                      className="flex-1 bg-gray-700 text-green-400 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                    <button
-                      onClick={bindReferrer}
-                      className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                    >
-                      绑定
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex justify-between items-center">
-                    <span className="text-green-400">推荐人</span>
-                    <span className="text-green-400">{stats.referrer}</span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center">
-                  <span className="text-green-400">推荐码</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-green-400">{account}</span>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(account);
-                        toast.success('推荐码已复制');
-                      }}
-                      className="text-sm text-blue-500 hover:text-blue-400"
-                    >
-                      复制
-                    </button>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-green-400">直推收益</span>
-                  <span className="text-green-400">{stats.directIncome} ZONE</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-green-400">团队收益</span>
-                  <span className="text-green-400">{stats.teamIncome || '0.0000'} ZONE</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-green-400">已邀请</span>
-                  <span className="text-green-400">{stats.directCount} 人</span>
-                </div>
-              </div>
-            </div>
+        {/* 操作按钮 */}
+        <div className="flex justify-end space-x-4">
+          <button
+            onClick={claimReward}
+            disabled={stats.claimableReward === 0}
+            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+              stats.claimableReward === 0
+                ? 'bg-gray-500/20 text-gray-400 cursor-not-allowed'
+                : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+            }`}
+          >
+            领取收益
+          </button>
+        </div>
 
-            <NFTList onNFTsLoaded={handleNFTsLoaded} />
-          </div>
-        )}
+        {/* NFT 列表 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.nfts.map(nft => (
+            <NFTCard
+              key={nft.tokenId}
+              nft={nft}
+              onStake={stakeNFT}
+              onUnstake={unstakeNFT}
+              isStaked={stats.stakedNfts.includes(nft.tokenId)}
+            />
+          ))}
+        </div>
 
-        {notification.show && (
-          <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
-            notification.type === 'error' ? 'bg-red-500' : 'bg-green-500'
-          } text-white`}>
-            {notification.message}
-          </div>
-        )}
+        {/* 推荐关系树 */}
+        <div className="bg-[#1A2438]/80 backdrop-blur-sm p-6 rounded-lg border border-green-500/20">
+          <h2 className="text-2xl font-bold text-green-400 mb-6">推荐关系</h2>
+          <ReferralTree account={account} provider={library} />
+        </div>
+
+        {/* 收益图表 */}
+        <div className="bg-[#1A2438]/80 backdrop-blur-sm p-6 rounded-lg border border-green-500/20">
+          <h2 className="text-2xl font-bold text-green-400 mb-6">收益历史</h2>
+          <RewardsChart account={account} provider={library} />
+        </div>
       </div>
-    </div>
+    </Background>
   );
 };
 
