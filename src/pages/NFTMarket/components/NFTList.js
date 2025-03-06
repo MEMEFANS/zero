@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Row, Col, Empty, Spin, Select, Input, Space, Button, Pagination, Modal } from 'antd';
+import { Row, Col, Empty, Spin, Select, Input, Space, Button, Pagination, Modal, message } from 'antd';
 import { SearchOutlined, AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import NFTCard from './NFTCard';
 import BatchActionModal from './BatchActionModal';
@@ -17,7 +17,7 @@ const NFTList = ({ type = 'market', onPageChange }) => {
     loadMyNFTs, 
     handleBuy, 
     handleList, 
-    handleUnlist,
+    handleUnlistNFT,
     loadingState 
   } = useNFTMarket();
   
@@ -99,14 +99,22 @@ const NFTList = ({ type = 'market', onPageChange }) => {
   const handleNFTAction = (action, nft) => {
     switch (action) {
       case 'buy':
-        handleBuy(nft.id, nft.price);
+        if (nft && nft.id && nft.price) {
+          handleBuy(nft.id, nft.price);
+        } else {
+          message.error('NFT数据无效');
+        }
         break;
       case 'list':
         setSelectedNFT(nft);
         setListingModalOpen(true);
         break;
       case 'unlist':
-        handleUnlist(nft.id);
+        if (nft && nft.id) {
+          handleUnlistNFT(nft);
+        } else {
+          message.error('NFT数据无效');
+        }
         break;
       case 'view':
         setSelectedNFT(nft);
@@ -274,9 +282,11 @@ const NFTList = ({ type = 'market', onPageChange }) => {
           setSelectedNFT(null);
         }}
         onConfirm={(price) => {
-          handleList(selectedNFT.id, price);
-          setListingModalOpen(false);
-          setSelectedNFT(null);
+          if (selectedNFT) {
+            handleList(selectedNFT, price);
+            setListingModalOpen(false);
+            setSelectedNFT(null);
+          }
         }}
       />
 

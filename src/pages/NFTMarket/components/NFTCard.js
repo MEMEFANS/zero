@@ -37,7 +37,7 @@ const NFTCard = ({ nft, type, onAction, onSelect, isSelected, NFT_SETTINGS }) =>
     
     return (
       <div className="flex items-center gap-2 mt-2">
-        <img src="/bnb-logo.png" alt="BNB" className="w-5 h-5" />
+        <img src="/images/partners/binance.png" alt="BNB" className="w-5 h-5" />
         <span className="text-lg font-semibold text-yellow-500">
           {nft.price} BNB
         </span>
@@ -101,7 +101,7 @@ const NFTCard = ({ nft, type, onAction, onSelect, isSelected, NFT_SETTINGS }) =>
             </div>
           );
         }
-        return nft.isActive ? (
+        return nft.isListed ? (
           <Button
             type="primary"
             danger
@@ -140,7 +140,7 @@ const NFTCard = ({ nft, type, onAction, onSelect, isSelected, NFT_SETTINGS }) =>
             <img
               src={nft.imageURI || '/placeholder.png'}
               alt={`NFT #${nft.id}`}
-              className="w-full h-48 object-cover"
+              className="w-full h-48 object-contain bg-[#1A2333]"
             />
             {renderRarityBadge()}
           </div>

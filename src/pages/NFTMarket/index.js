@@ -18,7 +18,7 @@ const NFTMarket = () => {
     handlePageChange,
     handleBuy,
     handleList,
-    handleUnlist,
+    handleUnlistNFT,
     setSelectedTab,
     setFilterType,
     setSearchTerm,
@@ -110,6 +110,7 @@ const NFTMarket = () => {
           isOpen={marketState.modals?.listing?.isOpen}
           nft={marketState.modals?.listing?.nft}
           onClose={() => setModal('listing', false)}
+          onSubmit={(price) => handleList(marketState.modals?.listing?.nft, price)}
         />
       </div>
     </div>

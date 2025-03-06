@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Form, Input, Button } from 'antd';
 import { ethers } from 'ethers';
 
-const ListingModal = ({ isOpen, nft, onClose, onSubmit }) => {
+const ListingModal = ({ visible, nft, onClose, onConfirm }) => {
   const [form] = Form.useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -10,7 +10,7 @@ const ListingModal = ({ isOpen, nft, onClose, onSubmit }) => {
     try {
       const values = await form.validateFields();
       setIsSubmitting(true);
-      await onSubmit(values.price);
+      await onConfirm(values.price);
       form.resetFields();
       onClose();
     } catch (error) {
@@ -33,7 +33,7 @@ const ListingModal = ({ isOpen, nft, onClose, onSubmit }) => {
   return (
     <Modal
       title="上架NFT"
-      open={isOpen}
+      open={visible}
       onCancel={onClose}
       footer={[
         <Button key="cancel" onClick={onClose}>
