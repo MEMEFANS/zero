@@ -36,7 +36,22 @@ const NFTMining = () => {
     return (
       <Background>
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
-          <h1 className="text-3xl font-bold text-green-400 mb-8">NFT 挖矿</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-green-400 mb-3 sm:mb-4">NFT 挖矿</h1>
+          <div className="max-w-2xl text-center mb-6 sm:mb-8">
+            <p className="text-gray-400 text-sm sm:text-base mb-3">
+              质押您的 NFT 参与挖矿，获得算力产出 ZONE 代币
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-gray-500 text-xs sm:text-sm px-4 sm:px-0">
+              <div className="bg-[#1A2438]/50 backdrop-blur-sm rounded-lg p-3 border border-green-500/10">
+                <p className="text-green-400 mb-1">⚡ 等级加成</p>
+                <p>NFT 等级越高，获得的基础算力越大</p>
+              </div>
+              <div className="bg-[#1A2438]/50 backdrop-blur-sm rounded-lg p-3 border border-green-500/10">
+                <p className="text-green-400 mb-1">🤝 团队收益</p>
+                <p>邀请好友加入，获得直推和团队算力加成</p>
+              </div>
+            </div>
+          </div>
           <button
             onClick={connectWallet}
             className="px-6 py-3 bg-green-500/20 text-green-400 rounded-lg font-medium hover:bg-green-500/30 transition-colors"
@@ -73,9 +88,27 @@ const NFTMining = () => {
 
   return (
     <Background>
-      <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8 space-y-6 sm:space-y-8">
+        {/* 页面说明 */}
+        <div className="max-w-2xl mx-auto text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-green-400 mb-3 sm:mb-4">NFT 挖矿</h1>
+          <p className="text-gray-400 text-sm sm:text-base mb-3">
+            质押您的 NFT 参与挖矿，获得算力产出 ZONE 代币
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-gray-500 text-xs sm:text-sm px-4 sm:px-0">
+            <div className="bg-[#1A2438]/50 backdrop-blur-sm rounded-lg p-3 border border-green-500/10">
+              <p className="text-green-400 mb-1">⚡ 等级加成</p>
+              <p>NFT 等级越高，获得的基础算力越大</p>
+            </div>
+            <div className="bg-[#1A2438]/50 backdrop-blur-sm rounded-lg p-3 border border-green-500/10">
+              <p className="text-green-400 mb-1">🤝 团队收益</p>
+              <p>邀请好友加入，获得直推和团队算力加成</p>
+            </div>
+          </div>
+        </div>
+
         {/* 头部状态卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           <StatusCard
             title="总算力"
             value={`${stats.totalPower} H/s`}
@@ -99,7 +132,7 @@ const NFTMining = () => {
           <StatusCard
             title="团队奖励"
             value={`${Number(stats.teamBonus).toFixed(4)} ZONE`}
-            icon={<BanknotesIcon className="w-6 h-6" />}
+            icon={<TrophyIcon className="w-6 h-6" />}
           />
         </div>
 

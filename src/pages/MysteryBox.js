@@ -6,6 +6,19 @@ import { LanguageContext } from '../App';
 import boxImage from '../images/mystery-box/box-bg.png';
 import { ZONE_NFT_ADDRESS, ZONE_TOKEN_ADDRESS } from '../constants/contracts';
 
+// 导入预览图
+import NFTPreviewN from '../images/nft-preview/N.png';
+import NFTPreviewR from '../images/nft-preview/R.png';
+import NFTPreviewSR from '../images/nft-preview/SR.png';
+import NFTPreviewSSR from '../images/nft-preview/SSR.png';
+
+const NFT_PREVIEW = {
+  N: NFTPreviewN,
+  R: NFTPreviewR,
+  SR: NFTPreviewSR,
+  SSR: NFTPreviewSSR
+};
+
 // NFT合约ABI
 const ZONE_NFT_ABI = [
   "function openBox() external returns (uint256)",
@@ -31,7 +44,7 @@ const ZONE_TOKEN_ABI = [
 ];
 
 const NFT_SETTINGS = {
-  N: { probability: 55, power: 100, price: 100, dailyReward: 2.8, maxReward: 252, roi: 35.7, yearReturn: 152 },
+  N: { probability: 79, power: 100, price: 100, dailyReward: 2.8, maxReward: 252, roi: 35.7, yearReturn: 152 },
   R: { probability: 15, power: 400, price: 100, dailyReward: 10, maxReward: 900, roi: 11.1, yearReturn: 800 },
   SR: { probability: 5, power: 1600, price: 100, dailyReward: 40, maxReward: 3600, roi: 2.8, yearReturn: 3500 },
   SSR: { probability: 1, power: 6400, price: 100, dailyReward: 160, maxReward: 14400, roi: 0.7, yearReturn: 14300 }
@@ -427,48 +440,128 @@ const MysteryBox = () => {
               {/* N NFT */}
               <div className="bg-[#1e2839] p-6 rounded-xl border border-[#2e3c51]">
                 <h2 className="text-xl font-bold text-[#00ff94] mb-4">N</h2>
-                <div className="space-y-2">
-                  <p className="text-gray-300">{t('probability')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.probability}%</span></p>
-                  <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.power} H/s</span></p>
-                  <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.dailyReward} ZONE</span></p>
-                  <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.maxReward}</span></p>
-                  <p className="text-gray-300">{t('yearReturn')}: <span className="text-[#00ff94]">{NFT_SETTINGS.N.yearReturn}%</span></p>
+                <img 
+                  src={NFT_PREVIEW.N}
+                  alt="N级别NFT" 
+                  className="w-48 h-48 mx-auto mb-6 rounded-lg"
+                />
+                <div className="grid gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">概率:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.N.probability}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">算力:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.N.power} H/s</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">日收益:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.N.dailyReward} ZONE</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">最大收益:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.N.maxReward}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">挖矿时长:</span>
+                    <span className="text-[#00ff94]">90D</span>
+                  </div>
                 </div>
               </div>
 
               {/* R NFT */}
               <div className="bg-[#1e2839] p-6 rounded-xl border border-[#2e3c51]">
                 <h2 className="text-xl font-bold text-[#00ff94] mb-4">R</h2>
-                <div className="space-y-2">
-                  <p className="text-gray-300">{t('probability')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.probability}%</span></p>
-                  <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.power} H/s</span></p>
-                  <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.dailyReward} ZONE</span></p>
-                  <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.maxReward}</span></p>
-                  <p className="text-gray-300">{t('yearReturn')}: <span className="text-[#00ff94]">{NFT_SETTINGS.R.yearReturn}%</span></p>
+                <img 
+                  src={NFT_PREVIEW.R}
+                  alt="R级别NFT" 
+                  className="w-48 h-48 mx-auto mb-6 rounded-lg"
+                />
+                <div className="grid gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">概率:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.R.probability}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">算力:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.R.power} H/s</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">日收益:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.R.dailyReward} ZONE</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">最大收益:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.R.maxReward}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">挖矿时长:</span>
+                    <span className="text-[#00ff94]">90D</span>
+                  </div>
                 </div>
               </div>
 
               {/* SR NFT */}
               <div className="bg-[#1e2839] p-6 rounded-xl border border-[#2e3c51]">
                 <h2 className="text-xl font-bold text-[#00ff94] mb-4">SR</h2>
-                <div className="space-y-2">
-                  <p className="text-gray-300">{t('probability')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.probability}%</span></p>
-                  <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.power} H/s</span></p>
-                  <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.dailyReward} ZONE</span></p>
-                  <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.maxReward}</span></p>
-                  <p className="text-gray-300">{t('yearReturn')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SR.yearReturn}%</span></p>
+                <img 
+                  src={NFT_PREVIEW.SR}
+                  alt="SR级别NFT" 
+                  className="w-48 h-48 mx-auto mb-6 rounded-lg"
+                />
+                <div className="grid gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">概率:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.SR.probability}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">算力:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.SR.power} H/s</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">日收益:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.SR.dailyReward} ZONE</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">最大收益:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.SR.maxReward}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">挖矿时长:</span>
+                    <span className="text-[#00ff94]">90D</span>
+                  </div>
                 </div>
               </div>
 
               {/* SSR NFT */}
               <div className="bg-[#1e2839] p-6 rounded-xl border border-[#2e3c51]">
                 <h2 className="text-xl font-bold text-[#00ff94] mb-4">SSR</h2>
-                <div className="space-y-2">
-                  <p className="text-gray-300">{t('probability')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.probability}%</span></p>
-                  <p className="text-gray-300">{t('power')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.power} H/s</span></p>
-                  <p className="text-gray-300">{t('dailyReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.dailyReward} ZONE</span></p>
-                  <p className="text-gray-300">{t('maxReward')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.maxReward}</span></p>
-                  <p className="text-gray-300">{t('yearReturn')}: <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.yearReturn}%</span></p>
+                <img 
+                  src={NFT_PREVIEW.SSR}
+                  alt="SSR级别NFT" 
+                  className="w-48 h-48 mx-auto mb-6 rounded-lg"
+                />
+                <div className="grid gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">概率:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.probability}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">算力:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.power} H/s</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">日收益:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.dailyReward} ZONE</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">最大收益:</span>
+                    <span className="text-[#00ff94]">{NFT_SETTINGS.SSR.maxReward}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">挖矿时长:</span>
+                    <span className="text-[#00ff94]">90D</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -499,7 +592,7 @@ const MysteryBox = () => {
             
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-400">稀有度:</span>
+                <span className="text-gray-300">稀有度:</span>
                 <span className={`font-bold ${
                   openingResult.rarity === 'SSR' ? 'text-purple-500' :
                   openingResult.rarity === 'SR' ? 'text-yellow-500' :
@@ -508,16 +601,16 @@ const MysteryBox = () => {
                 }`}>{openingResult.rarity}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">算力:</span>
+                <span className="text-gray-300">算力:</span>
                 <span className="text-white">{openingResult.power} H/s</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">日收益:</span>
+                <span className="text-gray-300">日收益:</span>
                 <span className="text-green-500">{openingResult.dailyReward} ZONE</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">最大收益:</span>
-                <span className="text-green-500">{openingResult.maxReward} ZONE</span>
+                <span className="text-gray-300">最大收益:</span>
+                <span className="text-green-500">{openingResult.maxReward}%</span>
               </div>
             </div>
             
