@@ -90,12 +90,12 @@ const NFTMining = () => {
           />
           <StatusCard
             title="可领取收益"
-            value={`${stats.claimableReward} ZONE`}
+            value={`${Number(stats.claimableReward).toFixed(4)} ZONE`}
             icon={<CurrencyDollarIcon className="w-6 h-6" />}
           />
           <StatusCard
             title="团队奖励"
-            value={`${stats.teamBonus} ZONE`}
+            value={`${Number(stats.teamBonus).toFixed(4)} ZONE`}
             icon={<BanknotesIcon className="w-6 h-6" />}
           />
         </div>

@@ -113,8 +113,9 @@ const useNFTMining = (account, provider) => {
         nfts,
         lastClaimTime: Number(userInfo.lastClaimTime),
         stakedNfts: userInfo.tokenIds.map(Number),
-        claimableReward: Number(reward),
-        teamBonus: Number(teamBonus)
+        // 直接除以 1e20 来修正显示（相当于除以100再除以1e18）
+        claimableReward: Number(reward) / 1e20,
+        teamBonus: Number(teamBonus) / 1e20
       }));
       
       setError(null);
