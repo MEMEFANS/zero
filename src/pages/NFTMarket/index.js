@@ -79,7 +79,12 @@ const NFTMarket = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 relative">
+      <div className="container mx-auto px-4 py-8 relative mt-16">
+        {/* 标题 */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">NFT交易市场</h1>
+        </div>
+
         {/* 市场数据统计 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

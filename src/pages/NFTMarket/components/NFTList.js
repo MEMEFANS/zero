@@ -168,9 +168,9 @@ const NFTList = ({ type = 'market', onPageChange }) => {
     }
 
     return (
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 12]}>
         {filteredAndSortedNFTs.map(nft => (
-          <Col key={nft.id} xs={24} sm={12} md={8} lg={6}>
+          <Col key={nft.id} xs={12} sm={12} md={8} lg={6}>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -198,12 +198,12 @@ const NFTList = ({ type = 'market', onPageChange }) => {
       className="p-4"
     >
       {/* 工具栏 */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <Space>
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-wrap gap-2 items-center">
           <Select
             value={sortBy}
             onChange={setSortBy}
-            style={{ width: 120 }}
+            className="w-[120px]"
             placeholder="排序方式"
           >
             <Option value="price_asc">价格从低到高</Option>
@@ -217,7 +217,7 @@ const NFTList = ({ type = 'market', onPageChange }) => {
           <Select
             value={filterRarity}
             onChange={setFilterRarity}
-            style={{ width: 120 }}
+            className="w-[100px]"
             placeholder="稀有度"
           >
             <Option value="all">全部</Option>
@@ -232,11 +232,11 @@ const NFTList = ({ type = 'market', onPageChange }) => {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             prefix={<SearchOutlined />}
-            style={{ width: 200 }}
+            className="w-full sm:w-[200px]"
           />
-        </Space>
+        </div>
 
-        <Space>
+        <div className="flex gap-2 items-center">
           <Button
             icon={<AppstoreOutlined />}
             type={viewMode === 'grid' ? 'primary' : 'default'}
@@ -247,7 +247,7 @@ const NFTList = ({ type = 'market', onPageChange }) => {
             type={viewMode === 'list' ? 'primary' : 'default'}
             onClick={() => setViewMode('list')}
           />
-        </Space>
+        </div>
       </div>
 
       {/* NFT列表 */}
@@ -262,6 +262,8 @@ const NFTList = ({ type = 'market', onPageChange }) => {
             pageSize={pagination.pageSize}
             onChange={handlePageChange}
             showSizeChanger={false}
+            size="small"
+            className="sm:text-base"
           />
         </div>
       )}

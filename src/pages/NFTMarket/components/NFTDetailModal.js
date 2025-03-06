@@ -1,6 +1,5 @@
 import React from 'react';
 import { Modal, Descriptions, Button, Typography, Tooltip, Divider } from 'antd';
-import { formatEther } from 'ethers/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -41,7 +40,7 @@ const NFTDetailModal = ({ isOpen, nft, onClose, onAction }) => {
           type="primary" 
           onClick={() => onAction('buy', nft)}
         >
-          购买 ({formatEther(nft.price)} BNB)
+          购买 ({nft.price ? (Number(nft.price) / 1e18).toFixed(2) : '0'} BNB)
         </Button>
       );
     }
@@ -83,10 +82,10 @@ const NFTDetailModal = ({ isOpen, nft, onClose, onAction }) => {
             </Descriptions.Item>
             <Descriptions.Item label="算力">{nft.power}</Descriptions.Item>
             <Descriptions.Item label="每日收益">
-              {formatEther(nft.dailyReward)} ZONE
+              {nft.dailyReward ? (Number(nft.dailyReward) / 1e18).toFixed(2) : '0'} ZONE
             </Descriptions.Item>
             <Descriptions.Item label="最大收益">
-              {formatEther(nft.maxReward)} ZONE
+              {nft.maxReward ? (Number(nft.maxReward) / 1e18).toFixed(2) : '0'} ZONE
             </Descriptions.Item>
             {nft.isStaked && (
               <Descriptions.Item label="质押时间">
@@ -105,7 +104,7 @@ const NFTDetailModal = ({ isOpen, nft, onClose, onAction }) => {
               <Divider />
               <Descriptions column={1} bordered size="small">
                 <Descriptions.Item label="价格">
-                  <Text strong>{formatEther(nft.price)} BNB</Text>
+                  <Text strong>{nft.price ? (Number(nft.price) / 1e18).toFixed(2) : '0'} BNB</Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="卖家">
                   <Tooltip title={nft.seller}>
