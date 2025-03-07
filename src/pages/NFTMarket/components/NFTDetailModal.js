@@ -35,17 +35,6 @@ const NFTDetailModal = ({ isOpen, nft, onClose, onAction }) => {
       );
     }
 
-    if (nft.isActive && nft.seller !== window.ethereum?.selectedAddress) {
-      return (
-        <Button 
-          type="primary" 
-          onClick={() => onAction('buy', nft)}
-        >
-          购买 ({nft.price ? (Number(nft.price) / 1e18).toFixed(2) : '0'} BNB)
-        </Button>
-      );
-    }
-
     return null;
   };
 

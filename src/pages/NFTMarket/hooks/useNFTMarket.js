@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { useState, useCallback, useEffect } from 'react';
 import { useWeb3React } from '@web3-react/core';
-import { message } from 'antd';
+// import { message } from 'antd'; 
 import { getContracts, NFT_SETTINGS, MARKETPLACE_CONTRACT } from '../../../constants/contracts';
 import useLoadingError from './useLoadingError';
 import useNFTCache from './useNFTCache';
@@ -122,7 +122,6 @@ const useNFTMarket = () => {
       }));
     } catch (error) {
       console.error('Error loading my NFTs:', error);
-      message.error('Failed to load NFTs');
     }
   }, 'myNFTs'), [library, account]);
 
@@ -158,7 +157,6 @@ const useNFTMarket = () => {
       }));
     } catch (error) {
       console.error('Error fetching market stats:', error);
-      message.error('Failed to load market statistics');
     }
   }, [library]);
 
@@ -244,7 +242,6 @@ const useNFTMarket = () => {
       }));
     } catch (error) {
       console.error('Error loading market data:', error);
-      message.error('Failed to load market data');
     }
   }, 'market'), [library]);
 
@@ -266,12 +263,11 @@ const useNFTMarket = () => {
       const tx = await contracts.marketplace.listNFT(tokenId, priceInWei);
       await tx.wait();
       
-      message.success('NFT上架成功');
+      console.log('NFT上架成功');
       fetchMarketItems();
       loadMyNFTs();
     } catch (error) {
       console.error('Error listing NFT:', error);
-      message.error('Failed to list NFT');
     }
   }, [library, account, fetchMarketItems, loadMyNFTs]);
 
@@ -283,7 +279,7 @@ const useNFTMarket = () => {
     const tx = await contracts.marketplace.unlistNFT(tokenId);
     await tx.wait();
     
-    message.success('NFT下架成功');
+    console.log('NFT下架成功');
     fetchMarketItems();
   }, [library, account, fetchMarketItems]);
 
@@ -297,7 +293,7 @@ const useNFTMarket = () => {
     });
     await tx.wait();
     
-    message.success('NFT购买成功');
+    console.log('NFT购买成功');
     fetchMarketItems();
   }, [library, account, fetchMarketItems]);
 
@@ -434,13 +430,13 @@ const useNFTMarket = () => {
   const handleBuy = async (nftId, price) => {
     try {
       if (!nftId) {
-        message.error('NFT ID无效');
+        console.log('NFT ID无效');
         return;
       }
 
       const contracts = getContracts(library.getSigner());
       if (!contracts) {
-        message.error('无法获取合约');
+        console.log('无法获取合约');
         return;
       }
 
@@ -453,22 +449,22 @@ const useNFTMarket = () => {
           : ethers.utils.parseEther(price.toString());
       } catch (error) {
         console.error('价格转换错误:', error);
-        message.error('价格格式无效');
+        console.log('价格格式无效');
         return;
       }
 
-      message.loading('正在购买NFT...');
+      console.log('正在购买NFT...');
       const tx = await contracts.marketplace.buyNFT(nftId, { 
         value: valueToSend,
         gasLimit: 500000 
       });
-      message.info('交易已提交...');
+      console.log('交易已提交...');
       await tx.wait();
-      message.success('NFT购买成功');
+      console.log('NFT购买成功');
       fetchMarketItems(marketState.pagination.currentPage);
     } catch (error) {
       console.error('购买错误:', error);
-      message.error('购买失败: ' + (error.message || '未知错误'));
+      console.log('购买失败: ' + (error.message || '未知错误'));
     }
   };
 
@@ -476,13 +472,13 @@ const useNFTMarket = () => {
   const handleList = async (nft, price) => {
     try {
       if (!nft) {
-        message.error('NFT数据无效');
+        console.log('NFT数据无效');
         return;
       }
 
       const contracts = getContracts(library.getSigner());
       if (!contracts) {
-        message.error('无法获取合约');
+        console.log('无法获取合约');
         return;
       }
 
@@ -492,7 +488,7 @@ const useNFTMarket = () => {
         priceInWei = ethers.utils.parseEther(price.toString());
       } catch (error) {
         console.error('价格转换错误:', error);
-        message.error('价格格式无效');
+        console.log('价格格式无效');
         return;
       }
       
@@ -503,32 +499,32 @@ const useNFTMarket = () => {
       try {
         const approved = await contracts.nft.getApproved(tokenId);
         if (approved !== MARKETPLACE_CONTRACT) {
-          message.info('正在授权NFT...');
+          console.log('正在授权NFT...');
           const approveTx = await contracts.nft.approve(MARKETPLACE_CONTRACT, tokenId);
           await approveTx.wait();
-          message.success('NFT授权成功');
+          console.log('NFT授权成功');
         }
       } catch (error) {
         console.error('授权检查失败:', error);
-        message.error('NFT授权失败: ' + (error.message || '未知错误'));
+        console.log('NFT授权失败: ' + (error.message || '未知错误'));
         return;
       }
 
       // 执行上架
-      message.loading('正在上架NFT...');
+      console.log('正在上架NFT...');
       const tx = await contracts.marketplace.listNFT(tokenId, priceInWei, {
         gasLimit: 500000
       });
-      message.info('交易已提交...');
+      console.log('交易已提交...');
       await tx.wait();
-      message.success('NFT上架成功');
+      console.log('NFT上架成功');
       
       // 刷新数据
       fetchMarketItems(marketState.pagination.currentPage);
       loadMyNFTs();
     } catch (error) {
       console.error('上架错误:', error);
-      message.error('上架失败: ' + (error.message || '未知错误'));
+      console.log('上架失败: ' + (error.message || '未知错误'));
     }
   };
 
@@ -536,30 +532,30 @@ const useNFTMarket = () => {
   const handleUnlist = async (nftId) => {
     try {
       if (!nftId) {
-        message.error('NFT ID无效');
+        console.log('NFT ID无效');
         return;
       }
 
       const contracts = getContracts(library.getSigner());
       if (!contracts) {
-        message.error('无法获取合约');
+        console.log('无法获取合约');
         return;
       }
 
-      message.loading('正在下架NFT...');
+      console.log('正在下架NFT...');
       const tx = await contracts.marketplace.unlistNFT(nftId, {
         gasLimit: 500000
       });
-      message.info('交易已提交...');
+      console.log('交易已提交...');
       await tx.wait();
-      message.success('NFT下架成功');
+      console.log('NFT下架成功');
       
       // 刷新数据
       fetchMarketItems(marketState.pagination.currentPage);
       loadMyNFTs();
     } catch (error) {
       console.error('下架错误:', error);
-      message.error('下架失败: ' + (error.message || '未知错误'));
+      console.log('下架失败: ' + (error.message || '未知错误'));
     }
   };
 
@@ -573,7 +569,7 @@ const useNFTMarket = () => {
       const isApproved = await contracts.nft.isApprovedForAll(account, MARKETPLACE_CONTRACT);
       if (!isApproved) {
         const approveTx = await contracts.nft.setApprovalForAll(MARKETPLACE_CONTRACT, true);
-        message.info('Approving NFTs...');
+        console.log('Approving NFTs...');
         await approveTx.wait();
       }
 
@@ -586,14 +582,14 @@ const useNFTMarket = () => {
         pricesInWei,
         { gasLimit: 1000000 }
       );
-      message.info('Transaction submitted...');
+      console.log('Transaction submitted...');
       await tx.wait();
-      message.success('NFTs listed successfully');
+      console.log('NFTs listed successfully');
       fetchMarketItems(marketState.pagination.currentPage);
       loadMyNFTs();
     } catch (error) {
       console.error('Batch list error:', error);
-      message.error(error.message || 'Failed to list NFTs');
+      console.log(error.message || 'Failed to list NFTs');
     }
   };
 
@@ -607,13 +603,13 @@ const useNFTMarket = () => {
         nfts.map(nft => nft.id),
         { gasLimit: 1000000 }
       );
-      message.info('Transaction submitted...');
+      console.log('Transaction submitted...');
       await tx.wait();
-      message.success('NFTs unlisted successfully');
+      console.log('NFTs unlisted successfully');
       fetchMarketItems(marketState.pagination.currentPage);
     } catch (error) {
       console.error('Batch unlist error:', error);
-      message.error(error.message || 'Failed to unlist NFTs');
+      console.log(error.message || 'Failed to unlist NFTs');
     }
   };
 
@@ -626,13 +622,13 @@ const useNFTMarket = () => {
       const tx = await contracts.marketplace.unlistNFT(nft.id, {
         gasLimit: 500000
       });
-      message.info('Transaction submitted...');
+      console.log('Transaction submitted...');
       await tx.wait();
-      message.success('NFT unlisted successfully');
+      console.log('NFT unlisted successfully');
       fetchMarketItems(marketState.pagination.currentPage);
     } catch (error) {
       console.error('Unlist error:', error);
-      message.error(error.message || 'Failed to unlist NFT');
+      console.log(error.message || 'Failed to unlist NFT');
     }
   };
 
