@@ -13,12 +13,12 @@
 }
 
 .custom-tabs .ant-tabs-tab:hover {
-  color: #00FF9D;
+  color: #22C55E;
   opacity: 1;
 }
 
 .custom-tabs .ant-tabs-tab.ant-tabs-tab-active {
-  background-image: linear-gradient(90deg, #00FF9D 0%, #00B8FF 100%);
+  background-image: linear-gradient(90deg, #22C55E 0%, #0EA5E9 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -26,10 +26,10 @@
 }
 
 .custom-tabs .ant-tabs-ink-bar {
-  background: linear-gradient(90deg, #00FF9D 0%, #00B8FF 100%);
+  background: linear-gradient(90deg, #22C55E 0%, #0EA5E9 100%);
   height: 3px;
   border-radius: 3px;
-  box-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
 }
 
 /* 自定义下拉菜单样式 */
@@ -73,21 +73,23 @@
 }
 
 .custom-dropdown .ant-select-item-option-selected {
-  background-color: rgba(0, 255, 157, 0.1) !important;
-  color: #00FF9D !important;
+  background-color: rgba(34, 197, 94, 0.1) !important;
+  color: #22C55E !important;
 }
 
 /* 自定义输入框样式 */
 .custom-input {
-  background-color: rgba(31, 41, 55, 0.7) !important;
-  border: 1px solid rgba(55, 65, 81, 0.5) !important;
+  background-color: rgba(17, 24, 39, 0.7) !important;
+  border: 1px solid rgba(75, 85, 99, 0.5) !important;
   border-radius: 8px !important;
   height: 40px !important;
+  backdrop-filter: blur(10px) !important;
 }
 
 .custom-input input {
   background: transparent !important;
   color: #E2E8F0 !important;
+  font-size: 14px !important;
 }
 
 .custom-input input::placeholder {
@@ -95,13 +97,49 @@
 }
 
 .custom-input:hover {
-  border-color: rgba(0, 255, 157, 0.5) !important;
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  background-color: rgba(17, 24, 39, 0.8) !important;
 }
 
 .custom-input:focus,
 .custom-input-focused {
-  border-color: #00FF9D !important;
-  box-shadow: 0 0 0 2px rgba(0, 255, 157, 0.2) !important;
+  border-color: #22C55E !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+  background-color: rgba(17, 24, 39, 0.9) !important;
+}
+
+.custom-select {
+  min-width: 120px !important;
+}
+
+.custom-select .ant-select-selector {
+  background-color: rgba(17, 24, 39, 0.7) !important;
+  border: 1px solid rgba(75, 85, 99, 0.5) !important;
+  border-radius: 8px !important;
+  height: 40px !important;
+  padding: 4px 12px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.custom-select .ant-select-selection-item {
+  color: #E2E8F0 !important;
+  line-height: 32px !important;
+  font-size: 14px !important;
+}
+
+.custom-select .ant-select-arrow {
+  color: #94A3B8 !important;
+}
+
+.custom-select:hover .ant-select-selector {
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  background-color: rgba(17, 24, 39, 0.8) !important;
+}
+
+.custom-select.ant-select-focused .ant-select-selector {
+  border-color: #22C55E !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+  background-color: rgba(17, 24, 39, 0.9) !important;
 }
 
 /* 自定义按钮样式 */
@@ -118,14 +156,14 @@
 }
 
 .custom-button:hover {
-  border-color: #00FF9D !important;
-  color: #00FF9D !important;
-  box-shadow: 0 0 15px rgba(0, 255, 157, 0.2) !important;
+  border-color: #22C55E !important;
+  color: #22C55E !important;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.2) !important;
   transform: translateY(-1px) !important;
 }
 
 .custom-button:hover .anticon {
-  color: #00FF9D !important;
+  color: #22C55E !important;
 }
 
 .custom-button .anticon {
@@ -134,13 +172,13 @@
 }
 
 .custom-button-active {
-  background: linear-gradient(90deg, rgba(0, 255, 157, 0.1), rgba(0, 184, 255, 0.1)) !important;
-  border-color: #00FF9D !important;
-  color: #00FF9D !important;
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.1), rgba(14, 165, 233, 0.1)) !important;
+  border-color: #22C55E !important;
+  color: #22C55E !important;
 }
 
 .custom-button-active .anticon {
-  color: #00FF9D !important;
+  color: #22C55E !important;
 }
 
 /* 动画效果 */
@@ -168,13 +206,13 @@
 }
 
 .custom-pagination .ant-pagination-item:hover {
-  border-color: #00FF9D;
+  border-color: #22C55E;
   transform: translateY(-1px);
 }
 
 .custom-pagination .ant-pagination-item-active {
-  border-color: #00FF9D;
-  box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
+  border-color: #22C55E;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
 }
 
 .custom-pagination .ant-pagination-item a {
@@ -182,7 +220,7 @@
 }
 
 .custom-pagination .ant-pagination-item-active a {
-  color: #00FF9D;
+  color: #22C55E;
 }
 
 /* 自定义表格样式 */
@@ -261,11 +299,11 @@
 }
 
 .custom-table .ant-pagination-item-active {
-  border-color: #00FF9D !important;
+  border-color: #22C55E !important;
 }
 
 .custom-table .ant-pagination-item-active a {
-  color: #00FF9D !important;
+  color: #22C55E !important;
 }
 
 .custom-table .ant-pagination-prev button,
@@ -277,8 +315,8 @@
 
 .custom-table .ant-pagination-prev:hover button,
 .custom-table .ant-pagination-next:hover button {
-  border-color: #00FF9D !important;
-  color: #00FF9D !important;
+  border-color: #22C55E !important;
+  color: #22C55E !important;
 }
 
 .custom-table .ant-pagination-disabled button {
@@ -310,4 +348,42 @@
 .custom-empty .ant-empty-description {
   color: #CBD5E1;
   opacity: 0.8;
+}
+
+/* 搜索框样式优化 */
+.ant-input-search .ant-input-wrapper {
+  background-color: rgba(15, 23, 42, 0.8) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.ant-input-search .ant-input {
+  background-color: transparent !important;
+  border: 1px solid rgba(55, 65, 81, 0.5) !important;
+  border-right: none !important;
+  color: #E2E8F0 !important;
+  height: 40px !important;
+  padding: 4px 12px !important;
+}
+
+.ant-input-search .ant-input:hover,
+.ant-input-search .ant-input:focus {
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  box-shadow: none !important;
+}
+
+.ant-input-search .ant-input-group-addon {
+  background-color: rgba(31, 41, 55, 0.7) !important;
+  border: 1px solid rgba(55, 65, 81, 0.5) !important;
+  border-left: none !important;
+}
+
+.ant-input-search .ant-input-search-button {
+  background-color: transparent !important;
+  border: none !important;
+  color: #94A3B8 !important;
+}
+
+.ant-input-search .ant-input-search-button:hover {
+  color: #22C55E !important;
 }

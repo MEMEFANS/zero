@@ -7,6 +7,7 @@ import NFTDetailModal from './NFTDetailModal';
 import ListingModal from './ListingModal';
 import { useNFTMarket } from '../hooks/useNFTMarket';
 import { motion } from 'framer-motion';
+import '../styles/search.css';
 
 const { Option } = Select;
 
@@ -203,7 +204,7 @@ const NFTList = ({ type = 'market', onPageChange }) => {
           <Select
             value={sortBy}
             onChange={setSortBy}
-            className="w-[120px]"
+            className="nft-filter-select w-[120px]"
             placeholder="排序方式"
           >
             <Option value="price_asc">价格从低到高</Option>
@@ -217,7 +218,7 @@ const NFTList = ({ type = 'market', onPageChange }) => {
           <Select
             value={filterRarity}
             onChange={setFilterRarity}
-            className="w-[100px]"
+            className="nft-filter-select w-[100px]"
             placeholder="稀有度"
           >
             <Option value="all">全部</Option>
@@ -232,7 +233,7 @@ const NFTList = ({ type = 'market', onPageChange }) => {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             prefix={<SearchOutlined />}
-            className="w-full sm:w-[200px]"
+            className="nft-search-input w-full sm:w-[200px]"
           />
         </div>
 
@@ -241,11 +242,13 @@ const NFTList = ({ type = 'market', onPageChange }) => {
             icon={<AppstoreOutlined />}
             type={viewMode === 'grid' ? 'primary' : 'default'}
             onClick={() => setViewMode('grid')}
+            className={viewMode === 'grid' ? 'nft-view-button-active' : 'nft-view-button'}
           />
           <Button
             icon={<UnorderedListOutlined />}
             type={viewMode === 'list' ? 'primary' : 'default'}
             onClick={() => setViewMode('list')}
+            className={viewMode === 'list' ? 'nft-view-button-active' : 'nft-view-button'}
           />
         </div>
       </div>
