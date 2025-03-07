@@ -2,12 +2,54 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { ethers } from 'ethers';
 import { toast } from 'react-toastify';
+import { useSearchParams } from 'react-router-dom';
 import { REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI } from '../../../../constants/contracts';
 
+// 确认对话框组件
+const ConfirmDialog = ({ isOpen, onConfirm, onCancel, referrerAddress }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+      <div className="relative bg-[#1A2438] rounded-lg p-6 max-w-md w-full mx-4 border border-green-500/20">
+        <h3 className="text-xl font-medium text-green-400 mb-4">绑定推荐人</h3>
+        <div className="mb-6">
+          <p className="text-gray-300 mb-2">检测到推荐人地址：</p>
+          <div className="bg-[#111827] rounded p-3 text-sm text-gray-400 break-all font-mono">
+            {referrerAddress}
+          </div>
+          <p className="text-gray-400 mt-4 text-sm">
+            确认将其设置为您的推荐人吗？此操作不可撤销。
+          </p>
+        </div>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-gray-400 hover:text-gray-300 transition-colors"
+          >
+            取消
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 transition-colors"
+          >
+            确认绑定
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ReferralTree = ({ account, provider }) => {
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingReferrer, setPendingReferrer] = useState(null);
 
   const init = async () => {
     console.log('Initializing ReferralTree with account:', account);
@@ -116,17 +158,109 @@ const ReferralTree = ({ account, provider }) => {
     init();
   }, [account, provider]);
 
+  // 检查并自动绑定推荐人
+  useEffect(() => {
+    const checkAndBindReferrer = async () => {
+      const urlReferrer = searchParams.get('referrer');
+      console.log('检查推荐人状态:', {
+        account,
+        provider,
+        urlReferrer,
+        isConnected: !!account && !!provider
+      });
+
+      if (!account || !provider || !urlReferrer || isSubmitting) {
+        console.log('条件不满足，退出检查');
+        return;
+      }
+
+      try {
+        const contract = new ethers.Contract(
+          REFERRAL_REGISTRY_ADDRESS,
+          REFERRAL_REGISTRY_ABI,
+          provider
+        );
+
+        // 检查是否已经有推荐人
+        const hasReferrer = await contract.hasReferrer(account);
+        console.log('是否已有推荐人:', hasReferrer);
+        
+        if (!hasReferrer && 
+            urlReferrer && 
+            ethers.utils.isAddress(urlReferrer) &&
+            urlReferrer.toLowerCase() !== account.toLowerCase()) {
+          
+          console.log('符合绑定条件，准备显示确认框');
+          setPendingReferrer(urlReferrer);
+          setShowConfirmDialog(true);
+        } else {
+          console.log('不符合绑定条件:', {
+            hasReferrer,
+            isValidAddress: ethers.utils.isAddress(urlReferrer),
+            isSelfReferral: urlReferrer?.toLowerCase() === account?.toLowerCase()
+          });
+        }
+      } catch (error) {
+        console.error('检查推荐人失败:', error);
+      }
+    };
+
+    if (account && provider) {
+      checkAndBindReferrer();
+    }
+  }, [account, provider, searchParams]);
+
+  const handleConfirmBind = async () => {
+    if (!pendingReferrer) return;
+    
+    setShowConfirmDialog(false);
+    setIsSubmitting(true);
+    toast.loading('正在绑定推荐人...');
+    
+    try {
+      console.log('开始绑定推荐人...');
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(
+        REFERRAL_REGISTRY_ADDRESS,
+        REFERRAL_REGISTRY_ABI,
+        signer
+      );
+      const tx = await contract.bindReferrer(pendingReferrer, {
+        gasLimit: 300000
+      });
+      console.log('交易已发送:', tx.hash);
+      await tx.wait();
+      console.log('交易已确认');
+      toast.success('推荐人绑定成功！');
+      // 重新加载数据
+      init();
+    } catch (error) {
+      console.error('绑定推荐人失败:', error);
+      toast.error('绑定推荐人失败: ' + (error.message || '未知错误'));
+    } finally {
+      setIsSubmitting(false);
+      setPendingReferrer(null);
+    }
+  };
+
   const bindReferrer = async (referrerAddress) => {
     if (!account || !provider) return;
     try {
+      setIsSubmitting(true);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI, signer);
-      await contract.bindReferrer(account, referrerAddress);
+      const tx = await contract.bindReferrer(referrerAddress, {
+        gasLimit: 300000
+      });
+      await tx.wait();
+      toast.success('推荐人绑定成功！');
       // 重新加载数据
       init();
     } catch (err) {
       console.error('Error binding referrer:', err);
-      setError('绑定推荐人失败');
+      toast.error('绑定推荐人失败: ' + (err.message || '未知错误'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -206,86 +340,97 @@ const ReferralTree = ({ account, provider }) => {
     );
   }
 
-  const formatAddress = (address) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
+  if (!stats) {
+    return null;
+  }
+
+  const referralLink = `${window.location.origin}${window.location.pathname}?referrer=${account}`;
 
   return (
     <div className="space-y-6">
-      {/* 邀请信息 */}
-      <div className="p-4">
-        <div className="text-gray-400 text-sm mb-3">我的邀请链接</div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <code className="flex-1 text-sm font-mono text-green-400 p-0 break-all select-all">
-            {window.location.origin + '/mining/' + account}
-          </code>
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        onConfirm={handleConfirmBind}
+        onCancel={() => {
+          setShowConfirmDialog(false);
+          setPendingReferrer(null);
+        }}
+        referrerAddress={pendingReferrer}
+      />
+      
+      {/* 推荐链接 */}
+      <div className="bg-[#1A2438]/50 backdrop-blur-sm rounded-lg p-4 border border-green-500/10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1 w-full">
+            <p className="text-gray-400 text-sm mb-2">您的推荐链接:</p>
+            <div className="bg-[#1A2438] rounded px-3 py-2 text-xs sm:text-sm text-gray-300 break-all">
+              {referralLink}
+            </div>
+          </div>
           <button
-            onClick={() => copyToClipboard(window.location.origin + '/mining/' + account)}
-            className="w-full sm:w-auto px-6 py-2.5 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 active:bg-green-500/40 transition-colors whitespace-nowrap touch-manipulation flex items-center justify-center gap-2"
+            onClick={() => copyToClipboard(referralLink)}
+            className="px-4 py-2 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 transition-colors text-sm whitespace-nowrap"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-            </svg>
             复制链接
           </button>
         </div>
       </div>
 
-      {/* 绑定推荐人 */}
-      {!stats?.hasReferrer && (
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="text-gray-400 text-sm mb-2">绑定推荐人</div>
-          {new URLSearchParams(window.location.search).get('referrer') ? (
-            <button
-              onClick={() => bindReferrer(new URLSearchParams(window.location.search).get('referrer'))}
-              className="w-full py-2 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 transition-colors"
-            >
-              确认绑定推荐人
-            </button>
-          ) : (
-            <div className="text-xs text-gray-500">
-              通过推荐人的邀请链接访问此页面，即可绑定推荐人
-            </div>
-          )}
+      {/* 推荐人信息 */}
+      <div className="bg-[#1A2438]/50 backdrop-blur-sm rounded-lg p-4 border border-green-500/10">
+        <h3 className="text-green-400 font-medium mb-4">推荐人信息</h3>
+        {stats.hasReferrer ? (
+          <div className="text-gray-300">
+            <p>推荐人地址: {stats.referrer}</p>
+          </div>
+        ) : (
+          <p className="text-gray-400">暂无推荐人</p>
+        )}
+      </div>
+
+      {/* 推荐统计 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="bg-[#1A2438]/50 backdrop-blur-sm rounded-lg p-4 border border-green-500/10">
+          <h3 className="text-green-400 font-medium mb-4">直推统计</h3>
+          <div className="space-y-2 text-gray-300">
+            <p>直推人数: {stats.directCount}</p>
+            <p>直推奖励: {ethers.utils.formatEther(stats.directRewards)} ZONE</p>
+          </div>
+        </div>
+        <div className="bg-[#1A2438]/50 backdrop-blur-sm rounded-lg p-4 border border-green-500/10">
+          <h3 className="text-green-400 font-medium mb-4">团队统计</h3>
+          <div className="space-y-2 text-gray-300">
+            <p>团队人数: {stats.teamCount}</p>
+            <p>团队奖励: {ethers.utils.formatEther(stats.teamRewards)} ZONE</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 直推列表 */}
+      {stats.directReferrals.length > 0 && (
+        <div className="bg-[#1A2438]/50 backdrop-blur-sm rounded-lg p-4 border border-green-500/10">
+          <h3 className="text-green-400 font-medium mb-4">直推列表</h3>
+          <div className="space-y-2">
+            {stats.directReferrals.map((address, index) => (
+              <div key={index} className="text-gray-300 break-all">
+                {address}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* 推荐统计 */}
-      {stats && (
-        <div className="grid grid-cols-1 gap-4 p-4 bg-gray-800/50 rounded-lg">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center">
-              <div className="text-gray-400 text-sm">直推人数</div>
-              <div className="text-xl font-bold text-green-400">{stats.directCount}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-gray-400 text-sm">团队人数</div>
-              <div className="text-xl font-bold text-blue-400">{stats.teamCount}</div>
-            </div>
+      {/* 团队列表 */}
+      {stats.teamMembers.length > 0 && (
+        <div className="bg-[#1A2438]/50 backdrop-blur-sm rounded-lg p-4 border border-green-500/10">
+          <h3 className="text-green-400 font-medium mb-4">团队列表</h3>
+          <div className="space-y-2">
+            {stats.teamMembers.map((address, index) => (
+              <div key={index} className="text-gray-300 break-all">
+                {address}
+              </div>
+            ))}
           </div>
-          
-          {stats.hasReferrer && stats.referrer && (
-            <div className="border-t border-gray-700 pt-4">
-              <div className="text-gray-400 text-sm mb-2">我的推荐人</div>
-              <div className="text-sm text-blue-400 bg-gray-800/30 p-2 rounded">
-                {formatAddress(stats.referrer)}
-              </div>
-            </div>
-          )}
-          
-          {stats.directReferrals && stats.directReferrals.length > 0 && (
-            <div className="border-t border-gray-700 pt-4">
-              <div className="text-gray-400 text-sm mb-2">我的直推</div>
-              <div className="space-y-2">
-                {stats.directReferrals.map((address, index) => (
-                  <div key={address} className="text-sm text-green-400 bg-gray-800/30 p-2 rounded flex justify-between items-center">
-                    <span>{index + 1}.</span>
-                    <span>{formatAddress(address)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
