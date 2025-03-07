@@ -1,66 +1,89 @@
-import React, { useState } from 'react';
-import { Modal, Form, Input, Button } from 'antd';
-import { ethers } from 'ethers';
+import React from 'react';
+import { Modal, Input, Button, Form } from 'antd';
+import { motion } from 'framer-motion';
+import { TagOutlined } from '@ant-design/icons';
 
-const ListingModal = ({ visible, nft, onClose, onConfirm }) => {
+const ListingModal = ({ nft, visible, onClose, onConfirm }) => {
   const [form] = Form.useForm();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      setIsSubmitting(true);
-      await onConfirm(values.price);
+      onConfirm(values.price);
       form.resetFields();
-      onClose();
     } catch (error) {
-      console.error('Submit error:', error);
-    } finally {
-      setIsSubmitting(false);
+      console.error('Validation failed:', error);
     }
   };
 
-  const validatePrice = (_, value) => {
-    if (!value) {
-      return Promise.reject('请输入价格');
-    }
-    if (isNaN(value) || value <= 0) {
-      return Promise.reject('请输入有效的价格');
-    }
-    return Promise.resolve();
+  const handleCancel = () => {
+    form.resetFields();
+    onClose();
   };
 
   return (
     <Modal
-      title="上架NFT"
+      title={
+        <div className="flex items-center gap-2 text-lg">
+          <TagOutlined className="text-blue-500" />
+          <span>上架 NFT #{nft?.id}</span>
+        </div>
+      }
       open={visible}
-      onCancel={onClose}
-      footer={[
-        <Button key="cancel" onClick={onClose}>
-          取消
-        </Button>,
-        <Button 
-          key="submit" 
-          type="primary" 
-          loading={isSubmitting} 
-          onClick={handleSubmit}
-        >
-          确认上架
-        </Button>
-      ]}
+      onCancel={handleCancel}
+      footer={null}
+      width={400}
+      destroyOnClose
+      className="nft-modal"
     >
-      <Form form={form} layout="vertical">
-        <Form.Item
-          name="price"
-          label="价格 (BNB)"
-          rules={[
-            { required: true, message: '请输入价格' },
-            { validator: validatePrice }
-          ]}
-        >
-          <Input placeholder="请输入价格" />
-        </Form.Item>
-      </Form>
+      <div className="flex flex-col items-center">
+        <div className="w-32 h-32 rounded-lg overflow-hidden border-2 border-blue-500/20 mb-6">
+          <img
+            src={nft?.imageURI || '/placeholder.png'}
+            alt={`NFT #${nft?.id}`}
+            className="w-full h-full object-contain bg-[#1A2333]"
+          />
+        </div>
+        
+        <Form form={form} layout="vertical" className="w-full">
+          <Form.Item
+            name="price"
+            label={<span className="text-[#F3BA2F]">价格 (BNB)</span>}
+            rules={[
+              { required: true, message: '请输入价格' },
+              { pattern: /^[0-9]*\.?[0-9]+$/, message: '请输入有效的数字' }
+            ]}
+          >
+            <Input
+              placeholder="请输入价格"
+              prefix={
+                <img
+                  src="/images/partners/binance.png"
+                  alt="BNB"
+                  className="w-5 h-5"
+                />
+              }
+              className="h-10 bg-[#1A2333] border-[#2D3748] hover:border-[#F3BA2F] focus:border-[#F3BA2F]"
+            />
+          </Form.Item>
+        </Form>
+
+        <div className="flex gap-3 justify-end w-full mt-6">
+          <Button 
+            onClick={handleCancel}
+            className="hover:bg-gray-700 hover:border-gray-600"
+          >
+            取消
+          </Button>
+          <Button
+            type="primary"
+            onClick={handleOk}
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-none"
+          >
+            确认上架
+          </Button>
+        </div>
+      </div>
     </Modal>
   );
 };

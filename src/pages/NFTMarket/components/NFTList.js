@@ -33,6 +33,7 @@ const NFTList = ({ type = 'market', onPageChange }) => {
   const [batchAction, setBatchAction] = useState(null);
   const [selectedNFTs, setSelectedNFTs] = useState([]);
   const [listingModalOpen, setListingModalOpen] = useState(false);
+  const [isListingAction, setIsListingAction] = useState(false);
 
   // 初始加载
   useEffect(() => {
@@ -105,7 +106,8 @@ const NFTList = ({ type = 'market', onPageChange }) => {
         }
         break;
       case 'list':
-        setSelectedNFT(null); // 确保不会显示详情模态框
+        setIsListingAction(true);
+        setSelectedNFT(null);
         setListingModalOpen(true);
         setSelectedNFT(nft);
         break;
@@ -117,8 +119,10 @@ const NFTList = ({ type = 'market', onPageChange }) => {
         }
         break;
       case 'view':
-        setListingModalOpen(false); // 确保上架模态框是关闭的
-        setSelectedNFT(nft);
+        if (!isListingAction) {
+          setListingModalOpen(false);
+          setSelectedNFT(nft);
+        }
         break;
       default:
         break;
@@ -270,9 +274,12 @@ const NFTList = ({ type = 'market', onPageChange }) => {
 
       {/* NFT详情模态框 */}
       <NFTDetailModal
-        isOpen={!!selectedNFT}
+        isOpen={!!selectedNFT && !isListingAction}
         nft={selectedNFT}
-        onClose={() => setSelectedNFT(null)}
+        onClose={() => {
+          setSelectedNFT(null);
+          setIsListingAction(false);
+        }}
         onAction={handleNFTAction}
       />
 
@@ -283,12 +290,14 @@ const NFTList = ({ type = 'market', onPageChange }) => {
         onClose={() => {
           setListingModalOpen(false);
           setSelectedNFT(null);
+          setIsListingAction(false);
         }}
         onConfirm={(price) => {
           if (selectedNFT) {
             handleList(selectedNFT, price);
             setListingModalOpen(false);
             setSelectedNFT(null);
+            setIsListingAction(false);
           }
         }}
       />

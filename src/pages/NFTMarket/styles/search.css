@@ -90,3 +90,70 @@
   color: inherit !important;
   transition: all 0.3s !important;
 }
+
+/* NFT Modal Styles */
+.nft-modal .ant-modal-content {
+  background: #1A2333;
+  border: 1px solid #2D3748;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.nft-modal .ant-modal-header {
+  background: transparent;
+  border-bottom: 1px solid #2D3748;
+  padding: 0 0 16px 0;
+  margin-bottom: 24px;
+}
+
+.nft-modal .ant-modal-title {
+  color: #E2E8F0;
+}
+
+.nft-modal .ant-modal-close {
+  color: #718096;
+}
+
+.nft-modal .ant-modal-close:hover {
+  color: #E2E8F0;
+}
+
+.nft-modal .ant-input-affix-wrapper {
+  background: #1A2333;
+  border: 1px solid #2D3748;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.nft-modal .ant-input-affix-wrapper:hover {
+  border-color: #F3BA2F;
+}
+
+.nft-modal .ant-input-affix-wrapper-focused,
+.nft-modal .ant-input-affix-wrapper:focus {
+  border-color: #F3BA2F !important;
+  box-shadow: 0 0 0 2px rgba(243, 186, 47, 0.2) !important;
+}
+
+.nft-modal .ant-input {
+  background: transparent;
+  color: #F3BA2F !important;
+  font-weight: 500;
+}
+
+.nft-modal .ant-input::placeholder {
+  color: rgba(243, 186, 47, 0.5);
+}
+
+.nft-modal .ant-btn {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.nft-modal .ant-form-item-label > label {
+  color: #94A3B8;
+  font-weight: 500;
+}
