@@ -13,10 +13,17 @@ const NFTCard = ({ nft, onStake, onUnstake, isStaked }) => {
   // 状态管理
   const [currentImage, setCurrentImage] = useState(placeholderImage);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
 
   // 加载实际的 NFT 图片
   useEffect(() => {
-    if (!imageURI) return;
+    if (!imageURI) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setIsError(false);
 
     const img = new Image();
     img.src = imageURI;
@@ -28,8 +35,7 @@ const NFTCard = ({ nft, onStake, onUnstake, isStaked }) => {
     
     img.onerror = () => {
       console.log('Failed to load NFT image:', imageURI);
-      // 加载失败时保持使用本地占位图
-      setCurrentImage(placeholderImage);
+      setIsError(true);
       setIsLoading(false);
     };
 
@@ -38,7 +44,7 @@ const NFTCard = ({ nft, onStake, onUnstake, isStaked }) => {
       img.onload = null;
       img.onerror = null;
     };
-  }, [imageURI, placeholderImage]);
+  }, [imageURI]);
 
   // 计算已挖矿进度
   const miningProgress = maxReward > 0 ? (minedAmount / maxReward) * 100 : 0;
@@ -60,7 +66,7 @@ const NFTCard = ({ nft, onStake, onUnstake, isStaked }) => {
         {/* NFT 图片 */}
         <div className="mb-4 relative aspect-square rounded-lg overflow-hidden">
           <img
-            src={currentImage}
+            src={isError ? placeholderImage : currentImage}
             alt={`NFT #${tokenId}`}
             className={`w-full h-full object-cover transition-all duration-300 ${
               isLoading ? 'scale-105 blur-sm' : 'scale-100 blur-0'

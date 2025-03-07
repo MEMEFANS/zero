@@ -1,7 +1,6 @@
 import { ethers } from 'ethers';
 import { useState, useCallback, useEffect } from 'react';
 import { useWeb3React } from '@web3-react/core';
-// import { message } from 'antd'; 
 import { getContracts, NFT_SETTINGS, MARKETPLACE_CONTRACT } from '../../../constants/contracts';
 import useLoadingError from './useLoadingError';
 import useNFTCache from './useNFTCache';
@@ -49,6 +48,47 @@ const useNFTMarket = () => {
     }
   });
 
+  // 创建 NFT 对象
+  const createNFTObject = useCallback(async (tokenId, attributes, tokenUri, listing = null, seller = null) => {
+    try {
+      const contracts = await getContracts(library.getSigner());
+      
+      // 获取 NFT 图片 URI
+      const imageURI = await contracts.nft.getNFTImageURI(tokenId);
+      
+      // 处理 IPFS URL
+      const processedImageURI = imageURI.startsWith('ipfs://')
+        ? `https://ipfs.io/ipfs/${imageURI.replace('ipfs://', '')}`
+        : imageURI;
+
+      // 创建 NFT 对象
+      const nft = {
+        id: tokenId.toString(),
+        rarity: Number(attributes.rarity),
+        power: ethers.BigNumber.from(attributes.power).toString(),
+        dailyReward: ethers.BigNumber.from(attributes.dailyReward).toString(),
+        maxReward: ethers.BigNumber.from(attributes.maxReward).toString(),
+        minedAmount: ethers.BigNumber.from(attributes.minedAmount).toString(),
+        isStaked: attributes.isStaked,
+        stakeTime: ethers.BigNumber.from(attributes.stakeTime).toString(),
+        imageURI: processedImageURI
+      };
+
+      // 如果有市场信息，添加市场相关字段
+      if (listing) {
+        nft.price = ethers.utils.formatEther(listing.price);
+        nft.seller = seller || listing.seller;
+        nft.isActive = listing.isActive;
+        nft.isListed = listing.isActive;
+      }
+
+      return nft;
+    } catch (error) {
+      console.error('Error creating NFT object:', error);
+      return null;
+    }
+  }, [library]);
+
   // 加载我的NFT
   const loadMyNFTs = useCallback(withLoading(async () => {
     if (!library || !account) return;
@@ -77,10 +117,6 @@ const useNFTMarket = () => {
             // 获取市场信息
             const listing = await contracts.marketplace.listings(tokenId);
             
-            // 获取元数据
-            const metadata = await getNFTMetadata(tokenUri);
-            const imageURI = metadata?.image || '/placeholder.png';
-            
             // 检查NFT是否真的属于当前用户
             const currentOwner = await contracts.nft.ownerOf(tokenId);
             if (currentOwner.toLowerCase() !== account.toLowerCase()) {
@@ -88,24 +124,7 @@ const useNFTMarket = () => {
               return null;
             }
             
-            // 检查NFT是否在市场上出售
-            const isListed = listing.isActive && listing.seller.toLowerCase() === account.toLowerCase();
-            
-            return {
-              id: tokenId.toString(),
-              price: isListed ? ethers.utils.formatEther(listing.price) : '0',
-              seller: listing.seller,
-              isActive: listing.isActive,
-              rarity: Number(attributes.rarity),
-              power: ethers.BigNumber.from(attributes.power).toString(),
-              dailyReward: ethers.BigNumber.from(attributes.dailyReward).toString(),
-              maxReward: ethers.BigNumber.from(attributes.maxReward).toString(),
-              minedAmount: ethers.BigNumber.from(attributes.minedAmount).toString(),
-              isStaked: attributes.isStaked,
-              stakeTime: ethers.BigNumber.from(attributes.stakeTime).toString(),
-              imageURI,
-              isListed: isListed
-            };
+            return createNFTObject(tokenId, attributes, tokenUri, listing);
           } catch (error) {
             console.error('Error loading NFT:', error);
             return null;
@@ -123,7 +142,59 @@ const useNFTMarket = () => {
     } catch (error) {
       console.error('Error loading my NFTs:', error);
     }
-  }, 'myNFTs'), [library, account]);
+  }, 'myNFTs'), [library, account, createNFTObject]);
+
+  // 获取在售NFT列表
+  const fetchMarketItems = useCallback(withLoading(async (page = 1, pageSize = 12) => {
+    if (!library) return;
+    
+    try {
+      const contracts = await getContracts(library.getSigner());
+      const offset = (page - 1) * pageSize;
+      
+      // 获取在售NFT总数
+      const totalCount = await contracts.marketplace.getActiveListingsCount();
+      
+      // 获取当前页的在售NFT
+      const { tokenIds, prices, sellers } = await contracts.marketplace.getActiveListings(offset, pageSize);
+      
+      // 获取NFT详细信息
+      const items = await Promise.all(
+        tokenIds.map(async (tokenId, index) => {
+          try {
+            // 验证NFT是否真的在售
+            const listing = await contracts.marketplace.listings(tokenId);
+            if (!listing.isActive) return null;
+            
+            // 获取NFT属性和URI
+            const [attributes, tokenUri] = await Promise.all([
+              contracts.nft.getNFTAttributes(tokenId),
+              contracts.nft.tokenURI(tokenId)
+            ]);
+            
+            return createNFTObject(tokenId, attributes, tokenUri, listing, sellers[index]);
+          } catch (error) {
+            console.error('Error loading market item:', error);
+            return null;
+          }
+        })
+      );
+      
+      const validItems = items.filter(Boolean);
+      
+      setMarketState(prev => ({
+        ...prev,
+        marketItems: validItems,
+        pagination: {
+          ...prev.pagination,
+          currentPage: page,
+          total: totalCount.toNumber()
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching market items:', error);
+    }
+  }, 'market'), [library, createNFTObject]);
 
   // 获取市场统计数据
   const fetchMarketStats = useCallback(async () => {
@@ -159,143 +230,6 @@ const useNFTMarket = () => {
       console.error('Error fetching market stats:', error);
     }
   }, [library]);
-
-  // 获取在售NFT列表
-  const fetchMarketItems = useCallback(withLoading(async (page = 1, pageSize = 12) => {
-    if (!library) return;
-    
-    try {
-      const contracts = await getContracts(library.getSigner());
-      const offset = (page - 1) * pageSize;
-      
-      // 获取在售NFT总数
-      const totalCount = await contracts.marketplace.getActiveListingsCount();
-      console.log('Total active listings:', totalCount.toString());
-      
-      // 获取当前页的在售NFT
-      const { tokenIds, prices, sellers } = await contracts.marketplace.getActiveListings(offset, pageSize);
-      console.log('Active listings:', { 
-        tokenIds: tokenIds.map(id => id.toString()),
-        prices: prices.map(p => ethers.utils.formatEther(p)),
-        sellers 
-      });
-      
-      // 获取NFT详细信息
-      const items = await Promise.all(
-        tokenIds.map(async (tokenId, index) => {
-          try {
-            // 验证NFT是否真的在售
-            const listing = await contracts.marketplace.listings(tokenId);
-            if (!listing.isActive) {
-              console.log(`NFT ${tokenId.toString()} is not active`);
-              return null;
-            }
-            
-            // 获取NFT属性和URI
-            const [attributes, tokenUri] = await Promise.all([
-              contracts.nft.getNFTAttributes(tokenId),
-              contracts.nft.tokenURI(tokenId)
-            ]);
-            
-            console.log(`NFT ${tokenId.toString()} attributes:`, attributes);
-            console.log(`NFT ${tokenId.toString()} URI:`, tokenUri);
-            
-            // 获取元数据
-            const metadata = await getNFTMetadata(tokenUri);
-            console.log(`NFT ${tokenId.toString()} metadata:`, metadata);
-            
-            const imageURI = metadata?.image || '/placeholder.png';
-
-            return {
-              id: tokenId.toString(),
-              price: ethers.utils.formatEther(prices[index] || '0'),
-              seller: sellers[index],
-              isActive: true,
-              rarity: Number(attributes.rarity),
-              power: ethers.BigNumber.from(attributes.power).toString(),
-              dailyReward: ethers.BigNumber.from(attributes.dailyReward).toString(),
-              maxReward: ethers.BigNumber.from(attributes.maxReward).toString(),
-              minedAmount: ethers.BigNumber.from(attributes.minedAmount).toString(),
-              isStaked: attributes.isStaked,
-              stakeTime: ethers.BigNumber.from(attributes.stakeTime).toString(),
-              imageURI,
-              isListed: true
-            };
-          } catch (error) {
-            console.error('Error loading NFT details:', tokenId.toString(), error);
-            return null;
-          }
-        })
-      );
-
-      const validItems = items.filter(Boolean);
-      console.log('Processed market items:', validItems);
-
-      setMarketState(prev => ({
-        ...prev,
-        marketItems: validItems,
-        pagination: {
-          ...prev.pagination,
-          currentPage: page,
-          total: totalCount.toNumber()
-        }
-      }));
-    } catch (error) {
-      console.error('Error loading market data:', error);
-    }
-  }, 'market'), [library]);
-
-  // 上架NFT
-  const listNFT = useCallback(async (tokenId, price) => {
-    if (!library || !account) return;
-    
-    try {
-      const contracts = await getContracts(library.getSigner());
-      
-      // 检查是否已授权
-      const isApproved = await contracts.nft.isApprovedForAll(account, contracts.marketplace.address);
-      if (!isApproved) {
-        const approveTx = await contracts.nft.setApprovalForAll(contracts.marketplace.address, true);
-        await approveTx.wait();
-      }
-      
-      const priceInWei = ethers.utils.parseEther(price.toString());
-      const tx = await contracts.marketplace.listNFT(tokenId, priceInWei);
-      await tx.wait();
-      
-      console.log('NFT上架成功');
-      fetchMarketItems();
-      loadMyNFTs();
-    } catch (error) {
-      console.error('Error listing NFT:', error);
-    }
-  }, [library, account, fetchMarketItems, loadMyNFTs]);
-
-  // 下架NFT
-  const unlistNFT = useCallback(async (tokenId) => {
-    if (!library || !account) return;
-    
-    const contracts = await getContracts(library.getSigner());
-    const tx = await contracts.marketplace.unlistNFT(tokenId);
-    await tx.wait();
-    
-    console.log('NFT下架成功');
-    fetchMarketItems();
-  }, [library, account, fetchMarketItems]);
-
-  // 购买NFT
-  const buyNFT = useCallback(async (tokenId, price) => {
-    if (!library || !account) return;
-    
-    const contracts = await getContracts(library.getSigner());
-    const tx = await contracts.marketplace.buyNFT(tokenId, {
-      value: price
-    });
-    await tx.wait();
-    
-    console.log('NFT购买成功');
-    fetchMarketItems();
-  }, [library, account, fetchMarketItems]);
 
   // 加载价格历史
   const loadPriceHistory = useCallback(async (tokenId) => {
@@ -529,33 +463,21 @@ const useNFTMarket = () => {
   };
 
   // 处理下架
-  const handleUnlist = async (nftId) => {
+  const handleUnlistNFT = async (nft) => {
     try {
-      if (!nftId) {
-        console.log('NFT ID无效');
-        return;
-      }
-
       const contracts = getContracts(library.getSigner());
-      if (!contracts) {
-        console.log('无法获取合约');
-        return;
-      }
+      if (!contracts) return;
 
-      console.log('正在下架NFT...');
-      const tx = await contracts.marketplace.unlistNFT(nftId, {
+      const tx = await contracts.marketplace.unlistNFT(nft.id, {
         gasLimit: 500000
       });
-      console.log('交易已提交...');
+      console.log('Transaction submitted...');
       await tx.wait();
-      console.log('NFT下架成功');
-      
-      // 刷新数据
+      console.log('NFT unlisted successfully');
       fetchMarketItems(marketState.pagination.currentPage);
-      loadMyNFTs();
     } catch (error) {
-      console.error('下架错误:', error);
-      console.log('下架失败: ' + (error.message || '未知错误'));
+      console.error('Unlist error:', error);
+      console.log(error.message || 'Failed to unlist NFT');
     }
   };
 
@@ -613,24 +535,57 @@ const useNFTMarket = () => {
     }
   };
 
-  // 下架单个NFT
-  const handleUnlistNFT = async (nft) => {
+  // 上架 NFT
+  const listNFT = useCallback(async (tokenId, price) => {
+    if (!library || !account) return;
+    
     try {
-      const contracts = getContracts(library.getSigner());
-      if (!contracts) return;
-
-      const tx = await contracts.marketplace.unlistNFT(nft.id, {
-        gasLimit: 500000
-      });
-      console.log('Transaction submitted...');
+      const contracts = await getContracts(library.getSigner());
+      
+      // 检查是否已授权
+      const isApproved = await contracts.nft.isApprovedForAll(account, contracts.marketplace.address);
+      if (!isApproved) {
+        const approveTx = await contracts.nft.setApprovalForAll(contracts.marketplace.address, true);
+        await approveTx.wait();
+      }
+      
+      const priceInWei = ethers.utils.parseEther(price.toString());
+      const tx = await contracts.marketplace.listNFT(tokenId, priceInWei);
       await tx.wait();
-      console.log('NFT unlisted successfully');
-      fetchMarketItems(marketState.pagination.currentPage);
+      
+      console.log('NFT上架成功');
+      fetchMarketItems();
+      loadMyNFTs();
     } catch (error) {
-      console.error('Unlist error:', error);
-      console.log(error.message || 'Failed to unlist NFT');
+      console.error('Error listing NFT:', error);
     }
-  };
+  }, [library, account, fetchMarketItems, loadMyNFTs]);
+
+  // 下架 NFT
+  const unlistNFT = useCallback(async (tokenId) => {
+    if (!library || !account) return;
+    
+    const contracts = await getContracts(library.getSigner());
+    const tx = await contracts.marketplace.unlistNFT(tokenId);
+    await tx.wait();
+    
+    console.log('NFT下架成功');
+    fetchMarketItems();
+  }, [library, account, fetchMarketItems]);
+
+  // 购买 NFT
+  const buyNFT = useCallback(async (tokenId, price) => {
+    if (!library || !account) return;
+    
+    const contracts = await getContracts(library.getSigner());
+    const tx = await contracts.marketplace.buyNFT(tokenId, {
+      value: price
+    });
+    await tx.wait();
+    
+    console.log('NFT购买成功');
+    fetchMarketItems();
+  }, [library, account, fetchMarketItems]);
 
   // 验证价格
   const validatePrice = useCallback(async (price) => {

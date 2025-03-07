@@ -63,7 +63,13 @@ const ListingModal = ({ nft, visible, onClose, onConfirm }) => {
                   className="w-5 h-5"
                 />
               }
-              className="h-10 bg-[#1A2333] border-[#2D3748] hover:border-[#F3BA2F] focus:border-[#F3BA2F]"
+              className="h-10 bg-[#1A2333] border-[#2D3748] hover:border-[#F3BA2F] focus:border-[#F3BA2F] text-[#F3BA2F]"
+              style={{
+                caretColor: '#F3BA2F',
+                '::placeholder': {
+                  color: '#4A5568'
+                }
+              }}
             />
           </Form.Item>
         </Form>
