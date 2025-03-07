@@ -141,11 +141,21 @@ const NFTCard = ({ nft, type, onAction, onSelect, isSelected, NFT_SETTINGS }) =>
               src={nft.imageURI || '/placeholder.png'}
               alt={`NFT #${nft.id}`}
               className="w-full h-48 object-contain bg-[#1A2333]"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAction('view');
+              }}
             />
             {renderRarityBadge()}
           </div>
         }
-        onClick={handleSelect}
+        onClick={(e) => {
+          // 只有在选择模式下才触发选择
+          if (onSelect) {
+            e.stopPropagation();
+            handleSelect();
+          }
+        }}
       >
         <Card.Meta
           title={

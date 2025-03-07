@@ -95,8 +95,6 @@ const NFTList = ({ type = 'market', onPageChange }) => {
     }
     onPageChange?.(page);
   };
-
-  // 处理NFT操作
   const handleNFTAction = (action, nft) => {
     switch (action) {
       case 'buy':
@@ -107,8 +105,9 @@ const NFTList = ({ type = 'market', onPageChange }) => {
         }
         break;
       case 'list':
-        setSelectedNFT(nft);
+        setSelectedNFT(null); // 确保不会显示详情模态框
         setListingModalOpen(true);
+        setSelectedNFT(nft);
         break;
       case 'unlist':
         if (nft && nft.id) {
@@ -118,13 +117,13 @@ const NFTList = ({ type = 'market', onPageChange }) => {
         }
         break;
       case 'view':
+        setListingModalOpen(false); // 确保上架模态框是关闭的
         setSelectedNFT(nft);
         break;
       default:
         break;
     }
   };
-
   // 处理NFT选择
   const handleNFTSelect = (tokenId) => {
     setSelectedNFTs(prev => {
@@ -169,13 +168,14 @@ const NFTList = ({ type = 'market', onPageChange }) => {
     }
 
     return (
-      <Row gutter={[12, 12]}>
+      <Row gutter={[16, 24]}>
         {filteredAndSortedNFTs.map(nft => (
-          <Col key={nft.id} xs={12} sm={12} md={8} lg={6}>
+          <Col key={nft.id} xs={24} sm={12} md={8} lg={6}>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
+              className="h-full"
             >
               <NFTCard
                 nft={nft}
