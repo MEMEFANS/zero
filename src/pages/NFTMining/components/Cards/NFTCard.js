@@ -1,10 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { NFT_RARITY_COLORS } from '../../../../constants/contracts';
+import { NFT_RARITY_IMAGES } from '../../../../constants/nftImages';
 
 const NFTCard = ({ nft, onStake, onUnstake, isStaked }) => {
   const { tokenId, power, level, rarity, dailyReward, maxReward, minedAmount, stakeTime, imageURI } = nft;
   const rarityColor = NFT_RARITY_COLORS[rarity] || NFT_RARITY_COLORS['N'];
+  
+  // 获取本地占位图
+  const placeholderImage = NFT_RARITY_IMAGES[rarity] || '/images/nft-placeholder.png';
+  
+  // 状态管理
+  const [currentImage, setCurrentImage] = useState(placeholderImage);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 加载实际的 NFT 图片
+  useEffect(() => {
+    if (!imageURI) return;
+
+    const img = new Image();
+    img.src = imageURI;
+    
+    img.onload = () => {
+      setCurrentImage(imageURI);
+      setIsLoading(false);
+    };
+    
+    img.onerror = () => {
+      console.log('Failed to load NFT image:', imageURI);
+      // 加载失败时保持使用本地占位图
+      setCurrentImage(placeholderImage);
+      setIsLoading(false);
+    };
+
+    // 清理函数
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [imageURI, placeholderImage]);
 
   // 计算已挖矿进度
   const miningProgress = maxReward > 0 ? (minedAmount / maxReward) * 100 : 0;
@@ -26,14 +60,18 @@ const NFTCard = ({ nft, onStake, onUnstake, isStaked }) => {
         {/* NFT 图片 */}
         <div className="mb-4 relative aspect-square rounded-lg overflow-hidden">
           <img
-            src={imageURI}
+            src={currentImage}
             alt={`NFT #${tokenId}`}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.onerror = null; // 防止无限循环
-              e.target.src = '/images/nft-placeholder.png'; // 设置默认图片
-            }}
+            className={`w-full h-full object-cover transition-all duration-300 ${
+              isLoading ? 'scale-105 blur-sm' : 'scale-100 blur-0'
+            }`}
+            loading="lazy"
           />
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-[#1A2438]/50">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
+            </div>
+          )}
           <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${rarityColor.bg} ${rarityColor.text}`}>
             {rarity}
           </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { ethers } from 'ethers';
 import { toast } from 'react-toastify';
@@ -9,15 +10,21 @@ import { REFERRAL_REGISTRY_ADDRESS, REFERRAL_REGISTRY_ABI } from '../../../../co
 const ConfirmDialog = ({ isOpen, onConfirm, onCancel, referrerAddress }) => {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
+  // 格式化地址显示
+  const formatAddress = (address) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 flex items-center justify-center z-[9999]">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
       <div className="relative bg-[#1A2438] rounded-lg p-6 max-w-md w-full mx-4 border border-green-500/20">
         <h3 className="text-xl font-medium text-green-400 mb-4">绑定推荐人</h3>
         <div className="mb-6">
           <p className="text-gray-300 mb-2">检测到推荐人地址：</p>
           <div className="bg-[#111827] rounded p-3 text-sm text-gray-400 break-all font-mono">
-            {referrerAddress}
+            {formatAddress(referrerAddress)}
           </div>
           <p className="text-gray-400 mt-4 text-sm">
             确认将其设置为您的推荐人吗？此操作不可撤销。
@@ -38,8 +45,16 @@ const ConfirmDialog = ({ isOpen, onConfirm, onCancel, referrerAddress }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
+};
+
+ConfirmDialog.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  referrerAddress: PropTypes.string
 };
 
 const ReferralTree = ({ account, provider }) => {
@@ -316,6 +331,12 @@ const ReferralTree = ({ account, provider }) => {
     }
   };
 
+  // 格式化地址显示
+  const formatAddress = (address) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -381,7 +402,7 @@ const ReferralTree = ({ account, provider }) => {
         <h3 className="text-green-400 font-medium mb-4">推荐人信息</h3>
         {stats.hasReferrer ? (
           <div className="text-gray-300">
-            <p>推荐人地址: {stats.referrer}</p>
+            <p>推荐人地址: {formatAddress(stats.referrer)}</p>
           </div>
         ) : (
           <p className="text-gray-400">暂无推荐人</p>
@@ -413,7 +434,7 @@ const ReferralTree = ({ account, provider }) => {
           <div className="space-y-2">
             {stats.directReferrals.map((address, index) => (
               <div key={index} className="text-gray-300 break-all">
-                {address}
+                {formatAddress(address)}
               </div>
             ))}
           </div>
@@ -427,7 +448,7 @@ const ReferralTree = ({ account, provider }) => {
           <div className="space-y-2">
             {stats.teamMembers.map((address, index) => (
               <div key={index} className="text-gray-300 break-all">
-                {address}
+                {formatAddress(address)}
               </div>
             ))}
           </div>
