@@ -254,28 +254,26 @@ const NFTList = ({ type = 'market', onPageChange }) => {
       {renderNFTList()}
 
       {/* 分页 */}
-      {type === 'market' && (
-        <div className="flex justify-center mt-6">
+      {type === 'market' && pagination && (
+        <div className="mt-6 flex justify-center">
           <Pagination
-            current={pagination.currentPage}
+            current={pagination.current}
             total={pagination.total}
             pageSize={pagination.pageSize}
             onChange={handlePageChange}
-            showSizeChanger={false}
-            size="small"
-            className="sm:text-base"
           />
         </div>
       )}
 
-      {/* 详情弹窗 */}
+      {/* NFT详情模态框 */}
       <NFTDetailModal
+        isOpen={!!selectedNFT}
         nft={selectedNFT}
-        visible={!!selectedNFT}
         onClose={() => setSelectedNFT(null)}
+        onAction={handleNFTAction}
       />
 
-      {/* 上架弹窗 */}
+      {/* 上架模态框 */}
       <ListingModal
         nft={selectedNFT}
         visible={listingModalOpen}

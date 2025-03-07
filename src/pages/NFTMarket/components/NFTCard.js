@@ -58,11 +58,11 @@ const NFTCard = ({ nft, type, onAction, onSelect, isSelected, NFT_SETTINGS }) =>
       <div className="grid grid-cols-2 gap-4 mt-4">
         <div className="text-center p-2 bg-[#1F2937] rounded-lg">
           <div className="text-sm text-gray-400">算力</div>
-          <div className="text-lg font-semibold text-green-400">{nft.power}</div>
+          <div className="text-lg font-semibold text-green-400">{nft.power} H/s</div>
         </div>
         <div className="text-center p-2 bg-[#1F2937] rounded-lg">
           <div className="text-sm text-gray-400">收益</div>
-          <div className="text-lg font-semibold text-blue-400">{formatReward(nft.dailyReward)} ZONE</div>
+          <div className="text-lg font-semibold text-blue-400">{formatReward(nft.dailyReward)} %</div>
         </div>
       </div>
     );
