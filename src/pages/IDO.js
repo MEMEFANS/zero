@@ -829,11 +829,6 @@ const IDO = () => {
           </div>
         </div>
       </div>
-      {userReferrer && (
-        <div className="referrer-info">
-          <p>您的推荐人: {userReferrer}</p>
-        </div>
-      )}
     </div>
   );
 };

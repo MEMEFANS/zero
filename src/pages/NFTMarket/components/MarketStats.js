@@ -19,7 +19,7 @@ const MarketStats = () => {
   const stats = marketState.stats || {};
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -62,9 +62,19 @@ const MarketStats = () => {
         transition={{ duration: 0.5, delay: 0.3 }}
       >
         <StatCard 
-          title="市场费率" 
-          value={parseFloat(stats.marketFeeRate || '0') / 10} 
-          unit="%" 
+          title="NFT总量" 
+          value={stats.totalSupply || '0'} 
+        />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <StatCard 
+          title="在售数量" 
+          value={stats.activeListings || '0'} 
         />
       </motion.div>
     </div>

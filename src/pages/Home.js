@@ -706,60 +706,6 @@ const Home = () => {
           </div>
         </div>
 
-                {/* 社区列表 */}
-                <div className="container mx-auto px-4 py-8 mb-12">
-          <h2 className="text-3xl font-bold text-center mb-12">{t('communityList')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-lg overflow-hidden">
-                  <img src="/images/communities/binance.png" alt="Binance" className="w-full h-full object-cover" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">{t('binanceCommunity')}</h3>
-                  <p className="text-gray-400">{t('globalLeadingExchange')}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-lg overflow-hidden">
-                  <img src="/images/communities/okx.png" alt="OKX" className="w-full h-full object-cover" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">{t('okxCommunity')}</h3>
-                  <p className="text-gray-400">{t('globalLeadingExchange')}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-lg overflow-hidden">
-                  <img src="/images/communities/huobi.png" alt="Huobi" className="w-full h-full object-cover" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">{t('huobiCommunity')}</h3>
-                  <p className="text-gray-400">{t('globalLeadingExchange')}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#1e2839] p-6 rounded-lg hover:scale-105 transition-transform">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-lg overflow-hidden">
-                  <img src="/images/communities/kucoin.png" alt="KuCoin" className="w-full h-full object-cover" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">{t('kucoinCommunity')}</h3>
-                  <p className="text-gray-400">{t('globalLeadingExchange')}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
                {/* 底部信息 */}
                <div className="text-center text-gray-400 py-8">
           <p>© 2025 ZERO. {t('allRightsReserved')}</p>

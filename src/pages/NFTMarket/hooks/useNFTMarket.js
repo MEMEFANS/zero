@@ -131,17 +131,19 @@ const useNFTMarket = () => {
     try {
       const contracts = await getContracts(library);
       if (!contracts) return;
-
+  
       // 分别获取各项市场数据
-      const [totalVolume, dailyVolume, floorPrice, marketFeeRate, feeReceiver, minPrice] = await Promise.all([
+      const [totalVolume, dailyVolume, floorPrice, marketFeeRate, feeReceiver, minPrice, totalSupply, activeListingsCount] = await Promise.all([
         contracts.marketplace.totalVolume(),
         contracts.marketplace.dailyVolume(),
         contracts.marketplace.floorPrice(),
         contracts.marketplace.marketFeeRate(),
         contracts.marketplace.feeReceiver(),
-        contracts.marketplace.minPrice()
+        contracts.marketplace.minPrice(),
+        contracts.nft.totalSupply(),
+        contracts.marketplace.getActiveListingsCount()
       ]);
-
+  
       setMarketState(prev => ({
         ...prev,
         stats: {
@@ -149,7 +151,9 @@ const useNFTMarket = () => {
           dailyVolume: ethers.utils.formatEther(dailyVolume),
           floorPrice: ethers.utils.formatEther(floorPrice),
           marketFeeRate: marketFeeRate.toString(),
-          minPrice: ethers.utils.formatEther(minPrice)
+          minPrice: ethers.utils.formatEther(minPrice),
+          totalSupply: totalSupply.toString(),
+          activeListings: activeListingsCount.toString()
         }
       }));
     } catch (error) {
@@ -382,12 +386,14 @@ const useNFTMarket = () => {
       if (!contracts) return;
 
       // 获取市场统计数据
-      const [totalVolume, dailyVolume, floorPrice, marketFeeRate, minPrice] = await Promise.all([
+      const [totalVolume, dailyVolume, floorPrice, marketFeeRate, minPrice, totalSupply, activeListingsCount] = await Promise.all([
         contracts.marketplace.totalVolume(),
         contracts.marketplace.dailyVolume(),
         contracts.marketplace.floorPrice(),
         contracts.marketplace.marketFeeRate(),
-        contracts.marketplace.minPrice()
+        contracts.marketplace.minPrice(),
+        contracts.nft.totalSupply(),
+        contracts.marketplace.getActiveListingsCount()
       ]);
 
       console.log('Market stats:', {
@@ -395,17 +401,21 @@ const useNFTMarket = () => {
         dailyVolume: dailyVolume.toString(),
         floorPrice: floorPrice.toString(),
         marketFeeRate: marketFeeRate.toString(),
-        minPrice: minPrice.toString()
+        minPrice: minPrice.toString(),
+        totalSupply: totalSupply.toString(),
+        activeListings: activeListingsCount.toString()
       });
 
       setMarketState(prev => ({
         ...prev,
         stats: {
-          totalVolume: totalVolume.toString(),
-          dailyVolume: dailyVolume.toString(),
-          floorPrice: floorPrice.toString(),
+          totalVolume: ethers.utils.formatEther(totalVolume),
+          dailyVolume: ethers.utils.formatEther(dailyVolume),
+          floorPrice: ethers.utils.formatEther(floorPrice),
           marketFeeRate: marketFeeRate.toString(),
-          minPrice: minPrice.toString()
+          minPrice: ethers.utils.formatEther(minPrice),
+          totalSupply: totalSupply.toString(),
+          activeListings: activeListingsCount.toString()
         }
       }));
     } catch (error) {
