@@ -101,23 +101,22 @@ const NFTList = ({ type = 'market', onPageChange }) => {
         if (nft && nft.id && nft.price) {
           handleBuy(nft.id, nft.price);
         } else {
-          message.error('NFT数据无效');
+          console.log('NFT数据无效');
         }
         break;
       case 'list':
-        setSelectedNFT(null); // 确保不会显示详情模态框
-        setListingModalOpen(true);
         setSelectedNFT(nft);
+        setListingModalOpen(true);
         break;
       case 'unlist':
         if (nft && nft.id) {
           handleUnlistNFT(nft);
         } else {
-          message.error('NFT数据无效');
+          console.log('NFT数据无效');
         }
         break;
       case 'view':
-        setListingModalOpen(false); // 确保上架模态框是关闭的
+        setListingModalOpen(false);
         setSelectedNFT(nft);
         break;
       default:
@@ -270,7 +269,7 @@ const NFTList = ({ type = 'market', onPageChange }) => {
 
       {/* NFT详情模态框 */}
       <NFTDetailModal
-        isOpen={!!selectedNFT}
+        isOpen={selectedNFT !== null && !listingModalOpen}
         nft={selectedNFT}
         onClose={() => setSelectedNFT(null)}
         onAction={handleNFTAction}

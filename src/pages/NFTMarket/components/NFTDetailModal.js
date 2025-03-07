@@ -13,17 +13,6 @@ const NFTDetailModal = ({ isOpen, nft, onClose, onAction }) => {
   const rarityColors = ['default', 'blue', 'purple', 'gold'];
 
   const renderActionButton = () => {
-    if (!nft.isActive && nft.owner === window.ethereum?.selectedAddress) {
-      return (
-        <Button 
-          type="primary" 
-          onClick={() => onAction('list', nft)}
-        >
-          上架
-        </Button>
-      );
-    }
-
     if (nft.isActive && nft.seller === window.ethereum?.selectedAddress) {
       return (
         <Button 
