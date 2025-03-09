@@ -11,23 +11,27 @@ import './styles/market.css';
 
 const NFTMarket = () => {
   const { active } = useWeb3React();
-  const {
-    marketState,
-    loadingState,
-    fetchMarketItems,
-    handlePageChange,
-    handleBuy,
-    handleList,
+  const { 
+    marketState, 
+    loadingState, 
+    fetchMarketItems, 
+    handlePageChange, 
+    handleBuy, 
+    handleList, 
     handleUnlistNFT,
-    setSelectedTab,
-    setFilterType,
-    setSearchTerm,
-    setModal
+    loadTradeHistory,
+    setSelectedTab, 
+    setFilterType, 
+    setSearchTerm, 
+    setModal 
   } = useNFTMarket();
   const [activeTab, setActiveTab] = useState('market');
 
   const handleTabChange = (key) => {
     setActiveTab(key);
+    if (key === 'history') {
+      loadTradeHistory();
+    }
   };
 
   // 处理分页变化
@@ -39,6 +43,13 @@ const NFTMarket = () => {
   useEffect(() => {
     fetchMarketItems(1);
   }, [fetchMarketItems]);
+
+  // 监听钱包连接状态，加载交易历史
+  useEffect(() => {
+    if (active && activeTab === 'history') {
+      loadTradeHistory();
+    }
+  }, [active, activeTab, loadTradeHistory]);
 
   const items = [
     {

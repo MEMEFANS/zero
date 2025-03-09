@@ -278,11 +278,16 @@ const useNFTMarket = () => {
     if (!active || !library) return;
 
     try {
-      const contracts = getContracts();
+      const contracts = await getContracts(library.getSigner());
       if (!contracts) return;
 
+      console.log('Loading trade history...');
+      const currentBlock = await library.getBlockNumber();
+      const fromBlock = Math.max(0, currentBlock - 10000);
+      
       const filter = contracts.marketplace.filters.NFTSold();
-      const events = await contracts.marketplace.queryFilter(filter, -10000); // 获取最近的交易记录
+      const events = await contracts.marketplace.queryFilter(filter, fromBlock, currentBlock);
+      console.log('Found NFT sold events:', events.length);
 
       const history = await Promise.all(events.map(async (event) => {
         const { tokenId, seller, buyer, price } = event.args;
@@ -294,10 +299,11 @@ const useNFTMarket = () => {
           seller,
           buyer,
           price: price.toString(),
-          timestamp: block.timestamp,
+          timestamp: block.timestamp
         };
       }));
 
+      console.log('Processed trade history:', history);
       setMarketState(prev => ({
         ...prev,
         tradeHistory: history.reverse()

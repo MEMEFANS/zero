@@ -5,6 +5,8 @@ import { formatEther } from '@ethersproject/units';
 import dayjs from 'dayjs';
 
 const TradeHistory = ({ history = [] }) => {
+  console.log('Rendering trade history:', history);
+
   const columns = [
     {
       title: 'NFT ID',
@@ -54,6 +56,8 @@ const TradeHistory = ({ history = [] }) => {
           {dayjs(time * 1000).format('YYYY-MM-DD HH:mm')}
         </span>
       ),
+      sorter: (a, b) => b.timestamp - a.timestamp,
+      defaultSortOrder: 'descend'
     },
   ];
 
@@ -68,6 +72,7 @@ const TradeHistory = ({ history = [] }) => {
         <Table
           dataSource={history}
           columns={columns}
+          rowKey="id"
           pagination={{
             pageSize: 10,
             className: 'custom-pagination',
@@ -83,30 +88,6 @@ const TradeHistory = ({ history = [] }) => {
             ),
           }}
           className="custom-table"
-          components={{
-            header: {
-              wrapper: ({ children }) => (
-                <thead className="bg-transparent">{children}</thead>
-              ),
-              row: ({ children }) => (
-                <tr className="bg-transparent">{children}</tr>
-              ),
-              cell: ({ children }) => (
-                <th className="bg-transparent">{children}</th>
-              ),
-            },
-            body: {
-              wrapper: ({ children }) => (
-                <tbody className="bg-transparent">{children}</tbody>
-              ),
-              row: ({ children }) => (
-                <tr className="bg-transparent">{children}</tr>
-              ),
-              cell: ({ children }) => (
-                <td className="bg-transparent">{children}</td>
-              ),
-            },
-          }}
         />
       </div>
     </motion.div>

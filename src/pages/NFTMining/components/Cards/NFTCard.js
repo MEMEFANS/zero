@@ -4,7 +4,7 @@ import { NFT_RARITY_COLORS } from '../../../../constants/contracts';
 import { NFT_RARITY_IMAGES } from '../../../../constants/nftImages';
 
 const NFTCard = ({ nft, onStake, onUnstake, isStaked }) => {
-  const { tokenId, power, level, rarity, dailyReward, maxReward, minedAmount, stakeTime, imageURI } = nft;
+  const { tokenId, power, level, rarity, dailyReward, maxReward, minedAmount, stakeTime, imageURI, isListed } = nft;
   const rarityColor = NFT_RARITY_COLORS[rarity] || NFT_RARITY_COLORS['N'];
   
   // 获取本地占位图
@@ -139,12 +139,21 @@ const NFTCard = ({ nft, onStake, onUnstake, isStaked }) => {
 
           {/* 操作按钮 */}
           {!isStaked && (
-            <button
-              onClick={() => onStake(tokenId)}
-              className="w-full py-2 px-4 rounded-lg font-medium transition-colors bg-green-500/20 text-green-400 hover:bg-green-500/30"
-            >
-              质押
-            </button>
+            <>
+              {isListed ? (
+                <div className="flex items-center justify-center space-x-2 py-2 px-4 rounded-lg bg-yellow-500/10">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                  <span className="text-yellow-400 text-sm">请先从市场下架</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => onStake(tokenId)}
+                  className="w-full py-2 px-4 rounded-lg font-medium transition-colors bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                >
+                  质押
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -162,7 +171,8 @@ NFTCard.propTypes = {
     maxReward: PropTypes.number.isRequired,
     minedAmount: PropTypes.number.isRequired,
     stakeTime: PropTypes.number,
-    imageURI: PropTypes.string.isRequired
+    imageURI: PropTypes.string.isRequired,
+    isListed: PropTypes.bool
   }).isRequired,
   onStake: PropTypes.func.isRequired,
   onUnstake: PropTypes.func.isRequired,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { NFT_MINING_ADDRESS, NFT_MINING_ABI, ZONE_NFT_ADDRESS, ZONE_NFT_ABI, NFT_RARITY } from '../../../constants/contracts';
+import { NFT_MINING_ADDRESS, NFT_MINING_ABI, ZONE_NFT_ADDRESS, ZONE_NFT_ABI, MARKETPLACE_CONTRACT, NFT_MARKETPLACE_ABI, NFT_RARITY } from '../../../constants/contracts';
 import { getContract } from '../../../utils/web3';
 
 const useNFTMining = (account, provider) => {
@@ -90,6 +90,9 @@ const useNFTMining = (account, provider) => {
       const nftCount = await retryOperation(() => nftContract.balanceOf(account));
       const nfts = [];
       
+      // 获取市场合约
+      const marketContract = getContract(MARKETPLACE_CONTRACT, NFT_MARKETPLACE_ABI, provider);
+      
       // 分批获取 NFT 数据，避免一次性请求过多
       const batchSize = 5;
       for (let i = 0; i < nftCount; i += batchSize) {
@@ -100,6 +103,10 @@ const useNFTMining = (account, provider) => {
               const tokenId = await nftContract.tokenOfOwnerByIndex(account, i + j);
               const nftAttributes = await nftContract.getNFTAttributes(tokenId);
               const imageURI = await nftContract.getNFTImageURI(tokenId);
+              
+              // 检查 NFT 是否在市场上架
+              const listing = await marketContract.listings(tokenId);
+              const isListed = listing.isActive;
               
               // 处理 IPFS URL
               const processedImageURI = imageURI.startsWith('ipfs://')
@@ -112,6 +119,7 @@ const useNFTMining = (account, provider) => {
                 level: 0, // 暂时设为0，因为合约中没有这个属性
                 rarity: NFT_RARITY[Number(nftAttributes.rarity)] || 'N',
                 isStaked: nftAttributes.isStaked,
+                isListed, // 添加是否上架的状态
                 dailyReward: Number(nftAttributes.dailyReward),
                 maxReward: Number(nftAttributes.maxReward),
                 minedAmount: Number(nftAttributes.minedAmount),
